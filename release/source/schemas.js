@@ -1,0 +1,195 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var Schemas_1;
+"use strict";
+/**
+ * Copyright (C) 2018 Silas B. Domingos
+ * This source code is licensed under the MIT License as described in the file LICENSE.
+ */
+const Source = require("mongodb");
+const Class = require("@singleware/class");
+const Mapping = require("@singleware/mapping");
+/**
+ * Mongo DB schemas class.
+ */
+let Schemas = Schemas_1 = class Schemas {
+    /**
+     * Sets the specified property if the source property has any data.
+     * @param to Target property.
+     * @param target Target entity.
+     * @param from Source property.
+     * @param source Source entity.
+     */
+    static setProperty(to, target, from, source) {
+        if (source[from] !== void 0) {
+            target[to] = source[from];
+        }
+    }
+    /**
+     * Sets the number range.
+     * @param entity Target entity.
+     * @param column Source column.
+     */
+    static setNumberRange(entity, column) {
+        Schemas_1.setProperty('minimum', entity, 'minimum', column);
+        Schemas_1.setProperty('maximum', entity, 'maximum', column);
+    }
+    /**
+     * Sets the string range.
+     * @param entity Target entity.
+     * @param column Source column.
+     */
+    static setStringRange(entity, column) {
+        Schemas_1.setProperty('minLength', entity, 'minimum', column);
+        Schemas_1.setProperty('maxLength', entity, 'maximum', column);
+    }
+    /**
+     * Sets the array range.
+     * @param entity Target entity.
+     * @param column Source column.
+     */
+    static setArrayRange(entity, column) {
+        Schemas_1.setProperty('minItems', entity, 'minimum', column);
+        Schemas_1.setProperty('maxItems', entity, 'maximum', column);
+    }
+    /**
+     * Build a column schema entity based on the specified column schema.
+     * @param column Column Schema.
+     * @returns Return the generated column schema entity.
+     * @throws Throws an error when the column type is unsupported.
+     */
+    static buildSchema(column) {
+        const entity = { bsonType: [] };
+        for (const type of column.types) {
+            switch (type) {
+                case Mapping.Formats.ID:
+                    entity.bsonType.push('objectId');
+                    break;
+                case Mapping.Formats.NULL:
+                    entity.bsonType.push('null');
+                    break;
+                case Mapping.Formats.BOOLEAN:
+                    entity.bsonType.push('bool');
+                    break;
+                case Mapping.Formats.INTEGER:
+                    entity.bsonType.push('int');
+                    Schemas_1.setNumberRange(entity, column);
+                    break;
+                case Mapping.Formats.DECIMAL:
+                    entity.bsonType.push('double');
+                    Schemas_1.setNumberRange(entity, column);
+                    break;
+                case Mapping.Formats.NUMBER:
+                    entity.bsonType.push('number');
+                    Schemas_1.setNumberRange(entity, column);
+                    break;
+                case Mapping.Formats.STRING:
+                    entity.bsonType.push('string');
+                    Schemas_1.setStringRange(entity, column);
+                    break;
+                case Mapping.Formats.ENUMERATION:
+                    entity.bsonType.push('string');
+                    entity.enum = column.values;
+                    break;
+                case Mapping.Formats.PATTERN:
+                    entity.bsonType.push('string');
+                    entity.pattern = column.pattern.toString();
+                    break;
+                case Mapping.Formats.TIMESTAMP:
+                    entity.bsonType.push('timestamp');
+                    break;
+                case Mapping.Formats.DATE:
+                    entity.bsonType.push('date');
+                    break;
+                case Mapping.Formats.ARRAY:
+                    entity.bsonType.push('array');
+                    Schemas_1.setArrayRange(entity, column);
+                    Schemas_1.setProperty('uniqueItems', entity, 'unique', column);
+                    switch (column.model) {
+                        case Source.ObjectID:
+                            entity.items = { bsonType: 'objectId' };
+                            break;
+                        case String:
+                            entity.items = { bsonType: 'string' };
+                            break;
+                        case Number:
+                            entity.items = { bsonType: 'number' };
+                            break;
+                        case Boolean:
+                            entity.items = { bsonType: 'bool' };
+                            break;
+                        case Date:
+                            entity.items = { bsonType: 'date' };
+                            break;
+                        case Object:
+                            entity.items = { bsonType: 'object' };
+                            break;
+                        default:
+                            entity.items = Schemas_1.build(column.schema);
+                    }
+                    break;
+                case Mapping.Formats.OBJECT:
+                    const result = Schemas_1.build(column.schema);
+                    entity.bsonType.push('object');
+                    entity.properties = result.properties;
+                    entity.additionalProperties = false;
+                    Schemas_1.setProperty('required', entity, 'required', result);
+                    break;
+                default:
+                    throw new TypeError(`Unsupported column schema type '${type}'`);
+            }
+        }
+        return entity;
+    }
+    /**
+     * Build a schema entity based on the specified row schema.
+     * @param row Row schema.
+     * @returns Returns the generated schema entity.
+     */
+    static build(row) {
+        const entity = { bsonType: 'object', required: [], properties: {}, additionalProperties: false };
+        for (const name in row) {
+            const column = row[name];
+            const key = column.alias || name;
+            if (column.required) {
+                entity.required.push(key);
+            }
+            entity.properties[key] = Schemas_1.buildSchema(column);
+        }
+        if (!entity.properties._id) {
+            entity.properties._id = { bsonType: 'objectId' };
+        }
+        if (entity.required.length === 0) {
+            delete entity.required;
+        }
+        return entity;
+    }
+};
+__decorate([
+    Class.Private()
+], Schemas, "setProperty", null);
+__decorate([
+    Class.Private()
+], Schemas, "setNumberRange", null);
+__decorate([
+    Class.Private()
+], Schemas, "setStringRange", null);
+__decorate([
+    Class.Private()
+], Schemas, "setArrayRange", null);
+__decorate([
+    Class.Private()
+], Schemas, "buildSchema", null);
+__decorate([
+    Class.Public()
+], Schemas, "build", null);
+Schemas = Schemas_1 = __decorate([
+    Class.Describe()
+], Schemas);
+exports.Schemas = Schemas;

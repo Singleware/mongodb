@@ -1,0 +1,47 @@
+{
+  "author": {
+    "name": "Silas B. Domingos",
+    "email": "hello@balmante.eti.br",
+    "url": "https://balmante.eti.br"
+  },
+  "name": "@singleware/mongodb",
+  "description": "Singleware MongoDB driver package.",
+  "license": "MIT",
+  "version": "1.0.21",
+  "main": "release/source/index.js",
+  "types": "release/types/index.d.ts",
+  "keywords": [
+    "mongodb",
+    "mongodb driver",
+    "data mapper",
+    "async"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/singleware/mongodb"
+  },
+  "engines": {
+    "node": ">=8"
+  },
+  "dependencies": {
+    "@singleware/class": "^1.0.13",
+    "@singleware/mapping": "^1.0.38"
+  },
+  "devDependencies": {
+    "@types/mongodb": "^3.1.4",
+    "@types/node": "^10.7.1",
+    "mongodb": "^3.1.3",
+    "prettier": "^1.14.2",
+    "typescript": "^2.9.2"
+  },
+  "prettier": {
+    "printWidth": 140,
+    "tabWidth": 2,
+    "singleQuote": true,
+    "semi": true
+  },
+  "scripts": {
+    "build": "npm run make",
+    "make": "tsc"
+  }
+}
