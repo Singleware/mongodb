@@ -5,6 +5,7 @@
  * The proposal of this example is to show how to use a simple entity CRUD with mapper
  * package.
  */
+import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 import * as MongoDB from '../source';
 
@@ -22,22 +23,26 @@ const driver = new MongoDB.Driver();
  * Test class.
  */
 @Mapping.Schema.Entity('UserEntity')
+@Class.Describe()
 class UserEntity {
   /**
    * User id.
    */
   @Mapping.Schema.Id()
   @Mapping.Schema.Alias('_id')
+  @Class.Public()
   public id?: string;
   /**
    * User first name.
    */
   @Mapping.Schema.String()
+  @Class.Public()
   public firstName?: string;
   /**
    * User last name.
    */
   @Mapping.Schema.String()
+  @Class.Public()
   public lastName?: string;
 }
 

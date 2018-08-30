@@ -37,7 +37,7 @@ let Driver = class Driver {
      */
     async connect(uri) {
         await new Promise((resolve, reject) => {
-            Source.MongoClient.connect(uri, this.options, Class.bindCallback((error, connection) => {
+            Source.MongoClient.connect(uri, this.options, (error, connection) => {
                 if (error) {
                     reject(error);
                 }
@@ -46,7 +46,7 @@ let Driver = class Driver {
                     this.database = connection.db();
                     resolve();
                 }
-            }));
+            });
         });
     }
     /**
@@ -54,7 +54,7 @@ let Driver = class Driver {
      */
     async disconnect() {
         return new Promise((resolve, reject) => {
-            this.connection.close(Class.bindCallback((error) => {
+            this.connection.close((error) => {
                 if (error) {
                     reject(error);
                 }
@@ -63,7 +63,7 @@ let Driver = class Driver {
                     this.database = void 0;
                     resolve();
                 }
-            }));
+            });
         });
     }
     /**

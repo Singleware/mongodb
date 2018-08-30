@@ -46,7 +46,7 @@ export class Driver implements Mapping.Driver {
         Source.MongoClient.connect(
           uri,
           this.options,
-          Class.bindCallback((error: Source.MongoError, connection: Source.MongoClient) => {
+          (error: Source.MongoError, connection: Source.MongoClient) => {
             if (error) {
               reject(error);
             } else {
@@ -54,7 +54,7 @@ export class Driver implements Mapping.Driver {
               this.database = connection.db();
               resolve();
             }
-          })
+          }
         );
       }
     );
@@ -67,17 +67,15 @@ export class Driver implements Mapping.Driver {
   public async disconnect(): Promise<void> {
     return new Promise<void>(
       (resolve: Function, reject: Function): void => {
-        (<Source.MongoClient>this.connection).close(
-          Class.bindCallback((error: Source.MongoError) => {
-            if (error) {
-              reject(error);
-            } else {
-              this.connection = void 0;
-              this.database = void 0;
-              resolve();
-            }
-          })
-        );
+        (<Source.MongoClient>this.connection).close((error: Source.MongoError) => {
+          if (error) {
+            reject(error);
+          } else {
+            this.connection = void 0;
+            this.database = void 0;
+            resolve();
+          }
+        });
       }
     );
   }

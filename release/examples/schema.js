@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * The proposal of this example is to show how to use a simple json schema with mapper
  * package.
  */
+const Class = require("@singleware/class");
 const Mapping = require("@singleware/mapping");
 const MongoDB = require("../source");
 /**
@@ -30,14 +31,17 @@ let TestEntitySub = class TestEntitySub {
 };
 __decorate([
     Mapping.Schema.Id(),
-    Mapping.Schema.Alias('_id')
+    Mapping.Schema.Alias('_id'),
+    Class.Public()
 ], TestEntitySub.prototype, "id", void 0);
 __decorate([
     Mapping.Schema.String(),
-    Mapping.Schema.Number()
+    Mapping.Schema.Number(),
+    Class.Public()
 ], TestEntitySub.prototype, "value", void 0);
 TestEntitySub = __decorate([
-    Mapping.Schema.Entity('TestEntitySub')
+    Mapping.Schema.Entity('TestEntitySub'),
+    Class.Describe()
 ], TestEntitySub);
 /**
  * Test entity.
@@ -46,127 +50,168 @@ let TestEntity = class TestEntity {
 };
 __decorate([
     Mapping.Schema.Id(),
-    Mapping.Schema.Alias('_id')
+    Mapping.Schema.Alias('_id'),
+    Class.Public()
 ], TestEntity.prototype, "id", void 0);
 __decorate([
-    Mapping.Schema.Null()
+    Mapping.Schema.Null(),
+    Class.Public()
 ], TestEntity.prototype, "null", void 0);
 __decorate([
-    Mapping.Schema.Boolean()
+    Mapping.Schema.Boolean(),
+    Class.Public()
 ], TestEntity.prototype, "boolean", void 0);
 __decorate([
-    Mapping.Schema.Integer()
+    Mapping.Schema.Integer(),
+    Class.Public()
 ], TestEntity.prototype, "integer", void 0);
 __decorate([
-    Mapping.Schema.Integer(1)
+    Mapping.Schema.Integer(1),
+    Class.Public()
 ], TestEntity.prototype, "minInteger", void 0);
 __decorate([
-    Mapping.Schema.Integer(0, 2)
+    Mapping.Schema.Integer(void 0, 2),
+    Class.Public()
 ], TestEntity.prototype, "maxInteger", void 0);
 __decorate([
-    Mapping.Schema.Integer(1, 2)
+    Mapping.Schema.Integer(1, 2),
+    Class.Public()
 ], TestEntity.prototype, "rangeInteger", void 0);
 __decorate([
-    Mapping.Schema.Decimal()
+    Mapping.Schema.Decimal(),
+    Class.Public()
 ], TestEntity.prototype, "decimal", void 0);
 __decorate([
-    Mapping.Schema.Decimal(1)
+    Mapping.Schema.Decimal(1),
+    Class.Public()
 ], TestEntity.prototype, "minDecimal", void 0);
 __decorate([
-    Mapping.Schema.Decimal(0, 2)
+    Mapping.Schema.Decimal(void 0, 2),
+    Class.Public()
 ], TestEntity.prototype, "maxDecimal", void 0);
 __decorate([
-    Mapping.Schema.Decimal(1, 2)
+    Mapping.Schema.Decimal(1, 2),
+    Class.Public()
 ], TestEntity.prototype, "rangeDecimal", void 0);
 __decorate([
-    Mapping.Schema.Number()
+    Mapping.Schema.Number(),
+    Class.Public()
 ], TestEntity.prototype, "number", void 0);
 __decorate([
-    Mapping.Schema.Number(1)
+    Mapping.Schema.Number(1),
+    Class.Public()
 ], TestEntity.prototype, "minNumber", void 0);
 __decorate([
-    Mapping.Schema.Number(0, 2)
+    Mapping.Schema.Number(void 0, 2),
+    Class.Public()
 ], TestEntity.prototype, "maxNumber", void 0);
 __decorate([
-    Mapping.Schema.Number(1, 2)
+    Mapping.Schema.Number(1, 2),
+    Class.Public()
 ], TestEntity.prototype, "rangeNumber", void 0);
 __decorate([
-    Mapping.Schema.String()
+    Mapping.Schema.String(),
+    Class.Public()
 ], TestEntity.prototype, "string", void 0);
 __decorate([
-    Mapping.Schema.String(1)
+    Mapping.Schema.String(1),
+    Class.Public()
 ], TestEntity.prototype, "minString", void 0);
 __decorate([
-    Mapping.Schema.String(0, 2)
+    Mapping.Schema.String(void 0, 2),
+    Class.Public()
 ], TestEntity.prototype, "maxString", void 0);
 __decorate([
-    Mapping.Schema.String(1, 2)
+    Mapping.Schema.String(1, 2),
+    Class.Public()
 ], TestEntity.prototype, "rangeString", void 0);
 __decorate([
-    Mapping.Schema.Enumeration('a', 'b', 'c')
+    Mapping.Schema.Enumeration('a', 'b', 'c'),
+    Class.Public()
 ], TestEntity.prototype, "enumeration", void 0);
 __decorate([
-    Mapping.Schema.Pattern(/^([a-z]+)$/)
+    Mapping.Schema.Pattern(/^([a-z]+)$/),
+    Class.Public()
 ], TestEntity.prototype, "pattern", void 0);
 __decorate([
-    Mapping.Schema.Timestamp()
+    Mapping.Schema.Timestamp(),
+    Class.Public()
 ], TestEntity.prototype, "timestamp", void 0);
 __decorate([
-    Mapping.Schema.Timestamp(new Date(2000, 1, 1, 0, 0, 0, 0))
+    Mapping.Schema.Timestamp(new Date(2000, 1, 1, 0, 0, 0, 0)),
+    Class.Public()
 ], TestEntity.prototype, "minTimestamp", void 0);
 __decorate([
-    Mapping.Schema.Timestamp(void 0, new Date(2010, 1, 1, 0, 0, 0, 0))
+    Mapping.Schema.Timestamp(void 0, new Date(2010, 1, 1, 0, 0, 0, 0)),
+    Class.Public()
 ], TestEntity.prototype, "maxTimestamp", void 0);
 __decorate([
-    Mapping.Schema.Timestamp(new Date(2000, 1, 1, 0, 0, 0, 0), new Date(2010, 1, 1, 0, 0, 0, 0))
+    Mapping.Schema.Timestamp(new Date(2000, 1, 1, 0, 0, 0, 0), new Date(2010, 1, 1, 0, 0, 0, 0)),
+    Class.Public()
 ], TestEntity.prototype, "rangeTimestamp", void 0);
 __decorate([
-    Mapping.Schema.Date()
+    Mapping.Schema.Date(),
+    Class.Public()
 ], TestEntity.prototype, "date", void 0);
 __decorate([
-    Mapping.Schema.Date(new Date(2000, 1, 1, 0, 0, 0, 0))
+    Mapping.Schema.Date(new Date(2000, 1, 1, 0, 0, 0, 0)),
+    Class.Public()
 ], TestEntity.prototype, "minDate", void 0);
 __decorate([
-    Mapping.Schema.Date(void 0, new Date(2010, 1, 1, 0, 0, 0, 0))
+    Mapping.Schema.Date(void 0, new Date(2010, 1, 1, 0, 0, 0, 0)),
+    Class.Public()
 ], TestEntity.prototype, "maxDate", void 0);
 __decorate([
-    Mapping.Schema.Date(new Date(2000, 1, 1, 0, 0, 0, 0), new Date(2010, 1, 1, 0, 0, 0, 0))
+    Mapping.Schema.Date(new Date(2000, 1, 1, 0, 0, 0, 0), new Date(2010, 1, 1, 0, 0, 0, 0)),
+    Class.Public()
 ], TestEntity.prototype, "rangeDate", void 0);
 __decorate([
-    Mapping.Schema.Array(String)
+    Mapping.Schema.Array(String),
+    Class.Public()
 ], TestEntity.prototype, "stringArray", void 0);
 __decorate([
-    Mapping.Schema.Array(String, true)
-], TestEntity.prototype, "stringUnqiueArray", void 0);
+    Mapping.Schema.Array(String, true),
+    Class.Public()
+], TestEntity.prototype, "stringUniqueArray", void 0);
 __decorate([
-    Mapping.Schema.Array(String, void 0, 1)
+    Mapping.Schema.Array(String, void 0, 1),
+    Class.Public()
 ], TestEntity.prototype, "stringMinArray", void 0);
 __decorate([
-    Mapping.Schema.Array(String, void 0, void 0, 2)
+    Mapping.Schema.Array(String, void 0, void 0, 2),
+    Class.Public()
 ], TestEntity.prototype, "stringMaxArray", void 0);
 __decorate([
-    Mapping.Schema.Array(String, void 0, 1, 2)
+    Mapping.Schema.Array(String, void 0, 1, 2),
+    Class.Public()
 ], TestEntity.prototype, "stringRangeArray", void 0);
 __decorate([
-    Mapping.Schema.Array(Number)
+    Mapping.Schema.Array(Number),
+    Class.Public()
 ], TestEntity.prototype, "numberArray", void 0);
 __decorate([
-    Mapping.Schema.Array(Boolean)
+    Mapping.Schema.Array(Boolean),
+    Class.Public()
 ], TestEntity.prototype, "booleanArray", void 0);
 __decorate([
-    Mapping.Schema.Array(Date)
+    Mapping.Schema.Array(Date),
+    Class.Public()
 ], TestEntity.prototype, "dateArray", void 0);
 __decorate([
-    Mapping.Schema.Array(Object)
+    Mapping.Schema.Array(Object),
+    Class.Public()
 ], TestEntity.prototype, "objectArray", void 0);
 __decorate([
-    Mapping.Schema.Array(TestEntitySub)
+    Mapping.Schema.Array(TestEntitySub),
+    Class.Public()
 ], TestEntity.prototype, "entityArray", void 0);
 __decorate([
-    Mapping.Schema.Object(TestEntitySub)
+    Mapping.Schema.Object(TestEntitySub),
+    Class.Public()
 ], TestEntity.prototype, "entityObject", void 0);
 TestEntity = __decorate([
-    Mapping.Schema.Entity('TestEntity')
+    Mapping.Schema.Entity('TestEntity'),
+    Class.Describe()
 ], TestEntity);
 /**
  * Test schema.

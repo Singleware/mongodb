@@ -5,6 +5,7 @@
  * The proposal of this example is to show how to use a simple json schema with mapper
  * package.
  */
+import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 import * as MongoDB from '../source';
 
@@ -22,18 +23,21 @@ const driver = new MongoDB.Driver();
  * Test sub entity.
  */
 @Mapping.Schema.Entity('TestEntitySub')
+@Class.Describe()
 class TestEntitySub {
   /**
    * Id.
    */
   @Mapping.Schema.Id()
   @Mapping.Schema.Alias('_id')
+  @Class.Public()
   public id?: any;
   /**
    * Some value.
    */
   @Mapping.Schema.String()
   @Mapping.Schema.Number()
+  @Class.Public()
   public value?: string | number;
 }
 
@@ -41,139 +45,180 @@ class TestEntitySub {
  * Test entity.
  */
 @Mapping.Schema.Entity('TestEntity')
+@Class.Describe()
 class TestEntity {
   // Id type.
   @Mapping.Schema.Id()
   @Mapping.Schema.Alias('_id')
+  @Class.Public()
   public id?: any;
 
   // Null type.
   @Mapping.Schema.Null()
+  @Class.Public()
   public null?: null;
 
   // Boolean types.
   @Mapping.Schema.Boolean()
+  @Class.Public()
   public boolean?: boolean;
 
   // Integer types.
   @Mapping.Schema.Integer()
+  @Class.Public()
   public integer?: number;
 
   @Mapping.Schema.Integer(1)
+  @Class.Public()
   public minInteger?: number;
 
-  @Mapping.Schema.Integer(0, 2)
+  @Mapping.Schema.Integer(void 0, 2)
+  @Class.Public()
   public maxInteger?: number;
 
   @Mapping.Schema.Integer(1, 2)
+  @Class.Public()
   public rangeInteger?: number;
 
   // Decimal types.
   @Mapping.Schema.Decimal()
+  @Class.Public()
   public decimal?: number;
 
   @Mapping.Schema.Decimal(1)
+  @Class.Public()
   public minDecimal?: number;
 
-  @Mapping.Schema.Decimal(0, 2)
+  @Mapping.Schema.Decimal(void 0, 2)
+  @Class.Public()
   public maxDecimal?: number;
 
   @Mapping.Schema.Decimal(1, 2)
+  @Class.Public()
   public rangeDecimal?: number;
 
   // Number types.
   @Mapping.Schema.Number()
+  @Class.Public()
   public number?: number;
 
   @Mapping.Schema.Number(1)
+  @Class.Public()
   public minNumber?: number;
 
-  @Mapping.Schema.Number(0, 2)
+  @Mapping.Schema.Number(void 0, 2)
+  @Class.Public()
   public maxNumber?: number;
 
   @Mapping.Schema.Number(1, 2)
+  @Class.Public()
   public rangeNumber?: number;
 
   // String types.
   @Mapping.Schema.String()
+  @Class.Public()
   public string?: string;
 
   @Mapping.Schema.String(1)
+  @Class.Public()
   public minString?: string;
 
-  @Mapping.Schema.String(0, 2)
+  @Mapping.Schema.String(void 0, 2)
+  @Class.Public()
   public maxString?: string;
 
   @Mapping.Schema.String(1, 2)
+  @Class.Public()
   public rangeString?: string;
 
   // Enumeration type.
   @Mapping.Schema.Enumeration('a', 'b', 'c')
+  @Class.Public()
   public enumeration?: 'a' | 'b' | 'c';
 
   // Pattern type.
   @Mapping.Schema.Pattern(/^([a-z]+)$/)
+  @Class.Public()
   public pattern?: string;
 
   // Timestamp types.
   @Mapping.Schema.Timestamp()
+  @Class.Public()
   public timestamp?: Date;
 
   @Mapping.Schema.Timestamp(new Date(2000, 1, 1, 0, 0, 0, 0))
+  @Class.Public()
   public minTimestamp?: Date;
 
   @Mapping.Schema.Timestamp(void 0, new Date(2010, 1, 1, 0, 0, 0, 0))
+  @Class.Public()
   public maxTimestamp?: Date;
 
   @Mapping.Schema.Timestamp(new Date(2000, 1, 1, 0, 0, 0, 0), new Date(2010, 1, 1, 0, 0, 0, 0))
+  @Class.Public()
   public rangeTimestamp?: Date;
 
   // Date types.
   @Mapping.Schema.Date()
+  @Class.Public()
   public date?: Date;
 
   @Mapping.Schema.Date(new Date(2000, 1, 1, 0, 0, 0, 0))
+  @Class.Public()
   public minDate?: Date;
 
   @Mapping.Schema.Date(void 0, new Date(2010, 1, 1, 0, 0, 0, 0))
+  @Class.Public()
   public maxDate?: Date;
 
   @Mapping.Schema.Date(new Date(2000, 1, 1, 0, 0, 0, 0), new Date(2010, 1, 1, 0, 0, 0, 0))
+  @Class.Public()
   public rangeDate?: Date;
 
   // Array types.
   @Mapping.Schema.Array(String)
+  @Class.Public()
   public stringArray?: string[];
 
   @Mapping.Schema.Array(String, true)
-  public stringUnqiueArray?: string[];
+  @Class.Public()
+  public stringUniqueArray?: string[];
 
   @Mapping.Schema.Array(String, void 0, 1)
+  @Class.Public()
   public stringMinArray?: string[];
 
   @Mapping.Schema.Array(String, void 0, void 0, 2)
+  @Class.Public()
   public stringMaxArray?: string[];
 
   @Mapping.Schema.Array(String, void 0, 1, 2)
+  @Class.Public()
   public stringRangeArray?: string[];
 
   @Mapping.Schema.Array(Number)
+  @Class.Public()
   public numberArray?: string[];
 
   @Mapping.Schema.Array(Boolean)
+  @Class.Public()
   public booleanArray?: boolean[];
 
   @Mapping.Schema.Array(Date)
+  @Class.Public()
   public dateArray?: Date[];
 
   @Mapping.Schema.Array(Object)
+  @Class.Public()
   public objectArray?: Date[];
 
   @Mapping.Schema.Array(TestEntitySub)
+  @Class.Public()
   public entityArray?: TestEntitySub[];
 
   // Object type.
   @Mapping.Schema.Object(TestEntitySub)
+  @Class.Public()
   public entityObject?: TestEntitySub;
 }
 

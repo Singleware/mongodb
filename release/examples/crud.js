@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * The proposal of this example is to show how to use a simple entity CRUD with mapper
  * package.
  */
+const Class = require("@singleware/class");
 const Mapping = require("@singleware/mapping");
 const MongoDB = require("../source");
 /**
@@ -30,16 +31,20 @@ let UserEntity = class UserEntity {
 };
 __decorate([
     Mapping.Schema.Id(),
-    Mapping.Schema.Alias('_id')
+    Mapping.Schema.Alias('_id'),
+    Class.Public()
 ], UserEntity.prototype, "id", void 0);
 __decorate([
-    Mapping.Schema.String()
+    Mapping.Schema.String(),
+    Class.Public()
 ], UserEntity.prototype, "firstName", void 0);
 __decorate([
-    Mapping.Schema.String()
+    Mapping.Schema.String(),
+    Class.Public()
 ], UserEntity.prototype, "lastName", void 0);
 UserEntity = __decorate([
-    Mapping.Schema.Entity('UserEntity')
+    Mapping.Schema.Entity('UserEntity'),
+    Class.Describe()
 ], UserEntity);
 /**
  * Database mapper.
