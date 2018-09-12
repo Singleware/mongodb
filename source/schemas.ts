@@ -69,46 +69,50 @@ export class Schemas {
     const entity = <Mapping.Entity>{ bsonType: [] };
     for (const type of column.types) {
       switch (type) {
-        case Mapping.Formats.ID:
+        case Mapping.Format.ID:
           entity.bsonType.push('objectId');
           break;
-        case Mapping.Formats.NULL:
+        case Mapping.Format.NULL:
           entity.bsonType.push('null');
           break;
-        case Mapping.Formats.BOOLEAN:
+        case Mapping.Format.BINARY:
+          entity.bsonType.push('binData');
+          break;
+        case Mapping.Format.BOOLEAN:
           entity.bsonType.push('bool');
           break;
-        case Mapping.Formats.INTEGER:
+        case Mapping.Format.INTEGER:
           entity.bsonType.push('int');
           Schemas.setNumberRange(entity, column);
           break;
-        case Mapping.Formats.DECIMAL:
+        case Mapping.Format.DECIMAL:
           entity.bsonType.push('double');
           Schemas.setNumberRange(entity, column);
           break;
-        case Mapping.Formats.NUMBER:
+        case Mapping.Format.NUMBER:
           entity.bsonType.push('number');
           Schemas.setNumberRange(entity, column);
           break;
-        case Mapping.Formats.STRING:
+        case Mapping.Format.STRING:
           entity.bsonType.push('string');
           Schemas.setStringRange(entity, column);
           break;
-        case Mapping.Formats.ENUMERATION:
+        case Mapping.Format.ENUMERATION:
           entity.bsonType.push('string');
           entity.enum = column.values;
           break;
-        case Mapping.Formats.PATTERN:
+        case Mapping.Format.PATTERN:
+          const pattern = (<RegExp>column.pattern).toString();
           entity.bsonType.push('string');
-          entity.pattern = (<RegExp>column.pattern).toString();
+          entity.pattern = pattern.substring(1, pattern.lastIndexOf('/'));
           break;
-        case Mapping.Formats.TIMESTAMP:
+        case Mapping.Format.TIMESTAMP:
           entity.bsonType.push('timestamp');
           break;
-        case Mapping.Formats.DATE:
+        case Mapping.Format.DATE:
           entity.bsonType.push('date');
           break;
-        case Mapping.Formats.ARRAY:
+        case Mapping.Format.ARRAY:
           entity.bsonType.push('array');
           Schemas.setArrayRange(entity, column);
           Schemas.setProperty('uniqueItems', entity, 'unique', column);
@@ -132,11 +136,11 @@ export class Schemas {
               entity.items = { bsonType: 'object' };
               break;
             default:
-              entity.items = Schemas.build(<Mapping.Row>column.schema);
+              entity.items = Schemas.build(column.schema || {});
           }
           break;
-        case Mapping.Formats.OBJECT:
-          const result = Schemas.build(<Mapping.Row>column.schema);
+        case Mapping.Format.OBJECT:
+          const result = Schemas.build(column.schema || {});
           entity.bsonType.push('object');
           entity.properties = result.properties;
           entity.additionalProperties = false;
@@ -155,8 +159,14 @@ export class Schemas {
    * @returns Returns the generated schema entity.
    */
   @Class.Public()
-  public static build(row: Mapping.Row): Mapping.Entity {
-    const entity = { bsonType: 'object', required: <string[]>[], properties: <Mapping.Entity>{}, additionalProperties: false };
+  public static build(row: Mapping.Map<Mapping.Column>): Mapping.Entity {
+    const entity = {
+      bsonType: 'object',
+      required: <string[]>[],
+      properties: <Mapping.Entity>{},
+      additionalProperties: false
+    };
+
     for (const name in row) {
       const column = row[name];
       const key = column.alias || name;
@@ -165,12 +175,15 @@ export class Schemas {
       }
       entity.properties[key] = Schemas.buildSchema(column);
     }
+
     if (!entity.properties._id) {
       entity.properties._id = { bsonType: 'objectId' };
     }
+
     if (entity.required.length === 0) {
       delete entity.required;
     }
+
     return entity;
   }
 }

@@ -59,7 +59,7 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
    * @returns Returns the id of new user.
    */
   public async create(): Promise<string> {
-    return await super.insert({ firstName: 'First 1', lastName: 'Last 1' });
+    return await this.insert({ firstName: 'First 1', lastName: 'Last 1' });
   }
 
   /**
@@ -68,7 +68,7 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
    * @returns Returns the number of updated users.
    */
   public async change(id: string): Promise<number> {
-    return await super.update({ _id: { operator: Mapping.Operators.EQUAL, value: id } }, { firstName: 'Changed!' });
+    return await this.update({ _id: { operator: Mapping.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
   }
 
   /**
@@ -77,7 +77,7 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
    * @requires Returns the list of users found.
    */
   public async read(id: string): Promise<UserEntity[]> {
-    return await super.find({ _id: { operator: Mapping.Operators.EQUAL, value: id } });
+    return await this.find({ _id: { operator: Mapping.Operator.EQUAL, value: id } });
   }
 
   /**
@@ -85,7 +85,7 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
    * @param id User id.
    */
   public async remove(id: string): Promise<number> {
-    return await super.delete({ _id: { operator: Mapping.Operators.EQUAL, value: id } });
+    return await this.delete({ _id: { operator: Mapping.Operator.EQUAL, value: id } });
   }
 }
 

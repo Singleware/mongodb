@@ -1,3 +1,4 @@
+import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 /**
  * Mongo DB driver class.
@@ -16,6 +17,27 @@ export declare class Driver implements Mapping.Driver {
      */
     private options;
     /**
+     * Gets the collection name from the specified model type.
+     * @param model Mode type.
+     * @returns Returns the collection name.
+     * @throws Throws an error when the model type is not valid.
+     */
+    private getCollectionName;
+    /**
+     * Gets the primary property from the specified model type.
+     * @param model Mode type.
+     * @returns Returns the primary column name.
+     * @throws Throws an error when there is no primary column defined.
+     */
+    private getPrimaryProperty;
+    /**
+     * Gets the primary filter based in the specified model type.
+     * @param model Model type.
+     * @param value Primary id value.
+     * @returns Returns the primary filter.
+     */
+    private getPrimaryFilter;
+    /**
      * Connect to the MongoDb URI.
      * @param uri Connection URI.
      */
@@ -25,63 +47,61 @@ export declare class Driver implements Mapping.Driver {
      */
     disconnect(): Promise<void>;
     /**
-     * Modifies the collection by the specified row schema.
-     * @param collection Collection name.
-     * @param schema Row schema.
+     * Modifies the collection by the specified model type.
+     * @param model Model type.
      */
-    modify(collection: string, schema: Mapping.Row): Promise<void>;
+    modify(model: Class.Constructor<Mapping.Entity>): Promise<void>;
     /**
-     * Insert the specified entity into the database.
-     * @param collection Collection name.
-     * @param entities Entity data list.
+     * Inserts all specified entities into the database.
+     * @param model Model type.
+     * @param entities Entity list.
      * @returns Returns the list inserted entities.
      */
-    insert<T extends Mapping.Entity>(collection: string, ...entities: T[]): Promise<any[]>;
+    insert<T extends Mapping.Entity>(model: Class.Constructor<T>, ...entities: T[]): Promise<string[]>;
     /**
-     * Find the corresponding entity from the database.
-     * @param collection Collection name.
+     * Finds the corresponding entity from the database.
+     * @param model Model type.
      * @param filter Filter expression.
+     * @param aggregate Aggregated entries.
      * @returns Returns the list of entities found.
      */
-    find<T extends Mapping.Entity>(collection: string, filter: Mapping.Expression): Promise<T[]>;
+    find<T extends Mapping.Entity>(model: Class.Constructor<T>, filter: Mapping.Expression, aggregate: Mapping.Aggregate[]): Promise<T[]>;
     /**
      * Find the entity that corresponds to the specified entity id.
-     * @param collection Collection name.
-     * @param column Id column name.
-     * @param id Entity id value.
+     * @param model Model type.
+     * @param value Entity id.
+     * @param aggregate Aggregated entries.
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
-    findById<T extends Mapping.Entity>(collection: string, column: string, id: any): Promise<T | undefined>;
+    findById<T extends Mapping.Entity>(model: Class.Constructor<T>, value: any, aggregate: Mapping.Aggregate[]): Promise<T | undefined>;
     /**
      * Update all entities that corresponds to the specified filter.
-     * @param collection Collection name.
+     * @param model Model type.
      * @param filter Filter expression.
      * @param entity Entity data to be updated.
      * @returns Returns the number of updated entities.
      */
-    update<T extends Mapping.Entity>(collection: string, filter: Mapping.Expression, entity: T): Promise<number>;
+    update(model: Class.Constructor<Mapping.Entity>, filter: Mapping.Expression, entity: Mapping.Entity): Promise<number>;
     /**
-     * Update the entity that corresponds to the specified entity id.
-     * @param collection Collection name.
-     * @param column Column name.
-     * @param id Entity id.
+     * Updates the entity that corresponds to the specified entity id.
+     * @param model Model type.
+     * @param value Entity id.
      * @param entity Entity data to be updated.
      * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
      */
-    updateById<T extends Mapping.Entity>(collection: string, column: string, id: any, entity: T): Promise<boolean>;
+    updateById(model: Class.Constructor<Mapping.Entity>, value: any, entity: Mapping.Entity): Promise<boolean>;
     /**
      * Delete all entities that corresponds to the specified filter.
-     * @param collection Collection name.
+     * @param model Model type.
      * @param filter Filter columns.
      * @return Returns the number of deleted entities.
      */
-    delete<T extends Mapping.Entity>(collection: string, filter: Mapping.Expression): Promise<number>;
+    delete(model: Class.Constructor<Mapping.Entity>, filter: Mapping.Expression): Promise<number>;
     /**
-     * Delete the entity that corresponds to the specified entity id.
-     * @param collection Collection name.
-     * @param column Column name.
-     * @param id Entity id.
+     * Deletes the entity that corresponds to the specified entity id.
+     * @param model Model type.
+     * @param value Entity id.
      * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
      */
-    deleteById<T extends Mapping.Entity>(collection: string, column: string, id: any): Promise<boolean>;
+    deleteById(model: Class.Constructor<Mapping.Entity>, value: any): Promise<boolean>;
 }

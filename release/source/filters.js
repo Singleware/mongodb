@@ -10,6 +10,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Copyright (C) 2018 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
+const Source = require("mongodb");
 const Class = require("@singleware/class");
 const Mapping = require("@singleware/mapping");
 /**
@@ -18,39 +19,44 @@ const Mapping = require("@singleware/mapping");
 let Filters = class Filters {
     /**
      * Build a filter entity from the specified filter expression.
+     * @param model Model type.
      * @param filter Filter expression.
      * @returns Returns the generated filter entity.
      */
-    static build(filter) {
+    static build(model, filter) {
         const entity = {};
         for (const column in filter) {
+            const schema = Mapping.Schema.getColumn(model, column);
             const operation = filter[column];
+            if (schema && schema.types.indexOf(Mapping.Format.ID) !== -1 && Source.ObjectId.isValid(operation.value)) {
+                operation.value = new Source.ObjectId(operation.value);
+            }
             switch (operation.operator) {
-                case Mapping.Operators.LESS:
+                case Mapping.Operator.LESS:
                     entity[column] = { $lt: operation.value };
                     break;
-                case Mapping.Operators.LESS_OR_EQUAL:
+                case Mapping.Operator.LESS_OR_EQUAL:
                     entity[column] = { $lte: operation.value };
                     break;
-                case Mapping.Operators.EQUAL:
+                case Mapping.Operator.EQUAL:
                     entity[column] = { $eq: operation.value };
                     break;
-                case Mapping.Operators.NOT_EQUAL:
+                case Mapping.Operator.NOT_EQUAL:
                     entity[column] = { $neq: operation.value };
                     break;
-                case Mapping.Operators.GREATER_OR_EQUAL:
+                case Mapping.Operator.GREATER_OR_EQUAL:
                     entity[column] = { $gte: operation.value };
                     break;
-                case Mapping.Operators.GREATER:
+                case Mapping.Operator.GREATER:
                     entity[column] = { $gt: operation.value };
                     break;
-                case Mapping.Operators.BETWEEN:
+                case Mapping.Operator.BETWEEN:
                     entity[column] = { $gte: operation.value[0], $lte: operation.value[1] };
                     break;
-                case Mapping.Operators.CONTAIN:
+                case Mapping.Operator.CONTAIN:
                     entity[column] = { $in: [...operation.value] };
                     break;
-                case Mapping.Operators.NOT_CONTAIN:
+                case Mapping.Operator.NOT_CONTAIN:
                     entity[column] = { $nin: [...operation.value] };
                     break;
             }

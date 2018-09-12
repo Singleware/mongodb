@@ -58,7 +58,7 @@ class UserMapper extends Mapping.Mapper {
      * @returns Returns the id of new user.
      */
     async create() {
-        return await super.insert({ firstName: 'First 1', lastName: 'Last 1' });
+        return await this.insert({ firstName: 'First 1', lastName: 'Last 1' });
     }
     /**
      * Change the test user.
@@ -66,7 +66,7 @@ class UserMapper extends Mapping.Mapper {
      * @returns Returns the number of updated users.
      */
     async change(id) {
-        return await super.update({ _id: { operator: Mapping.Operators.EQUAL, value: id } }, { firstName: 'Changed!' });
+        return await this.update({ _id: { operator: Mapping.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
     }
     /**
      * Read the test user.
@@ -74,14 +74,14 @@ class UserMapper extends Mapping.Mapper {
      * @requires Returns the list of users found.
      */
     async read(id) {
-        return await super.find({ _id: { operator: Mapping.Operators.EQUAL, value: id } });
+        return await this.find({ _id: { operator: Mapping.Operator.EQUAL, value: id } });
     }
     /**
      * Remove the test user.
      * @param id User id.
      */
     async remove(id) {
-        return await super.delete({ _id: { operator: Mapping.Operators.EQUAL, value: id } });
+        return await this.delete({ _id: { operator: Mapping.Operator.EQUAL, value: id } });
     }
 }
 /**

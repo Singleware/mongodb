@@ -68,46 +68,50 @@ let Schemas = Schemas_1 = class Schemas {
         const entity = { bsonType: [] };
         for (const type of column.types) {
             switch (type) {
-                case Mapping.Formats.ID:
+                case Mapping.Format.ID:
                     entity.bsonType.push('objectId');
                     break;
-                case Mapping.Formats.NULL:
+                case Mapping.Format.NULL:
                     entity.bsonType.push('null');
                     break;
-                case Mapping.Formats.BOOLEAN:
+                case Mapping.Format.BINARY:
+                    entity.bsonType.push('binData');
+                    break;
+                case Mapping.Format.BOOLEAN:
                     entity.bsonType.push('bool');
                     break;
-                case Mapping.Formats.INTEGER:
+                case Mapping.Format.INTEGER:
                     entity.bsonType.push('int');
                     Schemas_1.setNumberRange(entity, column);
                     break;
-                case Mapping.Formats.DECIMAL:
+                case Mapping.Format.DECIMAL:
                     entity.bsonType.push('double');
                     Schemas_1.setNumberRange(entity, column);
                     break;
-                case Mapping.Formats.NUMBER:
+                case Mapping.Format.NUMBER:
                     entity.bsonType.push('number');
                     Schemas_1.setNumberRange(entity, column);
                     break;
-                case Mapping.Formats.STRING:
+                case Mapping.Format.STRING:
                     entity.bsonType.push('string');
                     Schemas_1.setStringRange(entity, column);
                     break;
-                case Mapping.Formats.ENUMERATION:
+                case Mapping.Format.ENUMERATION:
                     entity.bsonType.push('string');
                     entity.enum = column.values;
                     break;
-                case Mapping.Formats.PATTERN:
+                case Mapping.Format.PATTERN:
+                    const pattern = column.pattern.toString();
                     entity.bsonType.push('string');
-                    entity.pattern = column.pattern.toString();
+                    entity.pattern = pattern.substring(1, pattern.lastIndexOf('/'));
                     break;
-                case Mapping.Formats.TIMESTAMP:
+                case Mapping.Format.TIMESTAMP:
                     entity.bsonType.push('timestamp');
                     break;
-                case Mapping.Formats.DATE:
+                case Mapping.Format.DATE:
                     entity.bsonType.push('date');
                     break;
-                case Mapping.Formats.ARRAY:
+                case Mapping.Format.ARRAY:
                     entity.bsonType.push('array');
                     Schemas_1.setArrayRange(entity, column);
                     Schemas_1.setProperty('uniqueItems', entity, 'unique', column);
@@ -131,11 +135,11 @@ let Schemas = Schemas_1 = class Schemas {
                             entity.items = { bsonType: 'object' };
                             break;
                         default:
-                            entity.items = Schemas_1.build(column.schema);
+                            entity.items = Schemas_1.build(column.schema || {});
                     }
                     break;
-                case Mapping.Formats.OBJECT:
-                    const result = Schemas_1.build(column.schema);
+                case Mapping.Format.OBJECT:
+                    const result = Schemas_1.build(column.schema || {});
                     entity.bsonType.push('object');
                     entity.properties = result.properties;
                     entity.additionalProperties = false;
@@ -153,7 +157,12 @@ let Schemas = Schemas_1 = class Schemas {
      * @returns Returns the generated schema entity.
      */
     static build(row) {
-        const entity = { bsonType: 'object', required: [], properties: {}, additionalProperties: false };
+        const entity = {
+            bsonType: 'object',
+            required: [],
+            properties: {},
+            additionalProperties: false
+        };
         for (const name in row) {
             const column = row[name];
             const key = column.alias || name;

@@ -58,6 +58,10 @@ __decorate([
     Class.Public()
 ], TestEntity.prototype, "null", void 0);
 __decorate([
+    Mapping.Schema.Binary(),
+    Class.Public()
+], TestEntity.prototype, "binary", void 0);
+__decorate([
     Mapping.Schema.Boolean(),
     Class.Public()
 ], TestEntity.prototype, "boolean", void 0);
@@ -221,8 +225,8 @@ async function test() {
     await driver.connect(connection);
     console.log('Connect');
     // Apply schema
-    await driver.modify(Mapping.Schema.getStorageName(TestEntity), Mapping.Schema.getRow(TestEntity));
-    console.log('Modify');
+    await driver.modify(TestEntity);
+    console.log('Modified');
     // Disconnect
     await driver.disconnect();
     console.log('Disconnect');

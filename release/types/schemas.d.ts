@@ -41,5 +41,5 @@ export declare class Schemas {
      * @param row Row schema.
      * @returns Returns the generated schema entity.
      */
-    static build(row: Mapping.Row): Mapping.Entity;
+    static build(row: Mapping.Map<Mapping.Column>): Mapping.Entity;
 }

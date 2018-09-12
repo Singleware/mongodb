@@ -58,6 +58,11 @@ class TestEntity {
   @Class.Public()
   public null?: null;
 
+  // Binary types.
+  @Mapping.Schema.Binary()
+  @Class.Public()
+  public binary?: string;
+
   // Boolean types.
   @Mapping.Schema.Boolean()
   @Class.Public()
@@ -231,8 +236,8 @@ async function test(): Promise<void> {
   console.log('Connect');
 
   // Apply schema
-  await driver.modify(<string>Mapping.Schema.getStorageName(TestEntity), <Mapping.Row>Mapping.Schema.getRow(TestEntity));
-  console.log('Modify');
+  await driver.modify(TestEntity);
+  console.log('Modified');
 
   // Disconnect
   await driver.disconnect();
