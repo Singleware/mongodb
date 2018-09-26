@@ -131,11 +131,30 @@ let Schemas = Schemas_1 = class Schemas {
                         case Date:
                             entity.items = { bsonType: 'date' };
                             break;
-                        case Object:
-                            entity.items = { bsonType: 'object' };
-                            break;
                         default:
                             entity.items = Schemas_1.build(column.schema || {});
+                    }
+                    break;
+                case Mapping.Format.MAP:
+                    entity.bsonType.push('object');
+                    switch (column.model) {
+                        case Source.ObjectID:
+                            entity.additionalProperties = { bsonType: 'objectId' };
+                            break;
+                        case String:
+                            entity.additionalProperties = { bsonType: 'string' };
+                            break;
+                        case Number:
+                            entity.additionalProperties = { bsonType: 'number' };
+                            break;
+                        case Boolean:
+                            entity.additionalProperties = { bsonType: 'bool' };
+                            break;
+                        case Date:
+                            entity.additionalProperties = { bsonType: 'date' };
+                            break;
+                        default:
+                            entity.additionalProperties = Schemas_1.build(column.schema || {});
                     }
                     break;
                 case Mapping.Format.OBJECT:
@@ -170,9 +189,6 @@ let Schemas = Schemas_1 = class Schemas {
                 entity.required.push(key);
             }
             entity.properties[key] = Schemas_1.buildSchema(column);
-        }
-        if (!entity.properties._id) {
-            entity.properties._id = { bsonType: 'objectId' };
         }
         if (entity.required.length === 0) {
             delete entity.required;

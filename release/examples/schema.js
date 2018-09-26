@@ -210,6 +210,26 @@ __decorate([
     Class.Public()
 ], TestEntity.prototype, "entityArray", void 0);
 __decorate([
+    Mapping.Schema.Map(String),
+    Class.Public()
+], TestEntity.prototype, "stringMap", void 0);
+__decorate([
+    Mapping.Schema.Map(Number),
+    Class.Public()
+], TestEntity.prototype, "numberMap", void 0);
+__decorate([
+    Mapping.Schema.Map(Boolean),
+    Class.Public()
+], TestEntity.prototype, "booleanMap", void 0);
+__decorate([
+    Mapping.Schema.Map(Date),
+    Class.Public()
+], TestEntity.prototype, "dateMap", void 0);
+__decorate([
+    Mapping.Schema.Map(TestEntitySub),
+    Class.Public()
+], TestEntity.prototype, "entityMap", void 0);
+__decorate([
     Mapping.Schema.Object(TestEntitySub),
     Class.Public()
 ], TestEntity.prototype, "entityObject", void 0);

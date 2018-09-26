@@ -221,6 +221,27 @@ class TestEntity {
   @Class.Public()
   public entityArray?: TestEntitySub[];
 
+  // Map type.
+  @Mapping.Schema.Map(String)
+  @Class.Public()
+  public stringMap?: Mapping.Map<string>;
+
+  @Mapping.Schema.Map(Number)
+  @Class.Public()
+  public numberMap?: Mapping.Map<number>;
+
+  @Mapping.Schema.Map(Boolean)
+  @Class.Public()
+  public booleanMap?: Mapping.Map<boolean>;
+
+  @Mapping.Schema.Map(Date)
+  @Class.Public()
+  public dateMap?: Mapping.Map<Date>;
+
+  @Mapping.Schema.Map(TestEntitySub)
+  @Class.Public()
+  public entityMap?: Mapping.Map<TestEntitySub>;
+
   // Object type.
   @Mapping.Schema.Object(TestEntitySub)
   @Class.Public()
