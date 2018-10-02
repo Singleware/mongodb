@@ -45,6 +45,20 @@ let Driver = class Driver {
         return name;
     }
     /**
+     * Gets the collection options.
+     * @param model Model type.
+     * @returns Returns the collection command object.
+     */
+    getCollectionOptions(model) {
+        return {
+            validator: {
+                $jsonSchema: schemas_1.Schemas.build(Mapping.Schema.getRow(model))
+            },
+            validationLevel: 'strict',
+            validationAction: 'error'
+        };
+    }
+    /**
      * Gets the primary property from the specified model type.
      * @param model Mode type.
      * @returns Returns the primary column name.
@@ -64,16 +78,9 @@ let Driver = class Driver {
      * @returns Returns the primary filter.
      */
     getPrimaryFilter(model, value) {
-        const primary = this.getPrimaryProperty(model);
         const filters = {};
-        const entry = { operator: Mapping.Operator.EQUAL };
-        if (primary.types.indexOf(Mapping.Format.ID) !== -1 && Source.ObjectId.isValid(value)) {
-            entry.value = new Source.ObjectId(value);
-        }
-        else {
-            entry.value = value;
-        }
-        filters[primary.alias || primary.name] = entry;
+        const primary = this.getPrimaryProperty(model);
+        filters[primary.name] = { operator: Mapping.Operator.EQUAL, value: value };
         return filters;
     }
     /**
@@ -118,11 +125,17 @@ let Driver = class Driver {
     async modify(model) {
         await this.database.command({
             collMod: this.getCollectionName(model),
-            validator: {
-                $jsonSchema: schemas_1.Schemas.build(Mapping.Schema.getRow(model))
-            },
-            validationLevel: 'strict',
-            validationAction: 'error'
+            ...this.getCollectionOptions(model)
+        });
+    }
+    /**
+     * Creates the collection by the specified model type.
+     * @param model Model type.
+     */
+    async create(model) {
+        await this.database.command({
+            create: this.getCollectionName(model),
+            ...this.getCollectionOptions(model)
         });
     }
     /**
@@ -229,6 +242,9 @@ __decorate([
 ], Driver.prototype, "getCollectionName", null);
 __decorate([
     Class.Private()
+], Driver.prototype, "getCollectionOptions", null);
+__decorate([
+    Class.Private()
 ], Driver.prototype, "getPrimaryProperty", null);
 __decorate([
     Class.Private()
@@ -242,6 +258,9 @@ __decorate([
 __decorate([
     Class.Public()
 ], Driver.prototype, "modify", null);
+__decorate([
+    Class.Public()
+], Driver.prototype, "create", null);
 __decorate([
     Class.Public()
 ], Driver.prototype, "insert", null);

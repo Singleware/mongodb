@@ -9,6 +9,7 @@ export declare class Filters {
      * @param model Model type.
      * @param filter Filter expression.
      * @returns Returns the generated filter entity.
+     * @throws Throws an error when there is a nonexistent column in the specified filter.
      */
     static build(model: Class.Constructor<Mapping.Entity>, filter: Mapping.Expression): Mapping.Entity;
 }

@@ -24,6 +24,12 @@ export declare class Driver implements Mapping.Driver {
      */
     private getCollectionName;
     /**
+     * Gets the collection options.
+     * @param model Model type.
+     * @returns Returns the collection command object.
+     */
+    private getCollectionOptions;
+    /**
      * Gets the primary property from the specified model type.
      * @param model Mode type.
      * @returns Returns the primary column name.
@@ -51,6 +57,11 @@ export declare class Driver implements Mapping.Driver {
      * @param model Model type.
      */
     modify(model: Class.Constructor<Mapping.Entity>): Promise<void>;
+    /**
+     * Creates the collection by the specified model type.
+     * @param model Model type.
+     */
+    create(model: Class.Constructor<Mapping.Entity>): Promise<void>;
     /**
      * Inserts all specified entities into the database.
      * @param model Model type.

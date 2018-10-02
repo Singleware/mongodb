@@ -22,15 +22,20 @@ let Filters = class Filters {
      * @param model Model type.
      * @param filter Filter expression.
      * @returns Returns the generated filter entity.
+     * @throws Throws an error when there is a nonexistent column in the specified filter.
      */
     static build(model, filter) {
         const entity = {};
-        for (const column in filter) {
-            const schema = Mapping.Schema.getColumn(model, column);
-            const operation = filter[column];
-            if (schema && schema.types.indexOf(Mapping.Format.ID) !== -1 && Source.ObjectId.isValid(operation.value)) {
+        for (const name in filter) {
+            const operation = filter[name];
+            const schema = Mapping.Schema.getColumn(model, name);
+            if (!schema) {
+                throw new Error(`Column '${name}' does not exists.`);
+            }
+            if (schema.types.includes(Mapping.Format.ID) && Source.ObjectId.isValid(operation.value)) {
                 operation.value = new Source.ObjectId(operation.value);
             }
+            const column = schema.alias || schema.name;
             switch (operation.operator) {
                 case Mapping.Operator.LESS:
                     entity[column] = { $lt: operation.value };

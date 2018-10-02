@@ -51,6 +51,22 @@ export class Driver implements Mapping.Driver {
   }
 
   /**
+   * Gets the collection options.
+   * @param model Model type.
+   * @returns Returns the collection command object.
+   */
+  @Class.Private()
+  private getCollectionOptions(model: Class.Constructor<Mapping.Entity>): Object {
+    return {
+      validator: {
+        $jsonSchema: Schemas.build(<Mapping.Map<Mapping.Column>>Mapping.Schema.getRow(model))
+      },
+      validationLevel: 'strict',
+      validationAction: 'error'
+    };
+  }
+
+  /**
    * Gets the primary property from the specified model type.
    * @param model Mode type.
    * @returns Returns the primary column name.
@@ -73,17 +89,9 @@ export class Driver implements Mapping.Driver {
    */
   @Class.Private()
   private getPrimaryFilter(model: Class.Constructor<Mapping.Entity>, value: any): Mapping.Entity {
-    const primary = this.getPrimaryProperty(model);
     const filters = <any>{};
-    const entry = <any>{ operator: Mapping.Operator.EQUAL };
-
-    if (primary.types.indexOf(Mapping.Format.ID) !== -1 && Source.ObjectId.isValid(value)) {
-      entry.value = new Source.ObjectId(value);
-    } else {
-      entry.value = value;
-    }
-
-    filters[primary.alias || primary.name] = entry;
+    const primary = this.getPrimaryProperty(model);
+    filters[primary.name] = { operator: Mapping.Operator.EQUAL, value: value };
     return filters;
   }
 
@@ -140,11 +148,19 @@ export class Driver implements Mapping.Driver {
   public async modify(model: Class.Constructor<Mapping.Entity>): Promise<void> {
     await (<Source.Db>this.database).command({
       collMod: this.getCollectionName(model),
-      validator: {
-        $jsonSchema: Schemas.build(<Mapping.Map<Mapping.Column>>Mapping.Schema.getRow(model))
-      },
-      validationLevel: 'strict',
-      validationAction: 'error'
+      ...this.getCollectionOptions(model)
+    });
+  }
+
+  /**
+   * Creates the collection by the specified model type.
+   * @param model Model type.
+   */
+  @Class.Public()
+  public async create(model: Class.Constructor<Mapping.Entity>): Promise<void> {
+    await (<Source.Db>this.database).command({
+      create: this.getCollectionName(model),
+      ...this.getCollectionOptions(model)
     });
   }
 
