@@ -117,8 +117,8 @@ export class Schemas {
           Schemas.setArrayRange(entity, column);
           Schemas.setProperty('uniqueItems', entity, 'unique', column);
           switch (column.model) {
-            case Source.ObjectID:
-              entity.items = { bsonType: 'objectId' };
+            case Object:
+              entity.items = { bsonType: 'object' };
               break;
             case String:
               entity.items = { bsonType: 'string' };
@@ -132,6 +132,9 @@ export class Schemas {
             case Date:
               entity.items = { bsonType: 'date' };
               break;
+            case Source.ObjectID:
+              entity.items = { bsonType: 'objectId' };
+              break;
             default:
               entity.items = Schemas.build(column.schema || {});
           }
@@ -139,8 +142,8 @@ export class Schemas {
         case Mapping.Format.MAP:
           entity.bsonType.push('object');
           switch (column.model) {
-            case Source.ObjectID:
-              entity.additionalProperties = { bsonType: 'objectId' };
+            case Object:
+              entity.additionalProperties = true;
               break;
             case String:
               entity.additionalProperties = { bsonType: 'string' };
@@ -153,6 +156,9 @@ export class Schemas {
               break;
             case Date:
               entity.additionalProperties = { bsonType: 'date' };
+              break;
+            case Source.ObjectID:
+              entity.additionalProperties = { bsonType: 'objectId' };
               break;
             default:
               entity.additionalProperties = Schemas.build(column.schema || {});

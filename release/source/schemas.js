@@ -116,8 +116,8 @@ let Schemas = Schemas_1 = class Schemas {
                     Schemas_1.setArrayRange(entity, column);
                     Schemas_1.setProperty('uniqueItems', entity, 'unique', column);
                     switch (column.model) {
-                        case Source.ObjectID:
-                            entity.items = { bsonType: 'objectId' };
+                        case Object:
+                            entity.items = { bsonType: 'object' };
                             break;
                         case String:
                             entity.items = { bsonType: 'string' };
@@ -131,6 +131,9 @@ let Schemas = Schemas_1 = class Schemas {
                         case Date:
                             entity.items = { bsonType: 'date' };
                             break;
+                        case Source.ObjectID:
+                            entity.items = { bsonType: 'objectId' };
+                            break;
                         default:
                             entity.items = Schemas_1.build(column.schema || {});
                     }
@@ -138,8 +141,8 @@ let Schemas = Schemas_1 = class Schemas {
                 case Mapping.Format.MAP:
                     entity.bsonType.push('object');
                     switch (column.model) {
-                        case Source.ObjectID:
-                            entity.additionalProperties = { bsonType: 'objectId' };
+                        case Object:
+                            entity.additionalProperties = true;
                             break;
                         case String:
                             entity.additionalProperties = { bsonType: 'string' };
@@ -152,6 +155,9 @@ let Schemas = Schemas_1 = class Schemas {
                             break;
                         case Date:
                             entity.additionalProperties = { bsonType: 'date' };
+                            break;
+                        case Source.ObjectID:
+                            entity.additionalProperties = { bsonType: 'objectId' };
                             break;
                         default:
                             entity.additionalProperties = Schemas_1.build(column.schema || {});
