@@ -3,7 +3,7 @@ import * as Mapping from '@singleware/mapping';
 /**
  * Mongo DB filters class.
  */
-export declare class Filters {
+export declare class Filters extends Class.Null {
     /**
      * Build a filter entity from the specified filter expression.
      * @param model Model type.

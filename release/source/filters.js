@@ -16,7 +16,7 @@ const Mapping = require("@singleware/mapping");
 /**
  * Mongo DB filters class.
  */
-let Filters = class Filters {
+let Filters = class Filters extends Class.Null {
     /**
      * Build a filter entity from the specified filter expression.
      * @param model Model type.

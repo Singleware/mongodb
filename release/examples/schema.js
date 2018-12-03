@@ -27,7 +27,7 @@ const driver = new MongoDB.Driver();
 /**
  * Test sub entity.
  */
-let TestEntitySub = class TestEntitySub {
+let TestEntitySub = class TestEntitySub extends Class.Null {
 };
 __decorate([
     Mapping.Schema.Id(),
@@ -46,7 +46,7 @@ TestEntitySub = __decorate([
 /**
  * Test entity.
  */
-let TestEntity = class TestEntity {
+let TestEntity = class TestEntity extends Class.Null {
 };
 __decorate([
     Mapping.Schema.Id(),

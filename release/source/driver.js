@@ -18,11 +18,12 @@ const schemas_1 = require("./schemas");
 /**
  * Mongo DB driver class.
  */
-let Driver = class Driver {
+let Driver = class Driver extends Class.Null {
     /**
      * Mongo DB driver class.
      */
     constructor() {
+        super(...arguments);
         /**
          * Driver connection options.
          */

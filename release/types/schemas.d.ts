@@ -1,8 +1,9 @@
+import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 /**
  * Mongo DB schemas class.
  */
-export declare class Schemas {
+export declare class Schemas extends Class.Null {
     /**
      * Sets the specified property if the source property has any data.
      * @param to Target property.

@@ -24,7 +24,7 @@ const driver = new MongoDB.Driver();
  */
 @Mapping.Schema.Entity('TestEntitySub')
 @Class.Describe()
-class TestEntitySub {
+class TestEntitySub extends Class.Null {
   /**
    * Id.
    */
@@ -46,7 +46,7 @@ class TestEntitySub {
  */
 @Mapping.Schema.Entity('TestEntity')
 @Class.Describe()
-class TestEntity {
+class TestEntity extends Class.Null {
   // Id type.
   @Mapping.Schema.Id()
   @Mapping.Schema.Alias('_id')

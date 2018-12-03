@@ -3,7 +3,7 @@ import * as Mapping from '@singleware/mapping';
 /**
  * Mongo DB driver class.
  */
-export declare class Driver implements Mapping.Driver {
+export declare class Driver extends Class.Null implements Mapping.Driver {
     /**
      * Driver connection.
      */

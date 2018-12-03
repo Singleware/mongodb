@@ -18,7 +18,7 @@ const Mapping = require("@singleware/mapping");
 /**
  * Mongo DB schemas class.
  */
-let Schemas = Schemas_1 = class Schemas {
+let Schemas = Schemas_1 = class Schemas extends Class.Null {
     /**
      * Sets the specified property if the source property has any data.
      * @param to Target property.

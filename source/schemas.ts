@@ -10,7 +10,7 @@ import * as Mapping from '@singleware/mapping';
  * Mongo DB schemas class.
  */
 @Class.Describe()
-export class Schemas {
+export class Schemas extends Class.Null {
   /**
    * Sets the specified property if the source property has any data.
    * @param to Target property.

@@ -24,7 +24,7 @@ const driver = new MongoDB.Driver();
  */
 @Mapping.Schema.Entity('UserEntity')
 @Class.Describe()
-class UserEntity {
+class UserEntity extends Class.Null {
   /**
    * User id.
    */
@@ -49,6 +49,7 @@ class UserEntity {
 /**
  * Database mapper.
  */
+@Class.Describe()
 class UserMapper extends Mapping.Mapper<UserEntity> {
   constructor() {
     super(driver, UserEntity);
@@ -58,6 +59,7 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
    * Create a test user.
    * @returns Returns the id of new user.
    */
+  @Class.Public()
   public async create(): Promise<string> {
     return await this.insert({ firstName: 'First 1', lastName: 'Last 1' });
   }
@@ -67,8 +69,9 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
    * @param id USer id.
    * @returns Returns the number of updated users.
    */
+  @Class.Public()
   public async change(id: string): Promise<number> {
-    return await this.update({ _id: { operator: Mapping.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
+    return await this.update({ id: { operator: Mapping.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
   }
 
   /**
@@ -76,16 +79,18 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
    * @param id User id.
    * @requires Returns the list of users found.
    */
+  @Class.Public()
   public async read(id: string): Promise<UserEntity[]> {
-    return await this.find({ _id: { operator: Mapping.Operator.EQUAL, value: id } });
+    return await this.find({ id: { operator: Mapping.Operator.EQUAL, value: id } });
   }
 
   /**
    * Remove the test user.
    * @param id User id.
    */
+  @Class.Public()
   public async remove(id: string): Promise<number> {
-    return await this.delete({ _id: { operator: Mapping.Operator.EQUAL, value: id } });
+    return await this.delete({ id: { operator: Mapping.Operator.EQUAL, value: id } });
   }
 }
 

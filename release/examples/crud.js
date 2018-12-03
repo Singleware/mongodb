@@ -27,7 +27,7 @@ const driver = new MongoDB.Driver();
 /**
  * Test class.
  */
-let UserEntity = class UserEntity {
+let UserEntity = class UserEntity extends Class.Null {
 };
 __decorate([
     Mapping.Schema.Id(),
@@ -49,7 +49,7 @@ UserEntity = __decorate([
 /**
  * Database mapper.
  */
-class UserMapper extends Mapping.Mapper {
+let UserMapper = class UserMapper extends Mapping.Mapper {
     constructor() {
         super(driver, UserEntity);
     }
@@ -66,7 +66,7 @@ class UserMapper extends Mapping.Mapper {
      * @returns Returns the number of updated users.
      */
     async change(id) {
-        return await this.update({ _id: { operator: Mapping.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
+        return await this.update({ id: { operator: Mapping.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
     }
     /**
      * Read the test user.
@@ -74,16 +74,31 @@ class UserMapper extends Mapping.Mapper {
      * @requires Returns the list of users found.
      */
     async read(id) {
-        return await this.find({ _id: { operator: Mapping.Operator.EQUAL, value: id } });
+        return await this.find({ id: { operator: Mapping.Operator.EQUAL, value: id } });
     }
     /**
      * Remove the test user.
      * @param id User id.
      */
     async remove(id) {
-        return await this.delete({ _id: { operator: Mapping.Operator.EQUAL, value: id } });
+        return await this.delete({ id: { operator: Mapping.Operator.EQUAL, value: id } });
     }
-}
+};
+__decorate([
+    Class.Public()
+], UserMapper.prototype, "create", null);
+__decorate([
+    Class.Public()
+], UserMapper.prototype, "change", null);
+__decorate([
+    Class.Public()
+], UserMapper.prototype, "read", null);
+__decorate([
+    Class.Public()
+], UserMapper.prototype, "remove", null);
+UserMapper = __decorate([
+    Class.Describe()
+], UserMapper);
 /**
  * Test operations.
  */
