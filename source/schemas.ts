@@ -2,9 +2,10 @@
  * Copyright (C) 2018 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
-import * as Source from 'mongodb';
 import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
+
+import * as BSON from './bson';
 
 /**
  * Mongo DB schemas class.
@@ -12,7 +13,7 @@ import * as Mapping from '@singleware/mapping';
 @Class.Describe()
 export class Schemas extends Class.Null {
   /**
-   * Sets the specified property if the source property has any data.
+   * Sets the specified target property if the source property has any data.
    * @param to Target property.
    * @param target Target entity.
    * @param from Source property.
@@ -132,7 +133,7 @@ export class Schemas extends Class.Null {
             case Date:
               entity.items = { bsonType: 'date' };
               break;
-            case Source.ObjectID:
+            case BSON.ObjectID:
               entity.items = { bsonType: 'objectId' };
               break;
             default:
@@ -157,7 +158,7 @@ export class Schemas extends Class.Null {
             case Date:
               entity.additionalProperties = { bsonType: 'date' };
               break;
-            case Source.ObjectID:
+            case BSON.ObjectID:
               entity.additionalProperties = { bsonType: 'objectId' };
               break;
             default:
@@ -191,20 +192,17 @@ export class Schemas extends Class.Null {
       properties: <Mapping.Entity>{},
       additionalProperties: false
     };
-
-    for (const name in row) {
-      const column = row[name];
-      const key = column.alias || name;
-      if (column.required) {
-        entity.required.push(key);
+    for (const column in row) {
+      const schema = row[column];
+      const name = schema.alias || column;
+      if (schema.required) {
+        entity.required.push(name);
       }
-      entity.properties[key] = Schemas.buildSchema(column);
+      entity.properties[name] = Schemas.buildSchema(schema);
     }
-
     if (entity.required.length === 0) {
       delete entity.required;
     }
-
     return entity;
   }
 }

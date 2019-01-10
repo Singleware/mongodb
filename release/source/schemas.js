@@ -12,15 +12,15 @@ var Schemas_1;
  * Copyright (C) 2018 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
-const Source = require("mongodb");
 const Class = require("@singleware/class");
 const Mapping = require("@singleware/mapping");
+const BSON = require("./bson");
 /**
  * Mongo DB schemas class.
  */
 let Schemas = Schemas_1 = class Schemas extends Class.Null {
     /**
-     * Sets the specified property if the source property has any data.
+     * Sets the specified target property if the source property has any data.
      * @param to Target property.
      * @param target Target entity.
      * @param from Source property.
@@ -131,7 +131,7 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                         case Date:
                             entity.items = { bsonType: 'date' };
                             break;
-                        case Source.ObjectID:
+                        case BSON.ObjectID:
                             entity.items = { bsonType: 'objectId' };
                             break;
                         default:
@@ -156,7 +156,7 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                         case Date:
                             entity.additionalProperties = { bsonType: 'date' };
                             break;
-                        case Source.ObjectID:
+                        case BSON.ObjectID:
                             entity.additionalProperties = { bsonType: 'objectId' };
                             break;
                         default:
@@ -188,13 +188,13 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
             properties: {},
             additionalProperties: false
         };
-        for (const name in row) {
-            const column = row[name];
-            const key = column.alias || name;
-            if (column.required) {
-                entity.required.push(key);
+        for (const column in row) {
+            const schema = row[column];
+            const name = schema.alias || column;
+            if (schema.required) {
+                entity.required.push(name);
             }
-            entity.properties[key] = Schemas_1.buildSchema(column);
+            entity.properties[name] = Schemas_1.buildSchema(schema);
         }
         if (entity.required.length === 0) {
             delete entity.required;

@@ -2,9 +2,10 @@
  * Copyright (C) 2018 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
-import * as Source from 'mongodb';
 import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
+
+import * as BSON from './bson';
 
 /**
  * Mongo DB filters class.
@@ -27,8 +28,8 @@ export class Filters extends Class.Null {
       if (!schema) {
         throw new Error(`Column '${name}' does not exists.`);
       }
-      if (schema.types.includes(Mapping.Format.ID) && Source.ObjectId.isValid(operation.value)) {
-        operation.value = new Source.ObjectId(operation.value);
+      if (schema.types.includes(Mapping.Format.ID) && BSON.ObjectID.isValid(operation.value)) {
+        operation.value = new BSON.ObjectID(operation.value);
       }
       const column = schema.alias || schema.name;
       switch (operation.operator) {

@@ -44,6 +44,20 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
      */
     private getPrimaryFilter;
     /**
+     * Gets the fields grouping based on the specified row schema.
+     * @param row Row schema.
+     * @param virtual Virtual schema.
+     * @returns Returns the grouping entity.
+     */
+    private getFieldsGrouping;
+    /**
+     * Purge all null fields returned by default in a performed query.
+     * @param row Row schema.
+     * @param entities Entities to be purged.
+     * @returns Returns the purged entities list.
+     */
+    private purgeNullFields;
+    /**
      * Connect to the MongoDb URI.
      * @param uri Connection URI.
      */

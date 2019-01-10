@@ -10,7 +10,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Copyright (C) 2018 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
-const Source = require("mongodb");
+const Mongodb = require("mongodb");
 const Class = require("@singleware/class");
 const Mapping = require("@singleware/mapping");
 const filters_1 = require("./filters");
@@ -85,12 +85,49 @@ let Driver = class Driver extends Class.Null {
         return filters;
     }
     /**
+     * Gets the fields grouping based on the specified row schema.
+     * @param row Row schema.
+     * @param virtual Virtual schema.
+     * @returns Returns the grouping entity.
+     */
+    getFieldsGrouping(row, virtual) {
+        const group = {};
+        for (const column in row) {
+            const name = row[column].alias || row[column].name;
+            group[name] = { $first: `$${name}` };
+        }
+        for (const column in virtual) {
+            const name = virtual[column].name;
+            group[name] = { $first: `$${name}` };
+        }
+        group._id = '$_id';
+        return group;
+    }
+    /**
+     * Purge all null fields returned by default in a performed query.
+     * @param row Row schema.
+     * @param entities Entities to be purged.
+     * @returns Returns the purged entities list.
+     */
+    purgeNullFields(row, ...entities) {
+        for (let i = 0; i < entities.length; ++i) {
+            const entity = entities[i];
+            for (const column in entity) {
+                let schema;
+                if (entity[column] === null && (schema = row[column]) && !schema.types.includes(Mapping.Format.NULL)) {
+                    delete entity[column];
+                }
+            }
+        }
+        return entities;
+    }
+    /**
      * Connect to the MongoDb URI.
      * @param uri Connection URI.
      */
     async connect(uri) {
         await new Promise((resolve, reject) => {
-            Source.MongoClient.connect(uri, this.options, (error, connection) => {
+            Mongodb.MongoClient.connect(uri, this.options, (error, connection) => {
                 if (error) {
                     reject(error);
                 }
@@ -158,13 +195,19 @@ let Driver = class Driver extends Class.Null {
      * @returns Returns the list of entities found.
      */
     async find(model, filter, aggregate) {
-        const filters = filters_1.Filters.build(model, filter);
+        const row = Mapping.Schema.getRow(model);
+        const virtual = Mapping.Schema.getVirtual(model);
         const manager = this.database.collection(this.getCollectionName(model));
-        if (!aggregate.length) {
-            return await manager.find(filters).toArray();
-        }
-        const pipeline = [{ $match: filters }];
+        const pipeline = [{ $match: filters_1.Filters.build(model, filter) }];
         for (const column of aggregate) {
+            if (column.multiple) {
+                pipeline.push({
+                    $unwind: {
+                        path: `\$${column.local}`,
+                        preserveNullAndEmptyArrays: true
+                    }
+                });
+            }
             pipeline.push({
                 $lookup: {
                     from: column.storage,
@@ -173,8 +216,22 @@ let Driver = class Driver extends Class.Null {
                     as: column.virtual
                 }
             });
+            const group = this.getFieldsGrouping(row, virtual);
+            if (column.multiple) {
+                pipeline.push({
+                    $unwind: {
+                        path: `\$${column.virtual}`,
+                        preserveNullAndEmptyArrays: true
+                    }
+                });
+                group[column.local] = { $push: `$${column.local}` };
+                group[column.virtual] = { $push: `$${column.virtual}` };
+            }
+            pipeline.push({
+                $group: group
+            });
         }
-        return await manager.aggregate(pipeline).toArray();
+        return this.purgeNullFields(row, ...(await manager.aggregate(pipeline).toArray()));
     }
     /**
      * Find the entity that corresponds to the specified entity id.
@@ -250,6 +307,12 @@ __decorate([
 __decorate([
     Class.Private()
 ], Driver.prototype, "getPrimaryFilter", null);
+__decorate([
+    Class.Private()
+], Driver.prototype, "getFieldsGrouping", null);
+__decorate([
+    Class.Private()
+], Driver.prototype, "purgeNullFields", null);
 __decorate([
     Class.Public()
 ], Driver.prototype, "connect", null);

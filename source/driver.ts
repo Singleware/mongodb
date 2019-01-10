@@ -2,7 +2,7 @@
  * Copyright (C) 2018 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
-import * as Source from 'mongodb';
+import * as Mongodb from 'mongodb';
 import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 
@@ -18,13 +18,13 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * Driver connection.
    */
   @Class.Private()
-  private connection?: Source.MongoClient;
+  private connection?: Mongodb.MongoClient;
 
   /**
    * Driver database.
    */
   @Class.Private()
-  private database?: Source.Db;
+  private database?: Mongodb.Db;
 
   /**
    * Driver connection options.
@@ -96,17 +96,58 @@ export class Driver extends Class.Null implements Mapping.Driver {
   }
 
   /**
+   * Gets the fields grouping based on the specified row schema.
+   * @param row Row schema.
+   * @param virtual Virtual schema.
+   * @returns Returns the grouping entity.
+   */
+  @Class.Private()
+  private getFieldsGrouping(row: Mapping.Map<Mapping.Column>, virtual: Mapping.Map<Mapping.Virtual>): Mapping.Entity {
+    const group = <any>{};
+    for (const column in row) {
+      const name = row[column].alias || row[column].name;
+      group[name] = { $first: `$${name}` };
+    }
+    for (const column in virtual) {
+      const name = virtual[column].name;
+      group[name] = { $first: `$${name}` };
+    }
+    group._id = '$_id';
+    return group;
+  }
+
+  /**
+   * Purge all null fields returned by default in a performed query.
+   * @param row Row schema.
+   * @param entities Entities to be purged.
+   * @returns Returns the purged entities list.
+   */
+  @Class.Private()
+  private purgeNullFields<T extends Mapping.Entity>(row: Mapping.Map<Mapping.Column>, ...entities: T[]): T[] {
+    for (let i = 0; i < entities.length; ++i) {
+      const entity = entities[i];
+      for (const column in entity) {
+        let schema;
+        if (entity[column] === null && (schema = row[column]) && !schema.types.includes(Mapping.Format.NULL)) {
+          delete entity[column];
+        }
+      }
+    }
+    return entities;
+  }
+
+  /**
    * Connect to the MongoDb URI.
    * @param uri Connection URI.
    */
   @Class.Public()
   public async connect(uri: string): Promise<void> {
-    await new Promise<Source.Db>(
+    await new Promise<Mongodb.Db>(
       (resolve: Function, reject: Function): void => {
-        Source.MongoClient.connect(
+        Mongodb.MongoClient.connect(
           uri,
           this.options,
-          (error: Source.MongoError, connection: Source.MongoClient) => {
+          (error: Mongodb.MongoError, connection: Mongodb.MongoClient) => {
             if (error) {
               reject(error);
             } else {
@@ -127,7 +168,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
   public async disconnect(): Promise<void> {
     return new Promise<void>(
       (resolve: Function, reject: Function): void => {
-        (<Source.MongoClient>this.connection).close((error: Source.MongoError) => {
+        (<Mongodb.MongoClient>this.connection).close((error: Mongodb.MongoError) => {
           if (error) {
             reject(error);
           } else {
@@ -146,7 +187,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async modify(model: Class.Constructor<Mapping.Entity>): Promise<void> {
-    await (<Source.Db>this.database).command({
+    await (<Mongodb.Db>this.database).command({
       collMod: this.getCollectionName(model),
       ...this.getCollectionOptions(model)
     });
@@ -158,7 +199,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async create(model: Class.Constructor<Mapping.Entity>): Promise<void> {
-    await (<Source.Db>this.database).command({
+    await (<Mongodb.Db>this.database).command({
       create: this.getCollectionName(model),
       ...this.getCollectionOptions(model)
     });
@@ -172,7 +213,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async insert<T extends Mapping.Entity>(model: Class.Constructor<T>, ...entities: T[]): Promise<string[]> {
-    const manager = (<Source.Db>this.database).collection(this.getCollectionName(model));
+    const manager = (<Mongodb.Db>this.database).collection(this.getCollectionName(model));
     const result = await manager.insertMany(entities);
     return Object.values(<any>result.insertedIds);
   }
@@ -190,13 +231,19 @@ export class Driver extends Class.Null implements Mapping.Driver {
     filter: Mapping.Expression,
     aggregate: Mapping.Aggregate[]
   ): Promise<T[]> {
-    const filters = Filters.build(model, filter);
-    const manager = (<Source.Db>this.database).collection(this.getCollectionName(model));
-    if (!aggregate.length) {
-      return await manager.find(filters).toArray();
-    }
-    const pipeline = <any[]>[{ $match: filters }];
+    const row = Mapping.Schema.getRow(model) as Mapping.Map<Mapping.Column>;
+    const virtual = Mapping.Schema.getVirtual(model) as Mapping.Map<Mapping.Virtual>;
+    const manager = (<Mongodb.Db>this.database).collection(this.getCollectionName(model));
+    const pipeline = <any[]>[{ $match: Filters.build(model, filter) }];
     for (const column of aggregate) {
+      if (column.multiple) {
+        pipeline.push({
+          $unwind: {
+            path: `\$${column.local}`,
+            preserveNullAndEmptyArrays: true
+          }
+        });
+      }
       pipeline.push({
         $lookup: {
           from: column.storage,
@@ -205,8 +252,22 @@ export class Driver extends Class.Null implements Mapping.Driver {
           as: column.virtual
         }
       });
+      const group = this.getFieldsGrouping(row, virtual);
+      if (column.multiple) {
+        pipeline.push({
+          $unwind: {
+            path: `\$${column.virtual}`,
+            preserveNullAndEmptyArrays: true
+          }
+        });
+        group[column.local] = { $push: `$${column.local}` };
+        group[column.virtual] = { $push: `$${column.virtual}` };
+      }
+      pipeline.push({
+        $group: group
+      });
     }
-    return await manager.aggregate(pipeline).toArray();
+    return this.purgeNullFields(row, ...(await manager.aggregate(pipeline).toArray()));
   }
 
   /**
@@ -234,7 +295,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async update(model: Class.Constructor<Mapping.Entity>, filter: Mapping.Expression, entity: Mapping.Entity): Promise<number> {
-    const manager = (<Source.Db>this.database).collection(this.getCollectionName(model));
+    const manager = (<Mongodb.Db>this.database).collection(this.getCollectionName(model));
     const result = await manager.updateMany(Filters.build(model, filter), { $set: entity });
     return result.modifiedCount;
   }
@@ -259,7 +320,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async delete(model: Class.Constructor<Mapping.Entity>, filter: Mapping.Expression): Promise<number> {
-    const manager = (<Source.Db>this.database).collection(this.getCollectionName(model));
+    const manager = (<Mongodb.Db>this.database).collection(this.getCollectionName(model));
     const result = await manager.deleteMany(Filters.build(model, filter));
     return result.deletedCount || 0;
   }

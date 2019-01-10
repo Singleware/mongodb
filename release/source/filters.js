@@ -10,9 +10,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Copyright (C) 2018 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
-const Source = require("mongodb");
 const Class = require("@singleware/class");
 const Mapping = require("@singleware/mapping");
+const BSON = require("./bson");
 /**
  * Mongo DB filters class.
  */
@@ -32,8 +32,8 @@ let Filters = class Filters extends Class.Null {
             if (!schema) {
                 throw new Error(`Column '${name}' does not exists.`);
             }
-            if (schema.types.includes(Mapping.Format.ID) && Source.ObjectId.isValid(operation.value)) {
-                operation.value = new Source.ObjectId(operation.value);
+            if (schema.types.includes(Mapping.Format.ID) && BSON.ObjectID.isValid(operation.value)) {
+                operation.value = new BSON.ObjectID(operation.value);
             }
             const column = schema.alias || schema.name;
             switch (operation.operator) {

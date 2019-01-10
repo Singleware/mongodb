@@ -1,3 +1,7 @@
+/**
+ * Copyright (C) 2018 Silas B. Domingos
+ * This source code is licensed under the MIT License as described in the file LICENSE.
+ */
 import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 /**
@@ -5,7 +9,7 @@ import * as Mapping from '@singleware/mapping';
  */
 export declare class Schemas extends Class.Null {
     /**
-     * Sets the specified property if the source property has any data.
+     * Sets the specified target property if the source property has any data.
      * @param to Target property.
      * @param target Target entity.
      * @param from Source property.
