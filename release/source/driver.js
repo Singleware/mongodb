@@ -6,6 +6,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+var Driver_1;
+"use strict";
 /**
  * Copyright (C) 2018 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
@@ -18,27 +20,14 @@ const schemas_1 = require("./schemas");
 /**
  * Mongo DB driver class.
  */
-let Driver = class Driver extends Class.Null {
-    /**
-     * Mongo DB driver class.
-     */
-    constructor() {
-        super(...arguments);
-        /**
-         * Driver connection options.
-         */
-        this.options = {
-            useNewUrlParser: true,
-            ignoreUndefined: true
-        };
-    }
+let Driver = Driver_1 = class Driver extends Class.Null {
     /**
      * Gets the collection name from the specified model type.
      * @param model Mode type.
      * @returns Returns the collection name.
      * @throws Throws an error when the model type is not valid.
      */
-    getCollectionName(model) {
+    static getCollectionName(model) {
         const name = Mapping.Schema.getStorage(model);
         if (!name) {
             throw new Error(`There is no collection name for the specified model type.`);
@@ -50,10 +39,10 @@ let Driver = class Driver extends Class.Null {
      * @param model Model type.
      * @returns Returns the collection command object.
      */
-    getCollectionOptions(model) {
+    static getCollectionOptions(model) {
         return {
             validator: {
-                $jsonSchema: schemas_1.Schemas.build(Mapping.Schema.getRow(model))
+                $jsonSchema: schemas_1.Schemas.build(Mapping.Schema.getRealRow(model))
             },
             validationLevel: 'strict',
             validationAction: 'error'
@@ -65,7 +54,7 @@ let Driver = class Driver extends Class.Null {
      * @returns Returns the primary column name.
      * @throws Throws an error when there is no primary column defined.
      */
-    getPrimaryProperty(model) {
+    static getPrimaryProperty(model) {
         const column = Mapping.Schema.getPrimary(model);
         if (!column) {
             throw new Error(`There is no primary column to be used.`);
@@ -78,7 +67,7 @@ let Driver = class Driver extends Class.Null {
      * @param value Primary id value.
      * @returns Returns the primary filter.
      */
-    getPrimaryFilter(model, value) {
+    static getPrimaryFilter(model, value) {
         const filters = {};
         const primary = this.getPrimaryProperty(model);
         filters[primary.name] = { operator: Mapping.Operator.EQUAL, value: value };
@@ -90,7 +79,7 @@ let Driver = class Driver extends Class.Null {
      * @param virtual Virtual schema.
      * @returns Returns the grouping entity.
      */
-    getFieldsGrouping(row, virtual) {
+    static getFieldsGrouping(row, virtual) {
         const group = {};
         for (const column in row) {
             const name = row[column].alias || row[column].name;
@@ -127,7 +116,7 @@ let Driver = class Driver extends Class.Null {
      */
     async connect(uri) {
         await new Promise((resolve, reject) => {
-            Mongodb.MongoClient.connect(uri, this.options, (error, connection) => {
+            Mongodb.MongoClient.connect(uri, Driver_1.options, (error, connection) => {
                 if (error) {
                     reject(error);
                 }
@@ -162,8 +151,8 @@ let Driver = class Driver extends Class.Null {
      */
     async modify(model) {
         await this.database.command({
-            collMod: this.getCollectionName(model),
-            ...this.getCollectionOptions(model)
+            collMod: Driver_1.getCollectionName(model),
+            ...Driver_1.getCollectionOptions(model)
         });
     }
     /**
@@ -172,8 +161,8 @@ let Driver = class Driver extends Class.Null {
      */
     async create(model) {
         await this.database.command({
-            create: this.getCollectionName(model),
-            ...this.getCollectionOptions(model)
+            create: Driver_1.getCollectionName(model),
+            ...Driver_1.getCollectionOptions(model)
         });
     }
     /**
@@ -182,24 +171,24 @@ let Driver = class Driver extends Class.Null {
      * @param entities Entity list.
      * @returns Returns the list inserted entities.
      */
-    async insert(model, ...entities) {
-        const manager = this.database.collection(this.getCollectionName(model));
+    async insert(model, entities) {
+        const manager = this.database.collection(Driver_1.getCollectionName(model));
         const result = await manager.insertMany(entities);
         return Object.values(result.insertedIds);
     }
     /**
      * Finds the corresponding entity from the database.
      * @param model Model type.
-     * @param filter Filter expression.
-     * @param aggregate Aggregated entries.
+     * @param aggregation List of virtual columns.
+     * @param filters List of expressions filter.
      * @returns Returns the list of entities found.
      */
-    async find(model, filter, aggregate) {
-        const row = Mapping.Schema.getRow(model);
-        const virtual = Mapping.Schema.getVirtual(model);
-        const manager = this.database.collection(this.getCollectionName(model));
-        const pipeline = [{ $match: filters_1.Filters.build(model, filter) }];
-        for (const column of aggregate) {
+    async find(model, aggregation, filters) {
+        const row = Mapping.Schema.getRealRow(model);
+        const virtual = Mapping.Schema.getVirtualRow(model);
+        const manager = this.database.collection(Driver_1.getCollectionName(model));
+        const pipeline = [{ $match: filters_1.Filters.build(model, filters[0]) }];
+        for (const column of aggregation) {
             if (column.multiple) {
                 pipeline.push({
                     $unwind: {
@@ -216,7 +205,7 @@ let Driver = class Driver extends Class.Null {
                     as: column.virtual
                 }
             });
-            const group = this.getFieldsGrouping(row, virtual);
+            const group = Driver_1.getFieldsGrouping(row, virtual);
             if (column.multiple) {
                 pipeline.push({
                     $unwind: {
@@ -236,34 +225,34 @@ let Driver = class Driver extends Class.Null {
     /**
      * Find the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param value Entity id.
-     * @param aggregate Aggregated entries.
+     * @param aggregation List of virtual columns.
+     * @param id Entity id.
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
-    async findById(model, value, aggregate) {
-        return (await this.find(model, this.getPrimaryFilter(model, value), aggregate))[0];
+    async findById(model, aggregation, id) {
+        return (await this.find(model, aggregation, [Driver_1.getPrimaryFilter(model, id)]))[0];
     }
     /**
      * Update all entities that corresponds to the specified filter.
      * @param model Model type.
-     * @param filter Filter expression.
      * @param entity Entity data to be updated.
+     * @param filter Filter expression.
      * @returns Returns the number of updated entities.
      */
-    async update(model, filter, entity) {
-        const manager = this.database.collection(this.getCollectionName(model));
+    async update(model, entity, filter) {
+        const manager = this.database.collection(Driver_1.getCollectionName(model));
         const result = await manager.updateMany(filters_1.Filters.build(model, filter), { $set: entity });
         return result.modifiedCount;
     }
     /**
      * Updates the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param value Entity id.
      * @param entity Entity data to be updated.
+     * @param id Entity id.
      * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
      */
-    async updateById(model, value, entity) {
-        return (await this.update(model, this.getPrimaryFilter(model, value), entity)) === 1;
+    async updateById(model, entity, id) {
+        return (await this.update(model, entity, Driver_1.getPrimaryFilter(model, id))) === 1;
     }
     /**
      * Delete all entities that corresponds to the specified filter.
@@ -272,19 +261,26 @@ let Driver = class Driver extends Class.Null {
      * @return Returns the number of deleted entities.
      */
     async delete(model, filter) {
-        const manager = this.database.collection(this.getCollectionName(model));
+        const manager = this.database.collection(Driver_1.getCollectionName(model));
         const result = await manager.deleteMany(filters_1.Filters.build(model, filter));
         return result.deletedCount || 0;
     }
     /**
      * Deletes the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param value Entity id.
+     * @param id Entity id.
      * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
      */
-    async deleteById(model, value) {
-        return (await this.delete(model, this.getPrimaryFilter(model, value))) === 1;
+    async deleteById(model, id) {
+        return (await this.delete(model, Driver_1.getPrimaryFilter(model, id))) === 1;
     }
+};
+/**
+ * Driver connection options.
+ */
+Driver.options = {
+    useNewUrlParser: true,
+    ignoreUndefined: true
 };
 __decorate([
     Class.Private()
@@ -292,24 +288,6 @@ __decorate([
 __decorate([
     Class.Private()
 ], Driver.prototype, "database", void 0);
-__decorate([
-    Class.Private()
-], Driver.prototype, "options", void 0);
-__decorate([
-    Class.Private()
-], Driver.prototype, "getCollectionName", null);
-__decorate([
-    Class.Private()
-], Driver.prototype, "getCollectionOptions", null);
-__decorate([
-    Class.Private()
-], Driver.prototype, "getPrimaryProperty", null);
-__decorate([
-    Class.Private()
-], Driver.prototype, "getPrimaryFilter", null);
-__decorate([
-    Class.Private()
-], Driver.prototype, "getFieldsGrouping", null);
 __decorate([
     Class.Private()
 ], Driver.prototype, "purgeNullFields", null);
@@ -346,7 +324,25 @@ __decorate([
 __decorate([
     Class.Public()
 ], Driver.prototype, "deleteById", null);
-Driver = __decorate([
+__decorate([
+    Class.Private()
+], Driver, "options", void 0);
+__decorate([
+    Class.Private()
+], Driver, "getCollectionName", null);
+__decorate([
+    Class.Private()
+], Driver, "getCollectionOptions", null);
+__decorate([
+    Class.Private()
+], Driver, "getPrimaryProperty", null);
+__decorate([
+    Class.Private()
+], Driver, "getPrimaryFilter", null);
+__decorate([
+    Class.Private()
+], Driver, "getFieldsGrouping", null);
+Driver = Driver_1 = __decorate([
     Class.Describe()
 ], Driver);
 exports.Driver = Driver;

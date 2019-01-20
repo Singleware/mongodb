@@ -30,7 +30,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * Driver connection options.
    */
   @Class.Private()
-  private options = {
+  private static options = {
     useNewUrlParser: true,
     ignoreUndefined: true
   };
@@ -42,7 +42,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @throws Throws an error when the model type is not valid.
    */
   @Class.Private()
-  private getCollectionName(model: Class.Constructor<Mapping.Entity>): string {
+  private static getCollectionName(model: Class.Constructor<Mapping.Entity>): string {
     const name = Mapping.Schema.getStorage(model);
     if (!name) {
       throw new Error(`There is no collection name for the specified model type.`);
@@ -56,10 +56,10 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @returns Returns the collection command object.
    */
   @Class.Private()
-  private getCollectionOptions(model: Class.Constructor<Mapping.Entity>): Object {
+  private static getCollectionOptions(model: Class.Constructor<Mapping.Entity>): Object {
     return {
       validator: {
-        $jsonSchema: Schemas.build(<Mapping.Map<Mapping.Column>>Mapping.Schema.getRow(model))
+        $jsonSchema: Schemas.build(<Mapping.Map<Mapping.Column>>Mapping.Schema.getRealRow(model))
       },
       validationLevel: 'strict',
       validationAction: 'error'
@@ -73,7 +73,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @throws Throws an error when there is no primary column defined.
    */
   @Class.Private()
-  private getPrimaryProperty(model: Class.Constructor<Mapping.Entity>): Mapping.Column {
+  private static getPrimaryProperty(model: Class.Constructor<Mapping.Entity>): Mapping.Column {
     const column = <Mapping.Column>Mapping.Schema.getPrimary(model);
     if (!column) {
       throw new Error(`There is no primary column to be used.`);
@@ -88,7 +88,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @returns Returns the primary filter.
    */
   @Class.Private()
-  private getPrimaryFilter(model: Class.Constructor<Mapping.Entity>, value: any): Mapping.Entity {
+  private static getPrimaryFilter(model: Class.Constructor<Mapping.Entity>, value: any): Mapping.Entity {
     const filters = <any>{};
     const primary = this.getPrimaryProperty(model);
     filters[primary.name] = { operator: Mapping.Operator.EQUAL, value: value };
@@ -102,7 +102,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @returns Returns the grouping entity.
    */
   @Class.Private()
-  private getFieldsGrouping(row: Mapping.Map<Mapping.Column>, virtual: Mapping.Map<Mapping.Virtual>): Mapping.Entity {
+  private static getFieldsGrouping(row: Mapping.Map<Mapping.Column>, virtual: Mapping.Map<Mapping.Virtual>): Mapping.Entity {
     const group = <any>{};
     for (const column in row) {
       const name = row[column].alias || row[column].name;
@@ -144,19 +144,15 @@ export class Driver extends Class.Null implements Mapping.Driver {
   public async connect(uri: string): Promise<void> {
     await new Promise<Mongodb.Db>(
       (resolve: Function, reject: Function): void => {
-        Mongodb.MongoClient.connect(
-          uri,
-          this.options,
-          (error: Mongodb.MongoError, connection: Mongodb.MongoClient) => {
-            if (error) {
-              reject(error);
-            } else {
-              this.connection = connection;
-              this.database = connection.db();
-              resolve();
-            }
+        Mongodb.MongoClient.connect(uri, Driver.options, (error: Mongodb.MongoError, connection: Mongodb.MongoClient) => {
+          if (error) {
+            reject(error);
+          } else {
+            this.connection = connection;
+            this.database = connection.db();
+            resolve();
           }
-        );
+        });
       }
     );
   }
@@ -188,8 +184,8 @@ export class Driver extends Class.Null implements Mapping.Driver {
   @Class.Public()
   public async modify(model: Class.Constructor<Mapping.Entity>): Promise<void> {
     await (<Mongodb.Db>this.database).command({
-      collMod: this.getCollectionName(model),
-      ...this.getCollectionOptions(model)
+      collMod: Driver.getCollectionName(model),
+      ...Driver.getCollectionOptions(model)
     });
   }
 
@@ -200,8 +196,8 @@ export class Driver extends Class.Null implements Mapping.Driver {
   @Class.Public()
   public async create(model: Class.Constructor<Mapping.Entity>): Promise<void> {
     await (<Mongodb.Db>this.database).command({
-      create: this.getCollectionName(model),
-      ...this.getCollectionOptions(model)
+      create: Driver.getCollectionName(model),
+      ...Driver.getCollectionOptions(model)
     });
   }
 
@@ -212,8 +208,8 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @returns Returns the list inserted entities.
    */
   @Class.Public()
-  public async insert<T extends Mapping.Entity>(model: Class.Constructor<T>, ...entities: T[]): Promise<string[]> {
-    const manager = (<Mongodb.Db>this.database).collection(this.getCollectionName(model));
+  public async insert<T extends Mapping.Entity>(model: Class.Constructor<T>, entities: T[]): Promise<string[]> {
+    const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
     const result = await manager.insertMany(entities);
     return Object.values(<any>result.insertedIds);
   }
@@ -221,21 +217,21 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Finds the corresponding entity from the database.
    * @param model Model type.
-   * @param filter Filter expression.
-   * @param aggregate Aggregated entries.
+   * @param aggregation List of virtual columns.
+   * @param filters List of expressions filter.
    * @returns Returns the list of entities found.
    */
   @Class.Public()
   public async find<T extends Mapping.Entity>(
     model: Class.Constructor<T>,
-    filter: Mapping.Expression,
-    aggregate: Mapping.Aggregate[]
+    aggregation: Mapping.Aggregation[],
+    filters: Mapping.Expression[]
   ): Promise<T[]> {
-    const row = Mapping.Schema.getRow(model) as Mapping.Map<Mapping.Column>;
-    const virtual = Mapping.Schema.getVirtual(model) as Mapping.Map<Mapping.Virtual>;
-    const manager = (<Mongodb.Db>this.database).collection(this.getCollectionName(model));
-    const pipeline = <any[]>[{ $match: Filters.build(model, filter) }];
-    for (const column of aggregate) {
+    const row = Mapping.Schema.getRealRow(model) as Mapping.Map<Mapping.Column>;
+    const virtual = Mapping.Schema.getVirtualRow(model) as Mapping.Map<Mapping.Virtual>;
+    const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
+    const pipeline = <any[]>[{ $match: Filters.build(model, filters[0]) }];
+    for (const column of aggregation) {
       if (column.multiple) {
         pipeline.push({
           $unwind: {
@@ -252,7 +248,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
           as: column.virtual
         }
       });
-      const group = this.getFieldsGrouping(row, virtual);
+      const group = Driver.getFieldsGrouping(row, virtual);
       if (column.multiple) {
         pipeline.push({
           $unwind: {
@@ -273,29 +269,29 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Find the entity that corresponds to the specified entity id.
    * @param model Model type.
-   * @param value Entity id.
-   * @param aggregate Aggregated entries.
+   * @param aggregation List of virtual columns.
+   * @param id Entity id.
    * @returns Returns a promise to get the found entity or undefined when the entity was not found.
    */
   @Class.Public()
   public async findById<T extends Mapping.Entity>(
     model: Class.Constructor<T>,
-    value: any,
-    aggregate: Mapping.Aggregate[]
+    aggregation: Mapping.Aggregation[],
+    id: any
   ): Promise<T | undefined> {
-    return (await this.find<T>(model, this.getPrimaryFilter(model, value), aggregate))[0];
+    return (await this.find<T>(model, aggregation, [Driver.getPrimaryFilter(model, id)]))[0];
   }
 
   /**
    * Update all entities that corresponds to the specified filter.
    * @param model Model type.
-   * @param filter Filter expression.
    * @param entity Entity data to be updated.
+   * @param filter Filter expression.
    * @returns Returns the number of updated entities.
    */
   @Class.Public()
-  public async update(model: Class.Constructor<Mapping.Entity>, filter: Mapping.Expression, entity: Mapping.Entity): Promise<number> {
-    const manager = (<Mongodb.Db>this.database).collection(this.getCollectionName(model));
+  public async update(model: Class.Constructor<Mapping.Entity>, entity: Mapping.Entity, filter: Mapping.Expression): Promise<number> {
+    const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
     const result = await manager.updateMany(Filters.build(model, filter), { $set: entity });
     return result.modifiedCount;
   }
@@ -303,13 +299,13 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Updates the entity that corresponds to the specified entity id.
    * @param model Model type.
-   * @param value Entity id.
    * @param entity Entity data to be updated.
+   * @param id Entity id.
    * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
    */
   @Class.Public()
-  public async updateById(model: Class.Constructor<Mapping.Entity>, value: any, entity: Mapping.Entity): Promise<boolean> {
-    return (await this.update(model, this.getPrimaryFilter(model, value), entity)) === 1;
+  public async updateById(model: Class.Constructor<Mapping.Entity>, entity: Mapping.Entity, id: any): Promise<boolean> {
+    return (await this.update(model, entity, Driver.getPrimaryFilter(model, id))) === 1;
   }
 
   /**
@@ -320,7 +316,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async delete(model: Class.Constructor<Mapping.Entity>, filter: Mapping.Expression): Promise<number> {
-    const manager = (<Mongodb.Db>this.database).collection(this.getCollectionName(model));
+    const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
     const result = await manager.deleteMany(Filters.build(model, filter));
     return result.deletedCount || 0;
   }
@@ -328,11 +324,11 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Deletes the entity that corresponds to the specified entity id.
    * @param model Model type.
-   * @param value Entity id.
+   * @param id Entity id.
    * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
    */
   @Class.Public()
-  public async deleteById(model: Class.Constructor<Mapping.Entity>, value: any): Promise<boolean> {
-    return (await this.delete(model, this.getPrimaryFilter(model, value))) === 1;
+  public async deleteById(model: Class.Constructor<Mapping.Entity>, id: any): Promise<boolean> {
+    return (await this.delete(model, Driver.getPrimaryFilter(model, id))) === 1;
   }
 }
