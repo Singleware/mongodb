@@ -20,43 +20,50 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
      * Gets the collection name from the specified model type.
      * @param model Mode type.
      * @returns Returns the collection name.
-     * @throws Throws an error when the model type is not valid.
+     * @throws Throws an error when the model type isn't valid.
      */
     private static getCollectionName;
     /**
-     * Gets the collection options.
+     * Build and get the collection validation.
      * @param model Model type.
-     * @returns Returns the collection command object.
+     * @returns Returns the collection validation object.
      */
-    private static getCollectionOptions;
+    private static getCollectionValidation;
     /**
-     * Gets the primary property from the specified model type.
-     * @param model Mode type.
-     * @returns Returns the primary column name.
-     * @throws Throws an error when there is no primary column defined.
-     */
-    private static getPrimaryProperty;
-    /**
-     * Gets the primary filter based in the specified model type.
+     * Build and get the primary filter based in the specified model type.
      * @param model Model type.
      * @param value Primary id value.
      * @returns Returns the primary filter.
+     * @throws Throws an error when there is no primary column defined.
      */
     private static getPrimaryFilter;
     /**
-     * Gets the fields grouping based on the specified row schema.
-     * @param row Row schema.
+     * Build and get the field grouping based on the specified row schema.
+     * @param real Real columns schema.
      * @param virtual Virtual schema.
      * @returns Returns the grouping entity.
      */
-    private static getFieldsGrouping;
+    private static getFieldGrouping;
     /**
-     * Purge all null fields returned by default in a performed query.
-     * @param row Row schema.
+     * Apply the specified aggregations into the target pipeline.
+     * @param pipeline Target pipeline.
+     * @param grouping Default grouping.
+     * @param joins List of junctions.
+     */
+    private static applyJoins;
+    /**
+     * Apply the specified filters into the target pipeline.
+     * @param pipeline Target pipeline.
+     * @param filters Filters to be applied.
+     */
+    private static applyFilters;
+    /**
+     * Purge all empty fields from the specified entities.
+     * @param real Real column schema.
      * @param entities Entities to be purged.
      * @returns Returns the purged entities list.
      */
-    private purgeNullFields;
+    private static purgeEmptyFields;
     /**
      * Connect to the MongoDb URI.
      * @param uri Connection URI.
@@ -70,35 +77,38 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
      * Modifies the collection by the specified model type.
      * @param model Model type.
      */
-    modify(model: Class.Constructor<Mapping.Entity>): Promise<void>;
+    modify(model: Class.Constructor<Mapping.Types.Entity>): Promise<void>;
     /**
      * Creates the collection by the specified model type.
      * @param model Model type.
      */
-    create(model: Class.Constructor<Mapping.Entity>): Promise<void>;
+    create(model: Mapping.Types.Model): Promise<void>;
     /**
      * Inserts all specified entities into the database.
      * @param model Model type.
      * @param entities Entity list.
      * @returns Returns the list inserted entities.
      */
-    insert<T extends Mapping.Entity>(model: Class.Constructor<T>, entities: T[]): Promise<string[]>;
+    insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, entities: T[]): Promise<string[]>;
     /**
      * Finds the corresponding entity from the database.
      * @param model Model type.
-     * @param aggregation List of virtual columns.
-     * @param filters List of expressions filter.
+     * @param joins List of junctions.
+     * @param filters List of filters.
+     * @param sort Sorting fields.
+     * @param limit Result limits.
+     * @returns Returns the  promise to get the list of entities found.
      * @returns Returns the list of entities found.
      */
-    find<T extends Mapping.Entity>(model: Class.Constructor<T>, aggregation: Mapping.Aggregation[], filters: Mapping.Expression[]): Promise<T[]>;
+    find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, joins: Mapping.Statements.Join[], filters: Mapping.Statements.Filter[], sort?: Mapping.Statements.Join, limit?: Mapping.Statements.Limit): Promise<T[]>;
     /**
      * Find the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param aggregation List of virtual columns.
+     * @param joins List of junctions.
      * @param id Entity id.
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
-    findById<T extends Mapping.Entity>(model: Class.Constructor<T>, aggregation: Mapping.Aggregation[], id: any): Promise<T | undefined>;
+    findById<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, joins: Mapping.Statements.Join[], id: any): Promise<T | undefined>;
     /**
      * Update all entities that corresponds to the specified filter.
      * @param model Model type.
@@ -106,7 +116,7 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
      * @param filter Filter expression.
      * @returns Returns the number of updated entities.
      */
-    update(model: Class.Constructor<Mapping.Entity>, entity: Mapping.Entity, filter: Mapping.Expression): Promise<number>;
+    update(model: Mapping.Types.Model, entity: Mapping.Types.Entity, filter: Mapping.Statements.Filter): Promise<number>;
     /**
      * Updates the entity that corresponds to the specified entity id.
      * @param model Model type.
@@ -114,19 +124,19 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
      * @param id Entity id.
      * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
      */
-    updateById(model: Class.Constructor<Mapping.Entity>, entity: Mapping.Entity, id: any): Promise<boolean>;
+    updateById(model: Mapping.Types.Model, entity: Mapping.Types.Model, id: any): Promise<boolean>;
     /**
      * Delete all entities that corresponds to the specified filter.
      * @param model Model type.
      * @param filter Filter columns.
      * @return Returns the number of deleted entities.
      */
-    delete(model: Class.Constructor<Mapping.Entity>, filter: Mapping.Expression): Promise<number>;
+    delete(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Promise<number>;
     /**
-     * Deletes the entity that corresponds to the specified entity id.
+     * Deletes the entity that corresponds to the specified id.
      * @param model Model type.
      * @param id Entity id.
      * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
      */
-    deleteById(model: Class.Constructor<Mapping.Entity>, id: any): Promise<boolean>;
+    deleteById(model: Mapping.Types.Model, id: any): Promise<boolean>;
 }

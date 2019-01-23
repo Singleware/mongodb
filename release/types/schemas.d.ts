@@ -46,5 +46,5 @@ export declare class Schemas extends Class.Null {
      * @param row Row schema.
      * @returns Returns the generated schema entity.
      */
-    static build(row: Mapping.Map<Mapping.Column>): Mapping.Entity;
+    static build(row: Mapping.Columns.RealRow): Mapping.Types.Entity;
 }

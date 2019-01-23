@@ -25,7 +25,7 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * Gets the collection name from the specified model type.
      * @param model Mode type.
      * @returns Returns the collection name.
-     * @throws Throws an error when the model type is not valid.
+     * @throws Throws an error when the model type isn't valid.
      */
     static getCollectionName(model) {
         const name = Mapping.Schema.getStorage(model);
@@ -35,76 +35,118 @@ let Driver = Driver_1 = class Driver extends Class.Null {
         return name;
     }
     /**
-     * Gets the collection options.
+     * Build and get the collection validation.
      * @param model Model type.
-     * @returns Returns the collection command object.
+     * @returns Returns the collection validation object.
      */
-    static getCollectionOptions(model) {
+    static getCollectionValidation(model) {
+        const schema = Mapping.Schema.getRealRow(model);
+        if (!schema) {
+            throw new TypeError(`The specified entity model is not valid.`);
+        }
         return {
             validator: {
-                $jsonSchema: schemas_1.Schemas.build(Mapping.Schema.getRealRow(model))
+                $jsonSchema: schemas_1.Schemas.build(schema)
             },
             validationLevel: 'strict',
             validationAction: 'error'
         };
     }
     /**
-     * Gets the primary property from the specified model type.
-     * @param model Mode type.
-     * @returns Returns the primary column name.
-     * @throws Throws an error when there is no primary column defined.
-     */
-    static getPrimaryProperty(model) {
-        const column = Mapping.Schema.getPrimary(model);
-        if (!column) {
-            throw new Error(`There is no primary column to be used.`);
-        }
-        return column;
-    }
-    /**
-     * Gets the primary filter based in the specified model type.
+     * Build and get the primary filter based in the specified model type.
      * @param model Model type.
      * @param value Primary id value.
      * @returns Returns the primary filter.
+     * @throws Throws an error when there is no primary column defined.
      */
     static getPrimaryFilter(model, value) {
+        const primary = Mapping.Schema.getPrimaryColumn(model);
         const filters = {};
-        const primary = this.getPrimaryProperty(model);
-        filters[primary.name] = { operator: Mapping.Operator.EQUAL, value: value };
+        if (!primary) {
+            throw new Error(`There is no primary column to be used.`);
+        }
+        filters[primary.name] = { operator: Mapping.Statements.Operator.EQUAL, value: value };
         return filters;
     }
     /**
-     * Gets the fields grouping based on the specified row schema.
-     * @param row Row schema.
+     * Build and get the field grouping based on the specified row schema.
+     * @param real Real columns schema.
      * @param virtual Virtual schema.
      * @returns Returns the grouping entity.
      */
-    static getFieldsGrouping(row, virtual) {
-        const group = {};
-        for (const column in row) {
-            const name = row[column].alias || row[column].name;
-            group[name] = { $first: `$${name}` };
+    static getFieldGrouping(real, virtual) {
+        const source = { ...real, ...virtual };
+        const grouping = {};
+        for (const id in source) {
+            const column = source[id];
+            const name = 'alias' in column && column.alias !== void 0 ? column.alias : column.name;
+            grouping[name] = { $first: `$${name}` };
         }
-        for (const column in virtual) {
-            const name = virtual[column].name;
-            group[name] = { $first: `$${name}` };
-        }
-        group._id = '$_id';
-        return group;
+        grouping._id = '$_id';
+        return grouping;
     }
     /**
-     * Purge all null fields returned by default in a performed query.
-     * @param row Row schema.
+     * Apply the specified aggregations into the target pipeline.
+     * @param pipeline Target pipeline.
+     * @param grouping Default grouping.
+     * @param joins List of junctions.
+     */
+    static applyJoins(pipeline, grouping, joins) {
+        for (const column of joins) {
+            const group = { ...grouping };
+            if (column.multiple) {
+                pipeline.push({
+                    $unwind: {
+                        path: `\$${column.local}`,
+                        preserveNullAndEmptyArrays: true
+                    }
+                });
+            }
+            pipeline.push({
+                $lookup: {
+                    from: column.storage,
+                    localField: column.local,
+                    foreignField: column.foreign,
+                    as: column.virtual
+                }
+            });
+            if (column.multiple) {
+                pipeline.push({
+                    $unwind: {
+                        path: `\$${column.virtual}`,
+                        preserveNullAndEmptyArrays: true
+                    }
+                });
+                group[column.local] = { $push: `$${column.local}` };
+                group[column.virtual] = { $push: `$${column.virtual}` };
+            }
+            pipeline.push({
+                $group: group
+            });
+        }
+    }
+    /**
+     * Apply the specified filters into the target pipeline.
+     * @param pipeline Target pipeline.
+     * @param filters Filters to be applied.
+     */
+    static applyFilters(pipeline, filters) {
+        while (filters.length) {
+            pipeline.push(filters);
+        }
+    }
+    /**
+     * Purge all empty fields from the specified entities.
+     * @param real Real column schema.
      * @param entities Entities to be purged.
      * @returns Returns the purged entities list.
      */
-    purgeNullFields(row, ...entities) {
+    static purgeEmptyFields(real, ...entities) {
+        let schema;
         for (let i = 0; i < entities.length; ++i) {
-            const entity = entities[i];
-            for (const column in entity) {
-                let schema;
-                if (entity[column] === null && (schema = row[column]) && !schema.types.includes(Mapping.Format.NULL)) {
-                    delete entity[column];
+            for (const column in entities[i]) {
+                if (entities[i][column] === null && (schema = real[column]) && !schema.formats.includes(Mapping.Types.Format.NULL)) {
+                    delete entities[i][column];
                 }
             }
         }
@@ -152,7 +194,7 @@ let Driver = Driver_1 = class Driver extends Class.Null {
     async modify(model) {
         await this.database.command({
             collMod: Driver_1.getCollectionName(model),
-            ...Driver_1.getCollectionOptions(model)
+            ...Driver_1.getCollectionValidation(model)
         });
     }
     /**
@@ -162,7 +204,7 @@ let Driver = Driver_1 = class Driver extends Class.Null {
     async create(model) {
         await this.database.command({
             create: Driver_1.getCollectionName(model),
-            ...Driver_1.getCollectionOptions(model)
+            ...Driver_1.getCollectionValidation(model)
         });
     }
     /**
@@ -179,58 +221,40 @@ let Driver = Driver_1 = class Driver extends Class.Null {
     /**
      * Finds the corresponding entity from the database.
      * @param model Model type.
-     * @param aggregation List of virtual columns.
-     * @param filters List of expressions filter.
+     * @param joins List of junctions.
+     * @param filters List of filters.
+     * @param sort Sorting fields.
+     * @param limit Result limits.
+     * @returns Returns the  promise to get the list of entities found.
      * @returns Returns the list of entities found.
      */
-    async find(model, aggregation, filters) {
-        const row = Mapping.Schema.getRealRow(model);
+    async find(model, joins, filters, sort, limit) {
+        const real = Mapping.Schema.getRealRow(model);
         const virtual = Mapping.Schema.getVirtualRow(model);
+        const pipeline = [{ $match: filters_1.Filters.build(model, filters.shift()) }];
         const manager = this.database.collection(Driver_1.getCollectionName(model));
-        const pipeline = [{ $match: filters_1.Filters.build(model, filters[0]) }];
-        for (const column of aggregation) {
-            if (column.multiple) {
-                pipeline.push({
-                    $unwind: {
-                        path: `\$${column.local}`,
-                        preserveNullAndEmptyArrays: true
-                    }
-                });
+        Driver_1.applyJoins(pipeline, Driver_1.getFieldGrouping(real, virtual), joins);
+        Driver_1.applyFilters(pipeline, filters);
+        return await Class.perform(this, async () => {
+            let records = await manager.aggregate(pipeline);
+            if (sort) {
+                records = await records.sort(sort);
             }
-            pipeline.push({
-                $lookup: {
-                    from: column.storage,
-                    localField: column.local,
-                    foreignField: column.foreign,
-                    as: column.virtual
-                }
-            });
-            const group = Driver_1.getFieldsGrouping(row, virtual);
-            if (column.multiple) {
-                pipeline.push({
-                    $unwind: {
-                        path: `\$${column.virtual}`,
-                        preserveNullAndEmptyArrays: true
-                    }
-                });
-                group[column.local] = { $push: `$${column.local}` };
-                group[column.virtual] = { $push: `$${column.virtual}` };
+            if (limit) {
+                records = await records.skip(limit.start).limit(limit.count);
             }
-            pipeline.push({
-                $group: group
-            });
-        }
-        return this.purgeNullFields(row, ...(await manager.aggregate(pipeline).toArray()));
+            return Driver_1.purgeEmptyFields(real, records);
+        });
     }
     /**
      * Find the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param aggregation List of virtual columns.
+     * @param joins List of junctions.
      * @param id Entity id.
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
-    async findById(model, aggregation, id) {
-        return (await this.find(model, aggregation, [Driver_1.getPrimaryFilter(model, id)]))[0];
+    async findById(model, joins, id) {
+        return (await this.find(model, joins, [Driver_1.getPrimaryFilter(model, id)]))[0];
     }
     /**
      * Update all entities that corresponds to the specified filter.
@@ -266,7 +290,7 @@ let Driver = Driver_1 = class Driver extends Class.Null {
         return result.deletedCount || 0;
     }
     /**
-     * Deletes the entity that corresponds to the specified entity id.
+     * Deletes the entity that corresponds to the specified id.
      * @param model Model type.
      * @param id Entity id.
      * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
@@ -288,9 +312,6 @@ __decorate([
 __decorate([
     Class.Private()
 ], Driver.prototype, "database", void 0);
-__decorate([
-    Class.Private()
-], Driver.prototype, "purgeNullFields", null);
 __decorate([
     Class.Public()
 ], Driver.prototype, "connect", null);
@@ -332,16 +353,22 @@ __decorate([
 ], Driver, "getCollectionName", null);
 __decorate([
     Class.Private()
-], Driver, "getCollectionOptions", null);
-__decorate([
-    Class.Private()
-], Driver, "getPrimaryProperty", null);
+], Driver, "getCollectionValidation", null);
 __decorate([
     Class.Private()
 ], Driver, "getPrimaryFilter", null);
 __decorate([
     Class.Private()
-], Driver, "getFieldsGrouping", null);
+], Driver, "getFieldGrouping", null);
+__decorate([
+    Class.Private()
+], Driver, "applyJoins", null);
+__decorate([
+    Class.Private()
+], Driver, "applyFilters", null);
+__decorate([
+    Class.Private()
+], Driver, "purgeEmptyFields", null);
 Driver = Driver_1 = __decorate([
     Class.Describe()
 ], Driver);

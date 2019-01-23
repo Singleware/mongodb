@@ -66,52 +66,52 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
      */
     static buildSchema(column) {
         const entity = { bsonType: [] };
-        for (const type of column.types) {
+        for (const type of column.formats) {
             switch (type) {
-                case Mapping.Format.ID:
+                case Mapping.Types.Format.ID:
                     entity.bsonType.push('objectId');
                     break;
-                case Mapping.Format.NULL:
+                case Mapping.Types.Format.NULL:
                     entity.bsonType.push('null');
                     break;
-                case Mapping.Format.BINARY:
+                case Mapping.Types.Format.BINARY:
                     entity.bsonType.push('binData');
                     break;
-                case Mapping.Format.BOOLEAN:
+                case Mapping.Types.Format.BOOLEAN:
                     entity.bsonType.push('bool');
                     break;
-                case Mapping.Format.INTEGER:
+                case Mapping.Types.Format.INTEGER:
                     entity.bsonType.push('int');
                     Schemas_1.setNumberRange(entity, column);
                     break;
-                case Mapping.Format.DECIMAL:
+                case Mapping.Types.Format.DECIMAL:
                     entity.bsonType.push('double');
                     Schemas_1.setNumberRange(entity, column);
                     break;
-                case Mapping.Format.NUMBER:
+                case Mapping.Types.Format.NUMBER:
                     entity.bsonType.push('number');
                     Schemas_1.setNumberRange(entity, column);
                     break;
-                case Mapping.Format.STRING:
+                case Mapping.Types.Format.STRING:
                     entity.bsonType.push('string');
                     Schemas_1.setStringRange(entity, column);
                     break;
-                case Mapping.Format.ENUMERATION:
+                case Mapping.Types.Format.ENUMERATION:
                     entity.bsonType.push('string');
                     entity.enum = column.values;
                     break;
-                case Mapping.Format.PATTERN:
+                case Mapping.Types.Format.PATTERN:
                     const pattern = column.pattern.toString();
                     entity.bsonType.push('string');
                     entity.pattern = pattern.substring(1, pattern.lastIndexOf('/'));
                     break;
-                case Mapping.Format.TIMESTAMP:
+                case Mapping.Types.Format.TIMESTAMP:
                     entity.bsonType.push('timestamp');
                     break;
-                case Mapping.Format.DATE:
+                case Mapping.Types.Format.DATE:
                     entity.bsonType.push('date');
                     break;
-                case Mapping.Format.ARRAY:
+                case Mapping.Types.Format.ARRAY:
                     entity.bsonType.push('array');
                     Schemas_1.setArrayRange(entity, column);
                     Schemas_1.setProperty('uniqueItems', entity, 'unique', column);
@@ -138,7 +138,7 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                             entity.items = Schemas_1.build(column.schema || {});
                     }
                     break;
-                case Mapping.Format.MAP:
+                case Mapping.Types.Format.MAP:
                     entity.bsonType.push('object');
                     switch (column.model) {
                         case Object:
@@ -163,7 +163,7 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                             entity.additionalProperties = Schemas_1.build(column.schema || {});
                     }
                     break;
-                case Mapping.Format.OBJECT:
+                case Mapping.Types.Format.OBJECT:
                     const result = Schemas_1.build(column.schema || {});
                     entity.bsonType.push('object');
                     entity.properties = result.properties;

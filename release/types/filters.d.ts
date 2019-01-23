@@ -15,5 +15,5 @@ export declare class Filters extends Class.Null {
      * @returns Returns the generated filter entity.
      * @throws Throws an error when there is a nonexistent column in the specified filter.
      */
-    static build(model: Class.Constructor<Mapping.Entity>, filter: Mapping.Expression): Mapping.Entity;
+    static build(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Mapping.Types.Entity;
 }
