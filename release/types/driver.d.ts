@@ -100,7 +100,7 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
      * @returns Returns the  promise to get the list of entities found.
      * @returns Returns the list of entities found.
      */
-    find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, joins: Mapping.Statements.Join[], filters: Mapping.Statements.Filter[], sort?: Mapping.Statements.Join, limit?: Mapping.Statements.Limit): Promise<T[]>;
+    find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, joins: Mapping.Statements.Join[], filters: Mapping.Statements.Filter[], sort?: Mapping.Statements.Sort, limit?: Mapping.Statements.Limit): Promise<T[]>;
     /**
      * Find the entity that corresponds to the specified entity id.
      * @param model Model type.

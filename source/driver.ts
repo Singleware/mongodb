@@ -273,7 +273,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
     model: Mapping.Types.Model<T>,
     joins: Mapping.Statements.Join[],
     filters: Mapping.Statements.Filter[],
-    sort?: Mapping.Statements.Join,
+    sort?: Mapping.Statements.Sort,
     limit?: Mapping.Statements.Limit
   ): Promise<T[]> {
     const real = <Mapping.Columns.RealRow>Mapping.Schema.getRealRow(model);
