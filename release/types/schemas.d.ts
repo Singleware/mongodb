@@ -9,7 +9,7 @@ import * as Mapping from '@singleware/mapping';
  */
 export declare class Schemas extends Class.Null {
     /**
-     * Sets the specified target property if the source property has any data.
+     * Sets the specified target property whether the source property has any data.
      * @param to Target property.
      * @param target Target entity.
      * @param from Source property.
@@ -17,34 +17,16 @@ export declare class Schemas extends Class.Null {
      */
     private static setProperty;
     /**
-     * Sets the number range.
-     * @param entity Target entity.
-     * @param column Source column.
-     */
-    private static setNumberRange;
-    /**
-     * Sets the string range.
-     * @param entity Target entity.
-     * @param column Source column.
-     */
-    private static setStringRange;
-    /**
-     * Sets the array range.
-     * @param entity Target entity.
-     * @param column Source column.
-     */
-    private static setArrayRange;
-    /**
-     * Build a column schema entity based on the specified column schema.
-     * @param column Column Schema.
-     * @returns Return the generated column schema entity.
+     * Build the schema properties based on the specified column schema.
+     * @param real Real column Schema.
+     * @returns Return the generated schema properties.
      * @throws Throws an error when the column type is unsupported.
      */
-    private static buildSchema;
+    private static buildProperties;
     /**
      * Build a schema entity based on the specified row schema.
-     * @param row Row schema.
+     * @param real Real row schema.
      * @returns Returns the generated schema entity.
      */
-    static build(row: Mapping.Columns.RealRow): Mapping.Types.Entity;
+    static build(real: Mapping.Columns.RealRow): Mapping.Types.Entity;
 }

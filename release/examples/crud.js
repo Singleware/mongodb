@@ -66,7 +66,7 @@ let UserMapper = class UserMapper extends Mapping.Mapper {
      * @returns Returns the number of updated users.
      */
     async change(id) {
-        return await this.update({ id: { operator: Mapping.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
+        return await this.update({ id: { operator: Mapping.Statements.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
     }
     /**
      * Read the test user.
@@ -74,14 +74,21 @@ let UserMapper = class UserMapper extends Mapping.Mapper {
      * @requires Returns the list of users found.
      */
     async read(id) {
-        return await this.find({ id: { operator: Mapping.Operator.EQUAL, value: id } });
+        return await this.find({
+            id: { operator: Mapping.Statements.Operator.EQUAL, value: id }
+        }, {
+            id: Mapping.Statements.Order.ASCENDING
+        }, {
+            start: 0,
+            count: 1
+        });
     }
     /**
      * Remove the test user.
      * @param id User id.
      */
     async remove(id) {
-        return await this.delete({ id: { operator: Mapping.Operator.EQUAL, value: id } });
+        return await this.delete({ id: { operator: Mapping.Statements.Operator.EQUAL, value: id } });
     }
 };
 __decorate([

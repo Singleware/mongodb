@@ -224,23 +224,23 @@ class TestEntity extends Class.Null {
   // Map type.
   @Mapping.Schema.Map(String)
   @Class.Public()
-  public stringMap?: Mapping.Map<string>;
+  public stringMap?: Mapping.Types.Map<string>;
 
   @Mapping.Schema.Map(Number)
   @Class.Public()
-  public numberMap?: Mapping.Map<number>;
+  public numberMap?: Mapping.Types.Map<number>;
 
   @Mapping.Schema.Map(Boolean)
   @Class.Public()
-  public booleanMap?: Mapping.Map<boolean>;
+  public booleanMap?: Mapping.Types.Map<boolean>;
 
   @Mapping.Schema.Map(Date)
   @Class.Public()
-  public dateMap?: Mapping.Map<Date>;
+  public dateMap?: Mapping.Types.Map<Date>;
 
   @Mapping.Schema.Map(TestEntitySub)
   @Class.Public()
-  public entityMap?: Mapping.Map<TestEntitySub>;
+  public entityMap?: Mapping.Types.Map<TestEntitySub>;
 
   // Object type.
   @Mapping.Schema.Object(TestEntitySub)
@@ -257,7 +257,11 @@ async function test(): Promise<void> {
   console.log('Connect');
 
   // Apply schema
-  await driver.modify(TestEntity);
+  if (!(await driver.hasCollection(TestEntity))) {
+    await driver.createCollection(TestEntity);
+  } else {
+    await driver.modifyCollection(TestEntity);
+  }
   console.log('Modified');
 
   // Disconnect

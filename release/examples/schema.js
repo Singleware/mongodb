@@ -245,7 +245,12 @@ async function test() {
     await driver.connect(connection);
     console.log('Connect');
     // Apply schema
-    await driver.modify(TestEntity);
+    if (!(await driver.hasCollection(TestEntity))) {
+        await driver.createCollection(TestEntity);
+    }
+    else {
+        await driver.modifyCollection(TestEntity);
+    }
     console.log('Modified');
     // Disconnect
     await driver.disconnect();

@@ -5,17 +5,17 @@ import * as Mapping from '@singleware/mapping';
  */
 export declare class Driver extends Class.Null implements Mapping.Driver {
     /**
-     * Driver connection.
+     * Connection options.
+     */
+    private static options;
+    /**
+     * Connection instance.
      */
     private connection?;
     /**
-     * Driver database.
+     * Current database.
      */
     private database?;
-    /**
-     * Driver connection options.
-     */
-    private static options;
     /**
      * Gets the collection name from the specified model type.
      * @param model Mode type.
@@ -24,65 +24,36 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
      */
     private static getCollectionName;
     /**
-     * Build and get the collection validation.
+     * Build and get the collection schema.
      * @param model Model type.
      * @returns Returns the collection validation object.
      */
-    private static getCollectionValidation;
+    private static getCollectionSchema;
     /**
-     * Build and get the primary filter based in the specified model type.
-     * @param model Model type.
-     * @param value Primary id value.
-     * @returns Returns the primary filter.
-     * @throws Throws an error when there is no primary column defined.
-     */
-    private static getPrimaryFilter;
-    /**
-     * Build and get the field grouping based on the specified row schema.
-     * @param real Real columns schema.
-     * @param virtual Virtual schema.
-     * @returns Returns the grouping entity.
-     */
-    private static getFieldGrouping;
-    /**
-     * Apply the specified aggregations into the target pipeline.
-     * @param pipeline Target pipeline.
-     * @param grouping Default grouping.
-     * @param joins List of junctions.
-     */
-    private static applyJoins;
-    /**
-     * Apply the specified filters into the target pipeline.
-     * @param pipeline Target pipeline.
-     * @param filters Filters to be applied.
-     */
-    private static applyFilters;
-    /**
-     * Purge all empty fields from the specified entities.
-     * @param real Real column schema.
-     * @param entities Entities to be purged.
-     * @returns Returns the purged entities list.
-     */
-    private static purgeEmptyFields;
-    /**
-     * Connect to the MongoDb URI.
+     * Connect to the URI.
      * @param uri Connection URI.
      */
     connect(uri: string): Promise<void>;
     /**
-     * Disconnect the current active connection.
+     * Disconnect any active connection.
      */
     disconnect(): Promise<void>;
     /**
-     * Modifies the collection by the specified model type.
+     * Modify the collection by the specified model type.
      * @param model Model type.
      */
-    modify(model: Class.Constructor<Mapping.Types.Entity>): Promise<void>;
+    modifyCollection(model: Class.Constructor<Mapping.Types.Entity>): Promise<void>;
     /**
-     * Creates the collection by the specified model type.
+     * Creates a new collection by the specified model type.
      * @param model Model type.
      */
-    create(model: Mapping.Types.Model): Promise<void>;
+    createCollection(model: Mapping.Types.Model): Promise<void>;
+    /**
+     * Determines whether the collection from the specified model exists or not.
+     * @param model Model type.
+     * @returns Returns true when the collection exists, false otherwise.
+     */
+    hasCollection(model: Mapping.Types.Model): Promise<boolean>;
     /**
      * Inserts all specified entities into the database.
      * @param model Model type.
@@ -93,18 +64,18 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
     /**
      * Finds the corresponding entity from the database.
      * @param model Model type.
-     * @param joins List of junctions.
-     * @param filters List of filters.
+     * @param joins List of joins.
+     * @param filter Field filters.
      * @param sort Sorting fields.
      * @param limit Result limits.
      * @returns Returns the  promise to get the list of entities found.
      * @returns Returns the list of entities found.
      */
-    find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, joins: Mapping.Statements.Join[], filters: Mapping.Statements.Filter[], sort?: Mapping.Statements.Sort, limit?: Mapping.Statements.Limit): Promise<T[]>;
+    find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, joins: Mapping.Statements.Join[], filter: Mapping.Statements.Filter, sort?: Mapping.Statements.Sort, limit?: Mapping.Statements.Limit): Promise<T[]>;
     /**
      * Find the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param joins List of junctions.
+     * @param joins List of joins.
      * @param id Entity id.
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
@@ -112,15 +83,15 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
     /**
      * Update all entities that corresponds to the specified filter.
      * @param model Model type.
-     * @param entity Entity data to be updated.
-     * @param filter Filter expression.
+     * @param entity Entity to be updated.
+     * @param filter Fields filter.
      * @returns Returns the number of updated entities.
      */
     update(model: Mapping.Types.Model, entity: Mapping.Types.Entity, filter: Mapping.Statements.Filter): Promise<number>;
     /**
      * Updates the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param entity Entity data to be updated.
+     * @param entity Entity to be updated.
      * @param id Entity id.
      * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
      */
@@ -128,7 +99,7 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
     /**
      * Delete all entities that corresponds to the specified filter.
      * @param model Model type.
-     * @param filter Filter columns.
+     * @param filter Fields filter.
      * @return Returns the number of deleted entities.
      */
     delete(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Promise<number>;

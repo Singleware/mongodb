@@ -20,7 +20,7 @@ const BSON = require("./bson");
  */
 let Schemas = Schemas_1 = class Schemas extends Class.Null {
     /**
-     * Sets the specified target property if the source property has any data.
+     * Sets the specified target property whether the source property has any data.
      * @param to Target property.
      * @param target Target entity.
      * @param from Source property.
@@ -32,41 +32,14 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
         }
     }
     /**
-     * Sets the number range.
-     * @param entity Target entity.
-     * @param column Source column.
-     */
-    static setNumberRange(entity, column) {
-        Schemas_1.setProperty('minimum', entity, 'minimum', column);
-        Schemas_1.setProperty('maximum', entity, 'maximum', column);
-    }
-    /**
-     * Sets the string range.
-     * @param entity Target entity.
-     * @param column Source column.
-     */
-    static setStringRange(entity, column) {
-        Schemas_1.setProperty('minLength', entity, 'minimum', column);
-        Schemas_1.setProperty('maxLength', entity, 'maximum', column);
-    }
-    /**
-     * Sets the array range.
-     * @param entity Target entity.
-     * @param column Source column.
-     */
-    static setArrayRange(entity, column) {
-        Schemas_1.setProperty('minItems', entity, 'minimum', column);
-        Schemas_1.setProperty('maxItems', entity, 'maximum', column);
-    }
-    /**
-     * Build a column schema entity based on the specified column schema.
-     * @param column Column Schema.
-     * @returns Return the generated column schema entity.
+     * Build the schema properties based on the specified column schema.
+     * @param real Real column Schema.
+     * @returns Return the generated schema properties.
      * @throws Throws an error when the column type is unsupported.
      */
-    static buildSchema(column) {
+    static buildProperties(real) {
         const entity = { bsonType: [] };
-        for (const type of column.formats) {
+        for (const type of real.formats) {
             switch (type) {
                 case Mapping.Types.Format.ID:
                     entity.bsonType.push('objectId');
@@ -82,26 +55,30 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                     break;
                 case Mapping.Types.Format.INTEGER:
                     entity.bsonType.push('int');
-                    Schemas_1.setNumberRange(entity, column);
+                    Schemas_1.setProperty('minimum', entity, 'minimum', real);
+                    Schemas_1.setProperty('maximum', entity, 'maximum', real);
                     break;
                 case Mapping.Types.Format.DECIMAL:
                     entity.bsonType.push('double');
-                    Schemas_1.setNumberRange(entity, column);
+                    Schemas_1.setProperty('minimum', entity, 'minimum', real);
+                    Schemas_1.setProperty('maximum', entity, 'maximum', real);
                     break;
                 case Mapping.Types.Format.NUMBER:
                     entity.bsonType.push('number');
-                    Schemas_1.setNumberRange(entity, column);
+                    Schemas_1.setProperty('minimum', entity, 'minimum', real);
+                    Schemas_1.setProperty('maximum', entity, 'maximum', real);
                     break;
                 case Mapping.Types.Format.STRING:
                     entity.bsonType.push('string');
-                    Schemas_1.setStringRange(entity, column);
+                    Schemas_1.setProperty('minLength', entity, 'minimum', real);
+                    Schemas_1.setProperty('maxLength', entity, 'maximum', real);
                     break;
                 case Mapping.Types.Format.ENUMERATION:
                     entity.bsonType.push('string');
-                    entity.enum = column.values;
+                    entity.enum = real.values;
                     break;
                 case Mapping.Types.Format.PATTERN:
-                    const pattern = column.pattern.toString();
+                    const pattern = real.pattern.toString();
                     entity.bsonType.push('string');
                     entity.pattern = pattern.substring(1, pattern.lastIndexOf('/'));
                     break;
@@ -113,9 +90,10 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                     break;
                 case Mapping.Types.Format.ARRAY:
                     entity.bsonType.push('array');
-                    Schemas_1.setArrayRange(entity, column);
-                    Schemas_1.setProperty('uniqueItems', entity, 'unique', column);
-                    switch (column.model) {
+                    Schemas_1.setProperty('minItems', entity, 'minimum', real);
+                    Schemas_1.setProperty('maxItems', entity, 'maximum', real);
+                    Schemas_1.setProperty('uniqueItems', entity, 'unique', real);
+                    switch (real.model) {
                         case Object:
                             entity.items = { bsonType: 'object' };
                             break;
@@ -135,12 +113,12 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                             entity.items = { bsonType: 'objectId' };
                             break;
                         default:
-                            entity.items = Schemas_1.build(column.schema || {});
+                            entity.items = Schemas_1.build(real.schema || {});
                     }
                     break;
                 case Mapping.Types.Format.MAP:
                     entity.bsonType.push('object');
-                    switch (column.model) {
+                    switch (real.model) {
                         case Object:
                             entity.additionalProperties = true;
                             break;
@@ -160,11 +138,11 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                             entity.additionalProperties = { bsonType: 'objectId' };
                             break;
                         default:
-                            entity.additionalProperties = Schemas_1.build(column.schema || {});
+                            entity.additionalProperties = Schemas_1.build(real.schema || {});
                     }
                     break;
                 case Mapping.Types.Format.OBJECT:
-                    const result = Schemas_1.build(column.schema || {});
+                    const result = Schemas_1.build(real.schema || {});
                     entity.bsonType.push('object');
                     entity.properties = result.properties;
                     entity.additionalProperties = false;
@@ -178,26 +156,27 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
     }
     /**
      * Build a schema entity based on the specified row schema.
-     * @param row Row schema.
+     * @param real Real row schema.
      * @returns Returns the generated schema entity.
      */
-    static build(row) {
+    static build(real) {
         const entity = {
             bsonType: 'object',
-            required: [],
             properties: {},
             additionalProperties: false
         };
-        for (const column in row) {
-            const schema = row[column];
-            const name = schema.alias || column;
+        for (const column in real) {
+            const schema = real[column];
+            const name = schema.alias || schema.name;
             if (schema.required) {
-                entity.required.push(name);
+                if (entity.required === void 0) {
+                    entity.required = [name];
+                }
+                else {
+                    entity.required.push(name);
+                }
             }
-            entity.properties[name] = Schemas_1.buildSchema(schema);
-        }
-        if (entity.required.length === 0) {
-            delete entity.required;
+            entity.properties[name] = Schemas_1.buildProperties(schema);
         }
         return entity;
     }
@@ -207,16 +186,7 @@ __decorate([
 ], Schemas, "setProperty", null);
 __decorate([
     Class.Private()
-], Schemas, "setNumberRange", null);
-__decorate([
-    Class.Private()
-], Schemas, "setStringRange", null);
-__decorate([
-    Class.Private()
-], Schemas, "setArrayRange", null);
-__decorate([
-    Class.Private()
-], Schemas, "buildSchema", null);
+], Schemas, "buildProperties", null);
 __decorate([
     Class.Public()
 ], Schemas, "build", null);

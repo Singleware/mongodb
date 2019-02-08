@@ -7,13 +7,15 @@
   "name": "@singleware/mongodb",
   "description": "Singleware MongoDB driver package.",
   "license": "MIT",
-  "version": "1.1.33",
+  "version": "1.1.40",
   "main": "release/source/index.js",
   "types": "release/types/index.d.ts",
   "keywords": [
     "mongodb driver",
-    "mongodb driver wrapper",
-    "data mapper"
+    "mongodb ODM",
+    "data mapper",
+    "data modeling",
+    "object data model"
   ],
   "repository": {
     "type": "git",
@@ -24,13 +26,13 @@
   },
   "dependencies": {
     "@singleware/class": "^1.1.19",
-    "@singleware/mapping": "^1.1.35"
+    "@singleware/mapping": "^1.1.43"
   },
   "devDependencies": {
     "@types/mongodb": "^3.1.19",
-    "@types/node": "^10.12.18",
+    "@types/node": "^10.12.23",
     "mongodb": "^3.1.13",
-    "prettier": "^1.16.1",
+    "prettier": "^1.16.4",
     "typescript": "^2.9.2"
   },
   "prettier": {

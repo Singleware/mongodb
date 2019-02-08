@@ -7,6 +7,7 @@ import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 
 import { Filters } from './filters';
+import { Fields } from './fields';
 import { Schemas } from './schemas';
 
 /**
@@ -15,25 +16,25 @@ import { Schemas } from './schemas';
 @Class.Describe()
 export class Driver extends Class.Null implements Mapping.Driver {
   /**
-   * Driver connection.
-   */
-  @Class.Private()
-  private connection?: Mongodb.MongoClient;
-
-  /**
-   * Driver database.
-   */
-  @Class.Private()
-  private database?: Mongodb.Db;
-
-  /**
-   * Driver connection options.
+   * Connection options.
    */
   @Class.Private()
   private static options = {
     useNewUrlParser: true,
     ignoreUndefined: true
   };
+
+  /**
+   * Connection instance.
+   */
+  @Class.Private()
+  private connection?: Mongodb.MongoClient;
+
+  /**
+   * Current database.
+   */
+  @Class.Private()
+  private database?: Mongodb.Db;
 
   /**
    * Gets the collection name from the specified model type.
@@ -51,15 +52,15 @@ export class Driver extends Class.Null implements Mapping.Driver {
   }
 
   /**
-   * Build and get the collection validation.
+   * Build and get the collection schema.
    * @param model Model type.
    * @returns Returns the collection validation object.
    */
   @Class.Private()
-  private static getCollectionValidation(model: Mapping.Types.Model): Object {
+  private static getCollectionSchema(model: Mapping.Types.Model): Object {
     const schema = Mapping.Schema.getRealRow(model);
     if (!schema) {
-      throw new TypeError(`The specified entity model is not valid.`);
+      throw new TypeError(`The specified model type is not valid.`);
     }
     return {
       validator: {
@@ -71,117 +72,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
   }
 
   /**
-   * Build and get the primary filter based in the specified model type.
-   * @param model Model type.
-   * @param value Primary id value.
-   * @returns Returns the primary filter.
-   * @throws Throws an error when there is no primary column defined.
-   */
-  @Class.Private()
-  private static getPrimaryFilter(model: Mapping.Types.Model, value: any): Mapping.Types.Entity {
-    const primary = <Mapping.Columns.Real>Mapping.Schema.getPrimaryColumn(model);
-    const filters = <any>{};
-    if (!primary) {
-      throw new Error(`There is no primary column to be used.`);
-    }
-    filters[primary.name] = { operator: Mapping.Statements.Operator.EQUAL, value: value };
-    return filters;
-  }
-
-  /**
-   * Build and get the field grouping based on the specified row schema.
-   * @param real Real columns schema.
-   * @param virtual Virtual schema.
-   * @returns Returns the grouping entity.
-   */
-  @Class.Private()
-  private static getFieldGrouping(real: Mapping.Columns.RealRow, virtual: Mapping.Columns.VirtualRow): Mapping.Types.Entity {
-    const source = <Mapping.Columns.RealRow | Mapping.Columns.VirtualRow>{ ...real, ...virtual };
-    const grouping = <Mapping.Types.Entity>{};
-    for (const id in source) {
-      const column = source[id];
-      const name = 'alias' in column && column.alias !== void 0 ? column.alias : column.name;
-      grouping[name] = { $first: `$${name}` };
-    }
-    grouping._id = '$_id';
-    return grouping;
-  }
-
-  /**
-   * Apply the specified aggregations into the target pipeline.
-   * @param pipeline Target pipeline.
-   * @param grouping Default grouping.
-   * @param joins List of junctions.
-   */
-  @Class.Private()
-  private static applyJoins(pipeline: Mapping.Types.Entity[], grouping: Mapping.Types.Entity, joins: Mapping.Statements.Join[]): void {
-    for (const column of joins) {
-      const group = { ...grouping };
-      if (column.multiple) {
-        pipeline.push({
-          $unwind: {
-            path: `\$${column.local}`,
-            preserveNullAndEmptyArrays: true
-          }
-        });
-      }
-      pipeline.push({
-        $lookup: {
-          from: column.storage,
-          localField: column.local,
-          foreignField: column.foreign,
-          as: column.virtual
-        }
-      });
-      if (column.multiple) {
-        pipeline.push({
-          $unwind: {
-            path: `\$${column.virtual}`,
-            preserveNullAndEmptyArrays: true
-          }
-        });
-        group[column.local] = { $push: `$${column.local}` };
-        group[column.virtual] = { $push: `$${column.virtual}` };
-      }
-      pipeline.push({
-        $group: group
-      });
-    }
-  }
-
-  /**
-   * Apply the specified filters into the target pipeline.
-   * @param pipeline Target pipeline.
-   * @param filters Filters to be applied.
-   */
-  @Class.Private()
-  private static applyFilters(pipeline: any[], filters: Mapping.Statements.Filter[]): void {
-    while (filters.length) {
-      pipeline.push(filters);
-    }
-  }
-
-  /**
-   * Purge all empty fields from the specified entities.
-   * @param real Real column schema.
-   * @param entities Entities to be purged.
-   * @returns Returns the purged entities list.
-   */
-  @Class.Private()
-  private static purgeEmptyFields<T extends Mapping.Types.Entity>(real: Mapping.Columns.RealRow, ...entities: T[]): T[] {
-    let schema;
-    for (let i = 0; i < entities.length; ++i) {
-      for (const column in entities[i]) {
-        if (entities[i][column] === null && (schema = real[column]) && !schema.formats.includes(Mapping.Types.Format.NULL)) {
-          delete entities[i][column];
-        }
-      }
-    }
-    return entities;
-  }
-
-  /**
-   * Connect to the MongoDb URI.
+   * Connect to the URI.
    * @param uri Connection URI.
    */
   @Class.Public()
@@ -202,7 +93,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
   }
 
   /**
-   * Disconnect the current active connection.
+   * Disconnect any active connection.
    */
   @Class.Public()
   public async disconnect(): Promise<void> {
@@ -222,27 +113,37 @@ export class Driver extends Class.Null implements Mapping.Driver {
   }
 
   /**
-   * Modifies the collection by the specified model type.
+   * Modify the collection by the specified model type.
    * @param model Model type.
    */
   @Class.Public()
-  public async modify(model: Class.Constructor<Mapping.Types.Entity>): Promise<void> {
+  public async modifyCollection(model: Class.Constructor<Mapping.Types.Entity>): Promise<void> {
     await (<Mongodb.Db>this.database).command({
       collMod: Driver.getCollectionName(model),
-      ...Driver.getCollectionValidation(model)
+      ...Driver.getCollectionSchema(model)
     });
   }
 
   /**
-   * Creates the collection by the specified model type.
+   * Creates a new collection by the specified model type.
    * @param model Model type.
    */
   @Class.Public()
-  public async create(model: Mapping.Types.Model): Promise<void> {
+  public async createCollection(model: Mapping.Types.Model): Promise<void> {
     await (<Mongodb.Db>this.database).command({
       create: Driver.getCollectionName(model),
-      ...Driver.getCollectionValidation(model)
+      ...Driver.getCollectionSchema(model)
     });
+  }
+
+  /**
+   * Determines whether the collection from the specified model exists or not.
+   * @param model Model type.
+   * @returns Returns true when the collection exists, false otherwise.
+   */
+  @Class.Public()
+  public async hasCollection(model: Mapping.Types.Model): Promise<boolean> {
+    return (await (<Mongodb.Db>this.database).listCollections({ name: Driver.getCollectionName(model) }).toArray()).length === 1;
   }
 
   /**
@@ -254,15 +155,14 @@ export class Driver extends Class.Null implements Mapping.Driver {
   @Class.Public()
   public async insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, entities: T[]): Promise<string[]> {
     const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
-    const result = await manager.insertMany(entities);
-    return Object.values(<any>result.insertedIds);
+    return Object.values((<any>await manager.insertMany(entities)).insertedIds);
   }
 
   /**
    * Finds the corresponding entity from the database.
    * @param model Model type.
-   * @param joins List of junctions.
-   * @param filters List of filters.
+   * @param joins List of joins.
+   * @param filter Field filters.
    * @param sort Sorting fields.
    * @param limit Result limits.
    * @returns Returns the  promise to get the list of entities found.
@@ -272,32 +172,30 @@ export class Driver extends Class.Null implements Mapping.Driver {
   public async find<T extends Mapping.Types.Entity>(
     model: Mapping.Types.Model<T>,
     joins: Mapping.Statements.Join[],
-    filters: Mapping.Statements.Filter[],
+    filter: Mapping.Statements.Filter,
     sort?: Mapping.Statements.Sort,
     limit?: Mapping.Statements.Limit
   ): Promise<T[]> {
-    const real = <Mapping.Columns.RealRow>Mapping.Schema.getRealRow(model);
+    const pipeline = <any[]>[];
     const virtual = <Mapping.Columns.VirtualRow>Mapping.Schema.getVirtualRow(model);
-    const pipeline = <any[]>[{ $match: Filters.build(model, <Mapping.Types.Entity>filters.shift()) }];
+    const real = <Mapping.Columns.RealRow>Mapping.Schema.getRealRow(model);
     const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
-    Driver.applyJoins(pipeline, Driver.getFieldGrouping(real, virtual), joins);
-    Driver.applyFilters(pipeline, filters);
-    return await Class.perform(this, async () => {
-      let records = await manager.aggregate(pipeline);
-      if (sort) {
-        records = await records.sort(sort);
-      }
-      if (limit) {
-        records = await records.skip(limit.start).limit(limit.count);
-      }
-      return Driver.purgeEmptyFields(real, records);
-    });
+    Fields.applyFilters(model, pipeline, [filter]);
+    Fields.applyRelations(pipeline, Fields.getGrouping(real, virtual), joins);
+    let cursor = manager.aggregate(pipeline);
+    if (sort) {
+      cursor = cursor.sort(Fields.getSorting(sort));
+    }
+    if (limit) {
+      cursor = limit ? cursor.skip(limit.start).limit(limit.count) : cursor;
+    }
+    return Fields.purgeNull(real, await cursor.toArray());
   }
 
   /**
    * Find the entity that corresponds to the specified entity id.
    * @param model Model type.
-   * @param joins List of junctions.
+   * @param joins List of joins.
    * @param id Entity id.
    * @returns Returns a promise to get the found entity or undefined when the entity was not found.
    */
@@ -307,14 +205,14 @@ export class Driver extends Class.Null implements Mapping.Driver {
     joins: Mapping.Statements.Join[],
     id: any
   ): Promise<T | undefined> {
-    return (await this.find<T>(model, joins, [Driver.getPrimaryFilter(model, id)]))[0];
+    return (await this.find<T>(model, joins, Fields.getPrimaryFilter(model, id)))[0];
   }
 
   /**
    * Update all entities that corresponds to the specified filter.
    * @param model Model type.
-   * @param entity Entity data to be updated.
-   * @param filter Filter expression.
+   * @param entity Entity to be updated.
+   * @param filter Fields filter.
    * @returns Returns the number of updated entities.
    */
   @Class.Public()
@@ -327,26 +225,25 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Updates the entity that corresponds to the specified entity id.
    * @param model Model type.
-   * @param entity Entity data to be updated.
+   * @param entity Entity to be updated.
    * @param id Entity id.
    * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
    */
   @Class.Public()
   public async updateById(model: Mapping.Types.Model, entity: Mapping.Types.Model, id: any): Promise<boolean> {
-    return (await this.update(model, entity, Driver.getPrimaryFilter(model, id))) === 1;
+    return (await this.update(model, entity, Fields.getPrimaryFilter(model, id))) === 1;
   }
 
   /**
    * Delete all entities that corresponds to the specified filter.
    * @param model Model type.
-   * @param filter Filter columns.
+   * @param filter Fields filter.
    * @return Returns the number of deleted entities.
    */
   @Class.Public()
   public async delete(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Promise<number> {
     const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
-    const result = await manager.deleteMany(Filters.build(model, filter));
-    return result.deletedCount || 0;
+    return (await manager.deleteMany(Filters.build(model, filter))).deletedCount || 0;
   }
 
   /**
@@ -357,6 +254,6 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async deleteById(model: Mapping.Types.Model, id: any): Promise<boolean> {
-    return (await this.delete(model, Driver.getPrimaryFilter(model, id))) === 1;
+    return (await this.delete(model, Fields.getPrimaryFilter(model, id))) === 1;
   }
 }
