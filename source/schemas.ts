@@ -8,7 +8,7 @@ import * as Mapping from '@singleware/mapping';
 import * as BSON from './bson';
 
 /**
- * Mongo DB schemas class.
+ * MongoDb schemas class.
  */
 @Class.Describe()
 export class Schemas extends Class.Null {

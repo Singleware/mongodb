@@ -5,7 +5,7 @@
 import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 /**
- * Mongo DB schemas class.
+ * MongoDb schemas class.
  */
 export declare class Schemas extends Class.Null {
     /**

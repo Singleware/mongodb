@@ -16,7 +16,7 @@ const Class = require("@singleware/class");
 const Mapping = require("@singleware/mapping");
 const BSON = require("./bson");
 /**
- * Mongo DB schemas class.
+ * MongoDb schemas class.
  */
 let Schemas = Schemas_1 = class Schemas extends Class.Null {
     /**

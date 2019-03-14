@@ -19,7 +19,7 @@ const filters_1 = require("./filters");
 const fields_1 = require("./fields");
 const schemas_1 = require("./schemas");
 /**
- * Mongo DB driver class.
+ * MongoDb driver class.
  */
 let Driver = Driver_1 = class Driver extends Class.Null {
     /**

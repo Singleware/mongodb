@@ -1,9 +1,6 @@
 /**
  * Copyright (C) 2018 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
- *
- * The proposal of this example is to show how to use a simple entity CRUD with mapper
- * package.
  */
 import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';

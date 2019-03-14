@@ -1,7 +1,7 @@
 import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 /**
- * Mongo DB driver class.
+ * MongoDb driver class.
  */
 export declare class Driver extends Class.Null implements Mapping.Driver {
     /**

@@ -11,7 +11,7 @@ import { Fields } from './fields';
 import { Schemas } from './schemas';
 
 /**
- * Mongo DB driver class.
+ * MongoDb driver class.
  */
 @Class.Describe()
 export class Driver extends Class.Null implements Mapping.Driver {
