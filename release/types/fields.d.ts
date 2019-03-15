@@ -1,7 +1,3 @@
-/**
- * Copyright (C) 2018 Silas B. Domingos
- * This source code is licensed under the MIT License as described in the file LICENSE.
- */
 import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 /**
@@ -42,7 +38,7 @@ export declare class Fields extends Class.Null {
      * @param pipeline Target pipeline.
      * @param filters Filters to be applied.
      */
-    static applyFilters(model: Mapping.Types.Model, pipeline: any[], filters: Mapping.Statements.Filter[]): void;
+    static applyFilters(model: Mapping.Types.Model, pipeline: any[], ...filters: Mapping.Statements.Filter[]): void;
     /**
      * Purge all null fields from the specified entity list.
      * @param real Real column schema.

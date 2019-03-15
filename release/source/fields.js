@@ -6,8 +6,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-/**
- * Copyright (C) 2018 Silas B. Domingos
+/*
+ * Copyright (C) 2018-2019 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
@@ -118,7 +118,7 @@ let Fields = class Fields extends Class.Null {
      * @param pipeline Target pipeline.
      * @param filters Filters to be applied.
      */
-    static applyFilters(model, pipeline, filters) {
+    static applyFilters(model, pipeline, ...filters) {
         for (const filter of filters) {
             pipeline.push({
                 $match: filters_1.Filters.build(model, filter)

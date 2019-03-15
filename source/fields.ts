@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2018 Silas B. Domingos
+/*
+ * Copyright (C) 2018-2019 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
@@ -122,10 +122,10 @@ export class Fields extends Class.Null {
    * @param filters Filters to be applied.
    */
   @Class.Public()
-  public static applyFilters(model: Mapping.Types.Model, pipeline: any[], filters: Mapping.Statements.Filter[]): void {
+  public static applyFilters(model: Mapping.Types.Model, pipeline: any[], ...filters: Mapping.Statements.Filter[]): void {
     for (const filter of filters) {
       pipeline.push({
-        $match: Filters.build(model, <Mapping.Types.Entity>filter)
+        $match: Filters.build(model, filter)
       });
     }
   }

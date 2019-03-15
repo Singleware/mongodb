@@ -7,7 +7,7 @@
   "name": "@singleware/mongodb",
   "description": "Singleware MongoDB driver package.",
   "license": "MIT",
-  "version": "1.1.42",
+  "version": "1.1.43",
   "main": "release/source/index.js",
   "types": "release/types/index.d.ts",
   "keywords": [
@@ -42,7 +42,8 @@
     "semi": true
   },
   "scripts": {
-    "build": "npm run make",
-    "make": "tsc"
+    "build": "npm run make-source && npm run make-examples",
+    "make-source": "npx tsc -p ./source",
+    "make-examples": "npx tsc -p ./examples"
   }
 }

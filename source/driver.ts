@@ -1,13 +1,13 @@
-/**
- * Copyright (C) 2018 Silas B. Domingos
+/*
+ * Copyright (C) 2018-2019 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Mongodb from 'mongodb';
 import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 
-import { Filters } from './filters';
 import { Fields } from './fields';
+import { Filters } from './filters';
 import { Schemas } from './schemas';
 
 /**
@@ -180,7 +180,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
     const virtual = <Mapping.Columns.VirtualRow>Mapping.Schema.getVirtualRow(model);
     const real = <Mapping.Columns.RealRow>Mapping.Schema.getRealRow(model);
     const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
-    Fields.applyFilters(model, pipeline, [filter]);
+    Fields.applyFilters(model, pipeline, filter);
     Fields.applyRelations(pipeline, Fields.getGrouping(real, virtual), joins);
     let cursor = manager.aggregate(pipeline);
     if (sort) {

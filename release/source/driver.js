@@ -8,15 +8,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 var Driver_1;
 "use strict";
-/**
- * Copyright (C) 2018 Silas B. Domingos
+/*
+ * Copyright (C) 2018-2019 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Mongodb = require("mongodb");
 const Class = require("@singleware/class");
 const Mapping = require("@singleware/mapping");
-const filters_1 = require("./filters");
 const fields_1 = require("./fields");
+const filters_1 = require("./filters");
 const schemas_1 = require("./schemas");
 /**
  * MongoDb driver class.
@@ -141,7 +141,7 @@ let Driver = Driver_1 = class Driver extends Class.Null {
         const virtual = Mapping.Schema.getVirtualRow(model);
         const real = Mapping.Schema.getRealRow(model);
         const manager = this.database.collection(Driver_1.getCollectionName(model));
-        fields_1.Fields.applyFilters(model, pipeline, [filter]);
+        fields_1.Fields.applyFilters(model, pipeline, filter);
         fields_1.Fields.applyRelations(pipeline, fields_1.Fields.getGrouping(real, virtual), joins);
         let cursor = manager.aggregate(pipeline);
         if (sort) {

@@ -1,7 +1,3 @@
-/**
- * Copyright (C) 2018 Silas B. Domingos
- * This source code is licensed under the MIT License as described in the file LICENSE.
- */
 import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 /**
@@ -9,18 +5,18 @@ import * as Mapping from '@singleware/mapping';
  */
 export declare class Filters extends Class.Null {
     /**
-     * Gets the corresponding column schema from the specified model type and column name.
+     * Gets the corresponding schema from the specified model type and column name.
      * @param model Model type.
      * @param name Column name.
      * @returns Returns the column schema.
-     * @throws Throws an exception when te specified column does not exists.
+     * @throws Throws an error when te specified column does not exists.
      */
     private static getSchema;
     /**
-     * Check whether the specified value type can be converted to another one.
-     * @param value Value to be converted.
+     * Converts the specified input value to an ObjectID when possible.
+     * @param value Input value.
      * @param schema Real column schema.
-     * @returns Returns the original or the converted value.
+     * @returns Returns the original value or the converted value.
      */
     private static castValue;
     /**

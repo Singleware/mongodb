@@ -8,8 +8,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 var Filters_1;
 "use strict";
-/**
- * Copyright (C) 2018 Silas B. Domingos
+/*
+ * Copyright (C) 2018-2019 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
@@ -20,24 +20,24 @@ const BSON = require("./bson");
  */
 let Filters = Filters_1 = class Filters extends Class.Null {
     /**
-     * Gets the corresponding column schema from the specified model type and column name.
+     * Gets the corresponding schema from the specified model type and column name.
      * @param model Model type.
      * @param name Column name.
      * @returns Returns the column schema.
-     * @throws Throws an exception when te specified column does not exists.
+     * @throws Throws an error when te specified column does not exists.
      */
     static getSchema(model, name) {
         const schema = Mapping.Schema.getRealColumn(model, name);
         if (!schema) {
-            throw new Error(`The column '${name}' does not exists.`);
+            throw new Error(`Column '${name}' does not exists.`);
         }
         return schema;
     }
     /**
-     * Check whether the specified value type can be converted to another one.
-     * @param value Value to be converted.
+     * Converts the specified input value to an ObjectID when possible.
+     * @param value Input value.
      * @param schema Real column schema.
-     * @returns Returns the original or the converted value.
+     * @returns Returns the original value or the converted value.
      */
     static castValue(value, schema) {
         if (schema.formats.includes(Mapping.Types.Format.ARRAY) && value instanceof Array && schema.model === BSON.ObjectID) {
