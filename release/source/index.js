@@ -8,8 +8,5 @@ var driver_1 = require("./driver");
 exports.Driver = driver_1.Driver;
 const BSON = require("./bson");
 exports.BSON = BSON;
-/**
- * Mapping configuration.
- */
-const Mapping = require("@singleware/mapping");
-Mapping.Mapper.addCommonType(BSON.ObjectID);
+const Converters = require("./converters");
+exports.Converters = Converters;

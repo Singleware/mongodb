@@ -7,8 +7,5 @@ export { Driver } from './driver';
 import * as BSON from './bson';
 export import BSON = BSON;
 
-/**
- * Mapping configuration.
- */
-import * as Mapping from '@singleware/mapping';
-Mapping.Mapper.addCommonType(BSON.ObjectID);
+import * as Converters from './converters';
+export import Converters = Converters;

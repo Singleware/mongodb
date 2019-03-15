@@ -8,3 +8,8 @@ import * as Source from 'mongodb';
  * Type to identify the document Id.
  */
 export const ObjectID = Source.ObjectID;
+
+/**
+ * Type to identify the document Id.
+ */
+export type ObjectID = Source.ObjectID;
