@@ -58,7 +58,7 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
    */
   @Class.Public()
   public async create(): Promise<string> {
-    return await this.insert({ firstName: 'First 1', lastName: 'Last 1' });
+    return await this.insert('*', { firstName: 'First 1', lastName: 'Last 1' });
   }
 
   /**
@@ -68,7 +68,7 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
    */
   @Class.Public()
   public async change(id: string): Promise<number> {
-    return await this.update({ id: { operator: Mapping.Statements.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
+    return await this.update('*', { id: { operator: Mapping.Statements.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
   }
 
   /**
@@ -79,6 +79,7 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
   @Class.Public()
   public async read(id: string): Promise<UserEntity[]> {
     return await this.find(
+      '*',
       {
         id: { operator: Mapping.Statements.Operator.EQUAL, value: id }
       },

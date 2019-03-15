@@ -20,18 +20,22 @@ const BSON = require("./bson");
  */
 let Filters = Filters_1 = class Filters extends Class.Null {
     /**
-     * Gets the corresponding schema from the specified model type and column name.
-     * @param model Model type.
-     * @param name Column name.
-     * @returns Returns the column schema.
-     * @throws Throws an error when te specified column does not exists.
+     * Converts the specified input array to an array of ObjectID when possible.
+     * @param input Input array.
+     * @param schema Real column schema.
+     * @returns Returns the original array or the converted array.
      */
-    static getSchema(model, name) {
-        const schema = Mapping.Schema.getRealColumn(model, name);
-        if (!schema) {
-            throw new Error(`Column '${name}' does not exists.`);
+    static castArray(input, schema) {
+        if (schema.formats.includes(Mapping.Types.Format.ARRAY) && schema.model === BSON.ObjectID) {
+            const list = [];
+            for (const value of input) {
+                if (BSON.ObjectID.isValid(value)) {
+                    list.push(new BSON.ObjectID(value));
+                }
+            }
+            return list;
         }
-        return schema;
+        return input;
     }
     /**
      * Converts the specified input value to an ObjectID when possible.
@@ -40,16 +44,9 @@ let Filters = Filters_1 = class Filters extends Class.Null {
      * @returns Returns the original value or the converted value.
      */
     static castValue(value, schema) {
-        if (schema.formats.includes(Mapping.Types.Format.ARRAY) && value instanceof Array && schema.model === BSON.ObjectID) {
-            for (let i = 0; i < value.length; ++i) {
-                if (BSON.ObjectID.isValid(value[i])) {
-                    value[i] = new BSON.ObjectID(value[i]);
-                }
-            }
-        }
-        else if (schema.formats.includes(Mapping.Types.Format.ID) && (typeof value === 'string' || typeof value === 'number')) {
+        if (schema.formats.includes(Mapping.Types.Format.ID) && (typeof value === 'string' || typeof value === 'number')) {
             if (BSON.ObjectID.isValid(value)) {
-                value = new BSON.ObjectID(value);
+                return new BSON.ObjectID(value);
             }
         }
         return value;
@@ -64,40 +61,39 @@ let Filters = Filters_1 = class Filters extends Class.Null {
     static build(model, filter) {
         const entity = {};
         for (const name in filter) {
-            const operation = filter[name];
-            const schema = Filters_1.getSchema(model, name);
+            const schema = Mapping.Schema.getRealColumn(model, name, Mapping.Types.View.ALL);
             const column = schema.alias || schema.name;
-            const value = Filters_1.castValue(operation.value, schema);
+            const operation = filter[name];
             switch (operation.operator) {
                 case Mapping.Statements.Operator.REGEX:
-                    entity[column] = { $regex: value };
+                    entity[column] = { $regex: Filters_1.castValue(operation.value, schema) };
                     break;
                 case Mapping.Statements.Operator.LESS:
-                    entity[column] = { $lt: value };
+                    entity[column] = { $lt: Filters_1.castValue(operation.value, schema) };
                     break;
                 case Mapping.Statements.Operator.LESS_OR_EQUAL:
-                    entity[column] = { $lte: value };
+                    entity[column] = { $lte: Filters_1.castValue(operation.value, schema) };
                     break;
                 case Mapping.Statements.Operator.EQUAL:
-                    entity[column] = { $eq: value };
+                    entity[column] = { $eq: Filters_1.castValue(operation.value, schema) };
                     break;
                 case Mapping.Statements.Operator.NOT_EQUAL:
-                    entity[column] = { $neq: value };
+                    entity[column] = { $neq: Filters_1.castValue(operation.value, schema) };
                     break;
                 case Mapping.Statements.Operator.GREATER_OR_EQUAL:
-                    entity[column] = { $gte: value };
+                    entity[column] = { $gte: Filters_1.castValue(operation.value, schema) };
                     break;
                 case Mapping.Statements.Operator.GREATER:
-                    entity[column] = { $gt: value };
+                    entity[column] = { $gt: Filters_1.castValue(operation.value, schema) };
                     break;
                 case Mapping.Statements.Operator.BETWEEN:
-                    entity[column] = { $gte: value[0], $lte: value[1] };
+                    entity[column] = { $gte: Filters_1.castValue(operation.value[0], schema), $lte: Filters_1.castValue(operation.value[1], schema) };
                     break;
                 case Mapping.Statements.Operator.CONTAIN:
-                    entity[column] = { $in: [...value] };
+                    entity[column] = { $in: Filters_1.castArray(operation.value, schema) };
                     break;
                 case Mapping.Statements.Operator.NOT_CONTAIN:
-                    entity[column] = { $nin: [...value] };
+                    entity[column] = { $nin: Filters_1.castArray(operation.value, schema) };
                     break;
             }
         }
@@ -106,7 +102,7 @@ let Filters = Filters_1 = class Filters extends Class.Null {
 };
 __decorate([
     Class.Private()
-], Filters, "getSchema", null);
+], Filters, "castArray", null);
 __decorate([
     Class.Private()
 ], Filters, "castValue", null);

@@ -10,17 +10,17 @@ import * as BSON from './bson';
  * Converters helper class.
  */
 @Class.Describe()
-export class Adapters extends Class.Null {
+export class Converters extends Class.Null {
   /**
    * Converts the specified input value to an ObjectID output.
    * @param input Input value.
    * @returns Returns the ObjectID or undefined when the input was not valid.
    */
   @Class.Public()
-  public static ObjectID(
-    input: string | number | BSON.ObjectID | string[] | number[] | BSON.ObjectID[]
-  ): BSON.ObjectID | BSON.ObjectID[] | undefined {
-    if (input instanceof Array) {
+  public static ObjectID<T extends string | number | BSON.ObjectID>(input: T | T[]): BSON.ObjectID | BSON.ObjectID[] | undefined {
+    if (input instanceof BSON.ObjectID) {
+      return input;
+    } else if (input instanceof Array) {
       const list = [];
       for (const value of input) {
         if (value instanceof BSON.ObjectID) {
@@ -29,9 +29,7 @@ export class Adapters extends Class.Null {
           list.push(new BSON.ObjectID(value));
         }
       }
-      return <BSON.ObjectID[]>list;
-    } else if (input instanceof BSON.ObjectID) {
-      return input;
+      return list;
     } else if (BSON.ObjectID.isValid(input)) {
       return new BSON.ObjectID(input);
     } else {

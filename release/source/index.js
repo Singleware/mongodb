@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 var driver_1 = require("./driver");
 exports.Driver = driver_1.Driver;
+var converters_1 = require("./converters");
+exports.Converters = converters_1.Converters;
 const BSON = require("./bson");
 exports.BSON = BSON;
-const Converters = require("./converters");
-exports.Converters = Converters;

@@ -37,34 +37,15 @@ export class Driver extends Class.Null implements Mapping.Driver {
   private database?: Mongodb.Db;
 
   /**
-   * Gets the collection name from the specified model type.
-   * @param model Mode type.
-   * @returns Returns the collection name.
-   * @throws Throws an error when the model type isn't valid.
-   */
-  @Class.Private()
-  private static getCollectionName(model: Mapping.Types.Model): string {
-    const name = Mapping.Schema.getStorage(model);
-    if (!name) {
-      throw new Error(`There is no collection name for the specified model type.`);
-    }
-    return name;
-  }
-
-  /**
    * Build and get the collection schema.
    * @param model Model type.
    * @returns Returns the collection validation object.
    */
   @Class.Private()
   private static getCollectionSchema(model: Mapping.Types.Model): Object {
-    const schema = Mapping.Schema.getRealRow(model);
-    if (!schema) {
-      throw new TypeError(`The specified model type is not valid.`);
-    }
     return {
       validator: {
-        $jsonSchema: Schemas.build(schema)
+        $jsonSchema: Schemas.build(Mapping.Schema.getRealRow(model, Mapping.Types.View.ALL))
       },
       validationLevel: 'strict',
       validationAction: 'error'
@@ -118,10 +99,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async modifyCollection(model: Class.Constructor<Mapping.Types.Entity>): Promise<void> {
-    await (<Mongodb.Db>this.database).command({
-      collMod: Driver.getCollectionName(model),
-      ...Driver.getCollectionSchema(model)
-    });
+    await (<Mongodb.Db>this.database).command({ collMod: Mapping.Schema.getStorage(model), ...Driver.getCollectionSchema(model) });
   }
 
   /**
@@ -130,10 +108,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async createCollection(model: Mapping.Types.Model): Promise<void> {
-    await (<Mongodb.Db>this.database).command({
-      create: Driver.getCollectionName(model),
-      ...Driver.getCollectionSchema(model)
-    });
+    await (<Mongodb.Db>this.database).command({ create: Mapping.Schema.getStorage(model), ...Driver.getCollectionSchema(model) });
   }
 
   /**
@@ -143,25 +118,26 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async hasCollection(model: Mapping.Types.Model): Promise<boolean> {
-    return (await (<Mongodb.Db>this.database).listCollections({ name: Driver.getCollectionName(model) }).toArray()).length === 1;
+    return (await (<Mongodb.Db>this.database).listCollections({ name: Mapping.Schema.getStorage(model) }).toArray()).length === 1;
   }
 
   /**
    * Inserts all specified entities into the database.
    * @param model Model type.
+   * @param view View mode.
    * @param entities Entity list.
    * @returns Returns the list inserted entities.
    */
   @Class.Public()
-  public async insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, entities: T[]): Promise<string[]> {
-    const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
+  public async insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, view: string, entities: T[]): Promise<string[]> {
+    const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
     return Object.values((<any>await manager.insertMany(entities)).insertedIds);
   }
 
   /**
-   * Finds the corresponding entity from the database.
+   * Find the corresponding entities from the database.
    * @param model Model type.
-   * @param joins List of joins.
+   * @param view View mode.
    * @param filter Field filters.
    * @param sort Sorting fields.
    * @param limit Result limits.
@@ -171,17 +147,15 @@ export class Driver extends Class.Null implements Mapping.Driver {
   @Class.Public()
   public async find<T extends Mapping.Types.Entity>(
     model: Mapping.Types.Model<T>,
-    joins: Mapping.Statements.Join[],
+    view: string,
     filter: Mapping.Statements.Filter,
     sort?: Mapping.Statements.Sort,
     limit?: Mapping.Statements.Limit
   ): Promise<T[]> {
     const pipeline = <any[]>[];
-    const virtual = <Mapping.Columns.VirtualRow>Mapping.Schema.getVirtualRow(model);
-    const real = <Mapping.Columns.RealRow>Mapping.Schema.getRealRow(model);
-    const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
-    Fields.applyFilters(model, pipeline, filter);
-    Fields.applyRelations(pipeline, Fields.getGrouping(real, virtual), joins);
+    const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
+    Fields.applyFilters(pipeline, model, filter);
+    Fields.applyRelations(pipeline, model, view);
     let cursor = manager.aggregate(pipeline);
     if (sort) {
       cursor = cursor.sort(Fields.getSorting(sort));
@@ -189,49 +163,51 @@ export class Driver extends Class.Null implements Mapping.Driver {
     if (limit) {
       cursor = limit ? cursor.skip(limit.start).limit(limit.count) : cursor;
     }
-    return Fields.purgeNull(real, await cursor.toArray());
+    return Fields.purgeNull(model, view, await cursor.toArray());
   }
 
   /**
    * Find the entity that corresponds to the specified entity id.
    * @param model Model type.
-   * @param joins List of joins.
+   * @param view View mode.
    * @param id Entity id.
    * @returns Returns a promise to get the found entity or undefined when the entity was not found.
    */
   @Class.Public()
-  public async findById<T extends Mapping.Types.Entity>(
-    model: Mapping.Types.Model<T>,
-    joins: Mapping.Statements.Join[],
-    id: any
-  ): Promise<T | undefined> {
-    return (await this.find<T>(model, joins, Fields.getPrimaryFilter(model, id)))[0];
+  public async findById<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, view: string, id: any): Promise<T | undefined> {
+    return (await this.find<T>(model, view, Fields.getPrimaryFilter(model, id)))[0];
   }
 
   /**
    * Update all entities that corresponds to the specified filter.
    * @param model Model type.
-   * @param entity Entity to be updated.
+   * @param view View mode.
    * @param filter Fields filter.
+   * @param entity Entity to be updated.
    * @returns Returns the number of updated entities.
    */
   @Class.Public()
-  public async update(model: Mapping.Types.Model, entity: Mapping.Types.Entity, filter: Mapping.Statements.Filter): Promise<number> {
-    const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
-    const result = await manager.updateMany(Filters.build(model, filter), { $set: entity });
-    return result.modifiedCount;
+  public async update(
+    model: Mapping.Types.Model,
+    view: string,
+    filter: Mapping.Statements.Filter,
+    entity: Mapping.Types.Entity
+  ): Promise<number> {
+    const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
+    return (await manager.updateMany(Filters.build(model, filter), { $set: entity })).modifiedCount;
   }
 
   /**
    * Updates the entity that corresponds to the specified entity id.
    * @param model Model type.
-   * @param entity Entity to be updated.
+   * @param view View mode.
    * @param id Entity id.
+   * @param entity Entity to be updated.
    * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
    */
   @Class.Public()
-  public async updateById(model: Mapping.Types.Model, entity: Mapping.Types.Model, id: any): Promise<boolean> {
-    return (await this.update(model, entity, Fields.getPrimaryFilter(model, id))) === 1;
+  public async updateById(model: Mapping.Types.Model, view: string, id: any, entity: Mapping.Types.Model): Promise<boolean> {
+    return (await this.update(model, view, Fields.getPrimaryFilter(model, id), entity)) === 1;
   }
 
   /**
@@ -242,7 +218,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async delete(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Promise<number> {
-    const manager = (<Mongodb.Db>this.database).collection(Driver.getCollectionName(model));
+    const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
     return (await manager.deleteMany(Filters.build(model, filter))).deletedCount || 0;
   }
 

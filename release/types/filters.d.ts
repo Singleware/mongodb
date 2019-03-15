@@ -5,13 +5,12 @@ import * as Mapping from '@singleware/mapping';
  */
 export declare class Filters extends Class.Null {
     /**
-     * Gets the corresponding schema from the specified model type and column name.
-     * @param model Model type.
-     * @param name Column name.
-     * @returns Returns the column schema.
-     * @throws Throws an error when te specified column does not exists.
+     * Converts the specified input array to an array of ObjectID when possible.
+     * @param input Input array.
+     * @param schema Real column schema.
+     * @returns Returns the original array or the converted array.
      */
-    private static getSchema;
+    private static castArray;
     /**
      * Converts the specified input value to an ObjectID when possible.
      * @param value Input value.

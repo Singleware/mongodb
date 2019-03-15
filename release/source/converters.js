@@ -15,14 +15,17 @@ const BSON = require("./bson");
 /**
  * Converters helper class.
  */
-let Adapters = class Adapters extends Class.Null {
+let Converters = class Converters extends Class.Null {
     /**
      * Converts the specified input value to an ObjectID output.
      * @param input Input value.
      * @returns Returns the ObjectID or undefined when the input was not valid.
      */
     static ObjectID(input) {
-        if (input instanceof Array) {
+        if (input instanceof BSON.ObjectID) {
+            return input;
+        }
+        else if (input instanceof Array) {
             const list = [];
             for (const value of input) {
                 if (value instanceof BSON.ObjectID) {
@@ -34,9 +37,6 @@ let Adapters = class Adapters extends Class.Null {
             }
             return list;
         }
-        else if (input instanceof BSON.ObjectID) {
-            return input;
-        }
         else if (BSON.ObjectID.isValid(input)) {
             return new BSON.ObjectID(input);
         }
@@ -47,8 +47,8 @@ let Adapters = class Adapters extends Class.Null {
 };
 __decorate([
     Class.Public()
-], Adapters, "ObjectID", null);
-Adapters = __decorate([
+], Converters, "ObjectID", null);
+Converters = __decorate([
     Class.Describe()
-], Adapters);
-exports.Adapters = Adapters;
+], Converters);
+exports.Converters = Converters;

@@ -13,6 +13,71 @@ import { Filters } from './filters';
 @Class.Describe()
 export class Fields extends Class.Null {
   /**
+   * Build and get the grouping of fields based on the specified real and virtual column schemas.
+   * @param real Real columns schema.
+   * @param virtual Virtual schema.
+   * @returns Returns the grouping entity.
+   */
+  @Class.Private()
+  private static getGrouping(real: Mapping.Columns.RealRow, virtual: Mapping.Columns.VirtualRow): Mapping.Types.Entity {
+    const source = <Mapping.Columns.RealRow | Mapping.Columns.VirtualRow>{ ...real, ...virtual };
+    const grouping = <Mapping.Types.Entity>{};
+    for (const id in source) {
+      const schema = source[id];
+      const name = (<Mapping.Types.Entity>schema).alias || schema.name;
+      grouping[name] = { $first: `$${name}` };
+    }
+    grouping._id = '$_id';
+    return grouping;
+  }
+
+  /**
+   * Apply any relationship in the specified pipeline according to the model type and view mode.
+   * @param pipeline Target pipeline.
+   * @param model Model type.
+   * @param view View mode.
+   */
+  @Class.Public()
+  public static applyRelations(pipeline: Mapping.Types.Entity[], model: Mapping.Types.Model, view: string): void {
+    const real = Mapping.Schema.getRealRow(model, view);
+    const joint = Mapping.Schema.getJointRow(model, view);
+    const virtual = Mapping.Schema.getVirtualRow(model, view);
+    const grouping = this.getGrouping(real, virtual);
+    for (const column in joint) {
+      const schema = joint[column];
+      if (schema.multiple) {
+        pipeline.push({ $unwind: { path: `\$${schema.local}`, preserveNullAndEmptyArrays: true } });
+      }
+      pipeline.push({
+        $lookup: {
+          from: Mapping.Schema.getStorage(schema.model),
+          let: { id: `$${schema.local}` },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $eq: [`$${schema.foreign}`, `$$id`]
+                }
+              }
+            },
+            {
+              $group: this.getGrouping(Mapping.Schema.getRealRow(schema.model, view), Mapping.Schema.getVirtualRow(schema.model, view))
+            }
+          ],
+          as: schema.virtual
+        }
+      });
+      const group = { ...grouping };
+      if (schema.multiple) {
+        pipeline.push({ $unwind: { path: `\$${schema.virtual}`, preserveNullAndEmptyArrays: true } });
+        group[schema.local] = { $push: `$${schema.local}` };
+        group[schema.virtual] = { $push: `$${schema.virtual}` };
+      }
+      pipeline.push({ $group: group });
+    }
+  }
+
+  /**
    * Build and get the primary filter based in the specified model type.
    * @param model Model type.
    * @param value Primary id value.
@@ -21,11 +86,8 @@ export class Fields extends Class.Null {
    */
   @Class.Public()
   public static getPrimaryFilter(model: Mapping.Types.Model, value: any): Mapping.Types.Entity {
-    const primary = <Mapping.Columns.Real>Mapping.Schema.getRealPrimaryColumn(model);
-    if (!primary) {
-      throw new Error(`There is no primary column to be used.`);
-    }
-    const filters = <any>{};
+    const primary = Mapping.Schema.getPrimaryColumn(model);
+    const filters = <Mapping.Types.Entity>{};
     filters[primary.name] = {
       operator: Mapping.Statements.Operator.EQUAL,
       value: value
@@ -34,22 +96,16 @@ export class Fields extends Class.Null {
   }
 
   /**
-   * Build and get the field grouping based on the specified real and virtual column schemas.
-   * @param real Real columns schema.
-   * @param virtual Virtual schema.
-   * @returns Returns the grouping entity.
+   * Apply the specified filters into the target pipeline.
+   * @param pipeline Target pipeline.
+   * @param model Model type.
+   * @param filters Filters to be applied.
    */
   @Class.Public()
-  public static getGrouping(real: Mapping.Columns.RealRow, virtual: Mapping.Columns.VirtualRow): Mapping.Types.Entity {
-    const source = <Mapping.Columns.RealRow | Mapping.Columns.VirtualRow>{ ...real, ...virtual };
-    const grouping = <Mapping.Types.Entity>{};
-    for (const id in source) {
-      const column = <Mapping.Types.Entity>source[id];
-      const name = column.alias || column.name;
-      grouping[name] = { $first: `$${name}` };
+  public static applyFilters(pipeline: any[], model: Mapping.Types.Model, ...filters: Mapping.Statements.Filter[]): void {
+    for (const filter of filters) {
+      pipeline.push({ $match: Filters.build(model, filter) });
     }
-    grouping._id = '$_id';
-    return grouping;
   }
 
   /**
@@ -74,70 +130,15 @@ export class Fields extends Class.Null {
   }
 
   /**
-   * Apply the specified grouping and join list into the target pipeline.
-   * @param pipeline Target pipeline.
-   * @param grouping Default grouping.
-   * @param joins List of joins.
-   */
-  @Class.Public()
-  public static applyRelations(pipeline: Mapping.Types.Entity[], grouping: Mapping.Types.Entity, joins: Mapping.Statements.Join[]): void {
-    for (const column of joins) {
-      const group = { ...grouping };
-      if (column.multiple) {
-        pipeline.push({
-          $unwind: {
-            path: `\$${column.local}`,
-            preserveNullAndEmptyArrays: true
-          }
-        });
-      }
-      pipeline.push({
-        $lookup: {
-          from: column.storage,
-          localField: column.local,
-          foreignField: column.foreign,
-          as: column.virtual
-        }
-      });
-      if (column.multiple) {
-        pipeline.push({
-          $unwind: {
-            path: `\$${column.virtual}`,
-            preserveNullAndEmptyArrays: true
-          }
-        });
-        group[column.local] = { $push: `$${column.local}` };
-        group[column.virtual] = { $push: `$${column.virtual}` };
-      }
-      pipeline.push({
-        $group: group
-      });
-    }
-  }
-
-  /**
-   * Apply the specified filters into the target pipeline.
-   * @param model Model type.
-   * @param pipeline Target pipeline.
-   * @param filters Filters to be applied.
-   */
-  @Class.Public()
-  public static applyFilters(model: Mapping.Types.Model, pipeline: any[], ...filters: Mapping.Statements.Filter[]): void {
-    for (const filter of filters) {
-      pipeline.push({
-        $match: Filters.build(model, filter)
-      });
-    }
-  }
-
-  /**
    * Purge all null fields from the specified entity list.
-   * @param real Real column schema.
-   * @param entities Entity list to be purged.
-   * @returns Returns the purged entity list.
+   * @param model Entity model.
+   * @param view View mode.
+   * @param entities List of entities to be cleaned.
+   * @returns Returns the cleaned entity list.
    */
   @Class.Public()
-  public static purgeNull<T extends Mapping.Types.Entity>(real: Mapping.Columns.RealRow, entities: T[]): T[] {
+  public static purgeNull<T extends Mapping.Types.Entity>(model: Mapping.Types.Model, view: string, entities: T[]): T[] {
+    const real = Mapping.Schema.getRealRow(model, view);
     let schema;
     for (let i = 0; i < entities.length; ++i) {
       for (const column in entities[i]) {

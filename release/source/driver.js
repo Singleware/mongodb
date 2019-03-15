@@ -23,31 +23,14 @@ const schemas_1 = require("./schemas");
  */
 let Driver = Driver_1 = class Driver extends Class.Null {
     /**
-     * Gets the collection name from the specified model type.
-     * @param model Mode type.
-     * @returns Returns the collection name.
-     * @throws Throws an error when the model type isn't valid.
-     */
-    static getCollectionName(model) {
-        const name = Mapping.Schema.getStorage(model);
-        if (!name) {
-            throw new Error(`There is no collection name for the specified model type.`);
-        }
-        return name;
-    }
-    /**
      * Build and get the collection schema.
      * @param model Model type.
      * @returns Returns the collection validation object.
      */
     static getCollectionSchema(model) {
-        const schema = Mapping.Schema.getRealRow(model);
-        if (!schema) {
-            throw new TypeError(`The specified model type is not valid.`);
-        }
         return {
             validator: {
-                $jsonSchema: schemas_1.Schemas.build(schema)
+                $jsonSchema: schemas_1.Schemas.build(Mapping.Schema.getRealRow(model, Mapping.Types.View.ALL))
             },
             validationLevel: 'strict',
             validationAction: 'error'
@@ -93,20 +76,14 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @param model Model type.
      */
     async modifyCollection(model) {
-        await this.database.command({
-            collMod: Driver_1.getCollectionName(model),
-            ...Driver_1.getCollectionSchema(model)
-        });
+        await this.database.command({ collMod: Mapping.Schema.getStorage(model), ...Driver_1.getCollectionSchema(model) });
     }
     /**
      * Creates a new collection by the specified model type.
      * @param model Model type.
      */
     async createCollection(model) {
-        await this.database.command({
-            create: Driver_1.getCollectionName(model),
-            ...Driver_1.getCollectionSchema(model)
-        });
+        await this.database.command({ create: Mapping.Schema.getStorage(model), ...Driver_1.getCollectionSchema(model) });
     }
     /**
      * Determines whether the collection from the specified model exists or not.
@@ -114,35 +91,34 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @returns Returns true when the collection exists, false otherwise.
      */
     async hasCollection(model) {
-        return (await this.database.listCollections({ name: Driver_1.getCollectionName(model) }).toArray()).length === 1;
+        return (await this.database.listCollections({ name: Mapping.Schema.getStorage(model) }).toArray()).length === 1;
     }
     /**
      * Inserts all specified entities into the database.
      * @param model Model type.
+     * @param view View mode.
      * @param entities Entity list.
      * @returns Returns the list inserted entities.
      */
-    async insert(model, entities) {
-        const manager = this.database.collection(Driver_1.getCollectionName(model));
+    async insert(model, view, entities) {
+        const manager = this.database.collection(Mapping.Schema.getStorage(model));
         return Object.values((await manager.insertMany(entities)).insertedIds);
     }
     /**
-     * Finds the corresponding entity from the database.
+     * Find the corresponding entities from the database.
      * @param model Model type.
-     * @param joins List of joins.
+     * @param view View mode.
      * @param filter Field filters.
      * @param sort Sorting fields.
      * @param limit Result limits.
      * @returns Returns the  promise to get the list of entities found.
      * @returns Returns the list of entities found.
      */
-    async find(model, joins, filter, sort, limit) {
+    async find(model, view, filter, sort, limit) {
         const pipeline = [];
-        const virtual = Mapping.Schema.getVirtualRow(model);
-        const real = Mapping.Schema.getRealRow(model);
-        const manager = this.database.collection(Driver_1.getCollectionName(model));
-        fields_1.Fields.applyFilters(model, pipeline, filter);
-        fields_1.Fields.applyRelations(pipeline, fields_1.Fields.getGrouping(real, virtual), joins);
+        const manager = this.database.collection(Mapping.Schema.getStorage(model));
+        fields_1.Fields.applyFilters(pipeline, model, filter);
+        fields_1.Fields.applyRelations(pipeline, model, view);
         let cursor = manager.aggregate(pipeline);
         if (sort) {
             cursor = cursor.sort(fields_1.Fields.getSorting(sort));
@@ -150,39 +126,40 @@ let Driver = Driver_1 = class Driver extends Class.Null {
         if (limit) {
             cursor = limit ? cursor.skip(limit.start).limit(limit.count) : cursor;
         }
-        return fields_1.Fields.purgeNull(real, await cursor.toArray());
+        return fields_1.Fields.purgeNull(model, view, await cursor.toArray());
     }
     /**
      * Find the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param joins List of joins.
+     * @param view View mode.
      * @param id Entity id.
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
-    async findById(model, joins, id) {
-        return (await this.find(model, joins, fields_1.Fields.getPrimaryFilter(model, id)))[0];
+    async findById(model, view, id) {
+        return (await this.find(model, view, fields_1.Fields.getPrimaryFilter(model, id)))[0];
     }
     /**
      * Update all entities that corresponds to the specified filter.
      * @param model Model type.
-     * @param entity Entity to be updated.
+     * @param view View mode.
      * @param filter Fields filter.
+     * @param entity Entity to be updated.
      * @returns Returns the number of updated entities.
      */
-    async update(model, entity, filter) {
-        const manager = this.database.collection(Driver_1.getCollectionName(model));
-        const result = await manager.updateMany(filters_1.Filters.build(model, filter), { $set: entity });
-        return result.modifiedCount;
+    async update(model, view, filter, entity) {
+        const manager = this.database.collection(Mapping.Schema.getStorage(model));
+        return (await manager.updateMany(filters_1.Filters.build(model, filter), { $set: entity })).modifiedCount;
     }
     /**
      * Updates the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param entity Entity to be updated.
+     * @param view View mode.
      * @param id Entity id.
+     * @param entity Entity to be updated.
      * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
      */
-    async updateById(model, entity, id) {
-        return (await this.update(model, entity, fields_1.Fields.getPrimaryFilter(model, id))) === 1;
+    async updateById(model, view, id, entity) {
+        return (await this.update(model, view, fields_1.Fields.getPrimaryFilter(model, id), entity)) === 1;
     }
     /**
      * Delete all entities that corresponds to the specified filter.
@@ -191,7 +168,7 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @return Returns the number of deleted entities.
      */
     async delete(model, filter) {
-        const manager = this.database.collection(Driver_1.getCollectionName(model));
+        const manager = this.database.collection(Mapping.Schema.getStorage(model));
         return (await manager.deleteMany(filters_1.Filters.build(model, filter))).deletedCount || 0;
     }
     /**
@@ -256,9 +233,6 @@ __decorate([
 __decorate([
     Class.Private()
 ], Driver, "options", void 0);
-__decorate([
-    Class.Private()
-], Driver, "getCollectionName", null);
 __decorate([
     Class.Private()
 ], Driver, "getCollectionSchema", null);

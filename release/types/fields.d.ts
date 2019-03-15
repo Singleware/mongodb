@@ -5,6 +5,20 @@ import * as Mapping from '@singleware/mapping';
  */
 export declare class Fields extends Class.Null {
     /**
+     * Build and get the grouping of fields based on the specified real and virtual column schemas.
+     * @param real Real columns schema.
+     * @param virtual Virtual schema.
+     * @returns Returns the grouping entity.
+     */
+    private static getGrouping;
+    /**
+     * Apply any relationship in the specified pipeline according to the model type and view mode.
+     * @param pipeline Target pipeline.
+     * @param model Model type.
+     * @param view View mode.
+     */
+    static applyRelations(pipeline: Mapping.Types.Entity[], model: Mapping.Types.Model, view: string): void;
+    /**
      * Build and get the primary filter based in the specified model type.
      * @param model Model type.
      * @param value Primary id value.
@@ -13,12 +27,12 @@ export declare class Fields extends Class.Null {
      */
     static getPrimaryFilter(model: Mapping.Types.Model, value: any): Mapping.Types.Entity;
     /**
-     * Build and get the field grouping based on the specified real and virtual column schemas.
-     * @param real Real columns schema.
-     * @param virtual Virtual schema.
-     * @returns Returns the grouping entity.
+     * Apply the specified filters into the target pipeline.
+     * @param pipeline Target pipeline.
+     * @param model Model type.
+     * @param filters Filters to be applied.
      */
-    static getGrouping(real: Mapping.Columns.RealRow, virtual: Mapping.Columns.VirtualRow): Mapping.Types.Entity;
+    static applyFilters(pipeline: any[], model: Mapping.Types.Model, ...filters: Mapping.Statements.Filter[]): void;
     /**
      * Build and get the sorting entity based on the specified sort object.
      * @param sort Columns to sort.
@@ -26,24 +40,11 @@ export declare class Fields extends Class.Null {
      */
     static getSorting(sort: Mapping.Statements.Sort): Mapping.Types.Entity;
     /**
-     * Apply the specified grouping and join list into the target pipeline.
-     * @param pipeline Target pipeline.
-     * @param grouping Default grouping.
-     * @param joins List of joins.
-     */
-    static applyRelations(pipeline: Mapping.Types.Entity[], grouping: Mapping.Types.Entity, joins: Mapping.Statements.Join[]): void;
-    /**
-     * Apply the specified filters into the target pipeline.
-     * @param model Model type.
-     * @param pipeline Target pipeline.
-     * @param filters Filters to be applied.
-     */
-    static applyFilters(model: Mapping.Types.Model, pipeline: any[], ...filters: Mapping.Statements.Filter[]): void;
-    /**
      * Purge all null fields from the specified entity list.
-     * @param real Real column schema.
-     * @param entities Entity list to be purged.
-     * @returns Returns the purged entity list.
+     * @param model Entity model.
+     * @param view View mode.
+     * @param entities List of entities to be cleaned.
+     * @returns Returns the cleaned entity list.
      */
-    static purgeNull<T extends Mapping.Types.Entity>(real: Mapping.Columns.RealRow, entities: T[]): T[];
+    static purgeNull<T extends Mapping.Types.Entity>(model: Mapping.Types.Model, view: string, entities: T[]): T[];
 }

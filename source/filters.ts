@@ -13,19 +13,23 @@ import * as BSON from './bson';
 @Class.Describe()
 export class Filters extends Class.Null {
   /**
-   * Gets the corresponding schema from the specified model type and column name.
-   * @param model Model type.
-   * @param name Column name.
-   * @returns Returns the column schema.
-   * @throws Throws an error when te specified column does not exists.
+   * Converts the specified input array to an array of ObjectID when possible.
+   * @param input Input array.
+   * @param schema Real column schema.
+   * @returns Returns the original array or the converted array.
    */
   @Class.Private()
-  private static getSchema(model: Mapping.Types.Model, name: string): Mapping.Columns.Real {
-    const schema = Mapping.Schema.getRealColumn(model, name);
-    if (!schema) {
-      throw new Error(`Column '${name}' does not exists.`);
+  private static castArray<T extends string | number>(input: T[], schema: Mapping.Columns.Real): T[] | BSON.ObjectID[] {
+    if (schema.formats.includes(Mapping.Types.Format.ARRAY) && schema.model === BSON.ObjectID) {
+      const list = [];
+      for (const value of input) {
+        if (BSON.ObjectID.isValid(value)) {
+          list.push(new BSON.ObjectID(value));
+        }
+      }
+      return list;
     }
-    return schema;
+    return input;
   }
 
   /**
@@ -35,16 +39,10 @@ export class Filters extends Class.Null {
    * @returns Returns the original value or the converted value.
    */
   @Class.Private()
-  private static castValue<T>(value: T, schema: Mapping.Columns.Real): T | typeof BSON.ObjectID {
-    if (schema.formats.includes(Mapping.Types.Format.ARRAY) && value instanceof Array && schema.model === BSON.ObjectID) {
-      for (let i = 0; i < value.length; ++i) {
-        if (BSON.ObjectID.isValid(value[i])) {
-          value[i] = new BSON.ObjectID(value[i]);
-        }
-      }
-    } else if (schema.formats.includes(Mapping.Types.Format.ID) && (typeof value === 'string' || typeof value === 'number')) {
-      if (BSON.ObjectID.isValid(<any>value)) {
-        value = <any>new BSON.ObjectID(<any>value);
+  private static castValue<T>(value: T, schema: Mapping.Columns.Real): T | BSON.ObjectID {
+    if (schema.formats.includes(Mapping.Types.Format.ID) && (typeof value === 'string' || typeof value === 'number')) {
+      if (BSON.ObjectID.isValid(value)) {
+        return new BSON.ObjectID(value);
       }
     }
     return value;
@@ -61,40 +59,39 @@ export class Filters extends Class.Null {
   public static build(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Mapping.Types.Entity {
     const entity = <Mapping.Types.Entity>{};
     for (const name in filter) {
-      const operation = filter[name];
-      const schema = Filters.getSchema(model, name);
+      const schema = Mapping.Schema.getRealColumn(model, name, Mapping.Types.View.ALL);
       const column = schema.alias || schema.name;
-      const value = Filters.castValue(operation.value, schema);
+      const operation = filter[name];
       switch (operation.operator) {
         case Mapping.Statements.Operator.REGEX:
-          entity[column] = { $regex: value };
+          entity[column] = { $regex: Filters.castValue(operation.value, schema) };
           break;
         case Mapping.Statements.Operator.LESS:
-          entity[column] = { $lt: value };
+          entity[column] = { $lt: Filters.castValue(operation.value, schema) };
           break;
         case Mapping.Statements.Operator.LESS_OR_EQUAL:
-          entity[column] = { $lte: value };
+          entity[column] = { $lte: Filters.castValue(operation.value, schema) };
           break;
         case Mapping.Statements.Operator.EQUAL:
-          entity[column] = { $eq: value };
+          entity[column] = { $eq: Filters.castValue(operation.value, schema) };
           break;
         case Mapping.Statements.Operator.NOT_EQUAL:
-          entity[column] = { $neq: value };
+          entity[column] = { $neq: Filters.castValue(operation.value, schema) };
           break;
         case Mapping.Statements.Operator.GREATER_OR_EQUAL:
-          entity[column] = { $gte: value };
+          entity[column] = { $gte: Filters.castValue(operation.value, schema) };
           break;
         case Mapping.Statements.Operator.GREATER:
-          entity[column] = { $gt: value };
+          entity[column] = { $gt: Filters.castValue(operation.value, schema) };
           break;
         case Mapping.Statements.Operator.BETWEEN:
-          entity[column] = { $gte: value[0], $lte: value[1] };
+          entity[column] = { $gte: Filters.castValue(operation.value[0], schema), $lte: Filters.castValue(operation.value[1], schema) };
           break;
         case Mapping.Statements.Operator.CONTAIN:
-          entity[column] = { $in: [...value] };
+          entity[column] = { $in: Filters.castArray(operation.value, schema) };
           break;
         case Mapping.Statements.Operator.NOT_CONTAIN:
-          entity[column] = { $nin: [...value] };
+          entity[column] = { $nin: Filters.castArray(operation.value, schema) };
           break;
       }
     }
