@@ -18,65 +18,273 @@ const filters_1 = require("./filters");
  */
 let Fields = class Fields extends Class.Null {
     /**
-     * Build and get the grouping of fields based on the specified real and virtual column schemas.
-     * @param real Real columns schema.
-     * @param virtual Virtual schema.
-     * @returns Returns the grouping entity.
+     * Gets a new real level entity based on the specified level information.
+     * @param column Level column schema.
+     * @param levels Level list.
+     * @returns Returns the generated level entity.
      */
-    static getGrouping(real, virtual) {
-        const source = { ...real, ...virtual };
-        const grouping = {};
-        for (const id in source) {
-            const schema = source[id];
-            const name = schema.alias || schema.name;
-            grouping[name] = { $first: `$${name}` };
+    static getRealLevel(column, levels) {
+        const current = levels[levels.length - 1];
+        return {
+            name: current ? `${current.name}.${column.name}` : column.name,
+            multiple: column.formats.includes(Mapping.Types.Format.ARRAY),
+            column: column,
+            previous: current
+        };
+    }
+    /**
+     * Gets a new virtual level entity based on the specified level information.
+     * @param column Level column schema.
+     * @param levels Level list.
+     * @returns Returns the level entity.
+     */
+    static getVirtualLevel(column, levels) {
+        const current = levels[levels.length - 1];
+        return {
+            name: current ? `${current.name}.${column.local}` : column.local,
+            virtual: current ? `${current.name}.${column.name}` : column.name,
+            multiple: column.multiple,
+            column: column,
+            previous: current
+        };
+    }
+    /**
+     * Gets a new row group based on the specified model type and view modes.
+     * @param model Model type.
+     * @param views Views modes.
+     * @param path Path to determine whether this group is a subgroup.
+     * @returns Returns the generated row group.
+     */
+    static getGrouping(model, views, path) {
+        const group = {};
+        const columns = {
+            ...Mapping.Schema.getRealRow(model, ...views),
+            ...Mapping.Schema.getVirtualRow(model, ...views)
+        };
+        for (const name in columns) {
+            const schema = columns[name];
+            const column = schema.alias || schema.name;
+            group[column] = path ? `$${path}.${column}` : { $first: `$${column}` };
         }
-        grouping._id = '$_id';
-        return grouping;
+        return group;
+    }
+    /**
+     * Gets a new compound Id based on the specified id and the list of levels.
+     * @param id Main id field.
+     * @param levels List of levels.
+     * @returns Returns the composed id object.
+     */
+    static getComposedId(id, ...levels) {
+        const compound = {
+            _id: `${id}`
+        };
+        for (const level of levels) {
+            compound[level.column.name] = `$_${level.column.name}Index`;
+        }
+        return compound;
+    }
+    /**
+     * Decompose all groups in the specified list of levels to the given pipeline.
+     * @param pipeline Current pipeline.
+     * @param levels List of levels.
+     * @returns Returns the list of decomposed levels.
+     */
+    static decomposeAll(pipeline, levels) {
+        let multiples = [];
+        for (const level of levels) {
+            if (level.multiple) {
+                const unwind = {
+                    path: `\$${level.name}`,
+                    includeArrayIndex: `_${level.column.name}Index`,
+                    preserveNullAndEmptyArrays: true
+                };
+                pipeline.push({ $unwind: unwind });
+                multiples.push(level);
+            }
+        }
+        return multiples;
+    }
+    /**
+     * Compose a subgroup to the given pipeline.
+     * @param pipeline Current pipeline.
+     * @param group Parent group.
+     * @param views Current view modes.
+     * @param level Current level.
+     * @param last Last level.
+     */
+    static composeSubgroup(pipeline, group, views, level, last) {
+        const name = level.previous ? `_${level.column.name}` : level.column.name;
+        const internal = this.getGrouping(level.column.model, views, level.name);
+        internal[last.column.name] = `$_${last.column.name}`;
+        if (last.column.type === 'joint') {
+            internal[last.column.local] = `$_${last.column.local}`;
+        }
+        group[name] = { $push: internal };
+        pipeline.push({ $group: group });
+        if (!level.multiple) {
+            pipeline.push({ $unwind: { path: `$${name}` } });
+        }
+    }
+    /**
+     * Compose a group into the pipeline.
+     * @param pipeline Current pipeline.
+     * @param group Current group.
+     * @param level Current level.
+     */
+    static composeGroup(pipeline, group, level) {
+        const name = level.previous ? `_${level.column.name}` : level.column.name;
+        if (level.column.type === 'joint') {
+            const local = level.previous ? `_${level.column.local}` : level.column.local;
+            if (level.multiple) {
+                group[name] = { $push: `$${level.virtual}` };
+                group[local] = { $push: `$${level.name}` };
+            }
+            else {
+                group[name] = { $first: `$${level.virtual}` };
+                group[local] = { $first: `$${level.name}` };
+            }
+        }
+        else if (level.multiple) {
+            group[name] = { $push: `$${level.name}` };
+        }
+        else {
+            group[name] = { $first: `$${level.name}` };
+        }
+        pipeline.push({ $group: group });
+    }
+    /**
+     * Compose all decomposed levels to the given pipeline.
+     * @param pipeline Current pipeline.
+     * @param fields List of fields.
+     * @param views View modes.
+     * @param level First decomposed level.
+     * @param multiples List of decomposed levels.
+     */
+    static composeAll(pipeline, fields, views, level, multiples) {
+        let multiple = multiples.pop();
+        let currentId = '$_id';
+        let last;
+        do {
+            const group = { ...fields };
+            if (level.previous) {
+                group['_realId'] = { $first: currentId };
+            }
+            if (multiple === level) {
+                multiple = multiples.pop();
+            }
+            if (multiple) {
+                group['_id'] = this.getComposedId(currentId, ...multiples, multiple);
+                currentId = '$_realId';
+            }
+            else {
+                group['_id'] = currentId;
+            }
+            if (last) {
+                this.composeSubgroup(pipeline, group, views, level, last);
+            }
+            else {
+                this.composeGroup(pipeline, group, level);
+            }
+            last = level;
+            level = level.previous;
+        } while (level);
+    }
+    /**
+     * Resolve any foreign relationship in the given model type to the specified pipeline.
+     * @param pipeline Current pipeline.
+     * @param project Current projection.
+     * @param base Base model type.
+     * @param model Current model type.
+     * @param views View mode.
+     * @param levels List of current levels.
+     */
+    static resolveForeignRelation(pipeline, project, base, model, views, levels) {
+        const joint = Mapping.Schema.getJointRow(model, ...views);
+        const fields = this.getGrouping(base, views);
+        for (const name in joint) {
+            const schema = joint[name];
+            const level = this.getVirtualLevel(schema, levels);
+            levels.push(level);
+            const multiples = this.decomposeAll(pipeline, levels);
+            const internal = [
+                {
+                    $match: { $expr: { $eq: [`$${schema.foreign}`, `$$id`] } }
+                }
+            ];
+            this.applyRelations(internal, schema.model, views);
+            pipeline.push({
+                $lookup: {
+                    from: Mapping.Schema.getStorage(schema.model),
+                    let: { id: `$${level.name}` },
+                    pipeline: internal,
+                    as: level.virtual
+                }
+            }, {
+                $unwind: {
+                    path: `\$${level.virtual}`,
+                    preserveNullAndEmptyArrays: true
+                }
+            });
+            if (multiples.length > 0) {
+                const current = multiples.pop();
+                const newer = { ...fields };
+                for (const level of multiples) {
+                    const column = `_${level.column.name}Index`;
+                    newer[column] = { $first: `$${column}` };
+                }
+                this.composeAll(pipeline, newer, views, current, multiples);
+            }
+            levels.pop();
+            project[schema.name] = true;
+        }
+    }
+    /**
+     * Resolve any nested relationship in the given model type to the specified pipeline.
+     * @param pipeline Current pipeline.
+     * @param project Current projection.
+     * @param base Base model type.
+     * @param model Current model type.
+     * @param views View modes.
+     * @param levels List of current levels.
+     */
+    static resolveNestedRelations(pipeline, project, base, model, views, levels) {
+        const real = Mapping.Schema.getRealRow(model, ...views);
+        for (const name in real) {
+            const schema = real[name];
+            const column = schema.alias || schema.name;
+            if (schema.model && Mapping.Schema.isEntity(schema.model)) {
+                levels.push(this.getRealLevel(schema, levels));
+                project[column] = this.resolveRelations(pipeline, base, schema.model, views, levels);
+                levels.pop();
+            }
+            else {
+                project[column] = true;
+            }
+        }
+    }
+    /**
+     * Resolve any relationship in the given model type to the specified pipeline.
+     * @param pipeline Current pipeline.
+     * @param base Base model type.
+     * @param model Current model type.
+     * @param views View modes.
+     * @param levels List of current levels.
+     */
+    static resolveRelations(pipeline, base, model, views, levels) {
+        const project = {};
+        this.resolveForeignRelation(pipeline, project, base, model, views, levels);
+        this.resolveNestedRelations(pipeline, project, base, model, views, levels);
+        return project;
     }
     /**
      * Apply any relationship in the specified pipeline according to the model type and view mode.
      * @param pipeline Target pipeline.
      * @param model Model type.
-     * @param view View mode.
+     * @param views View modes.
      */
-    static applyRelations(pipeline, model, view) {
-        const real = Mapping.Schema.getRealRow(model, view);
-        const joint = Mapping.Schema.getJointRow(model, view);
-        const virtual = Mapping.Schema.getVirtualRow(model, view);
-        const grouping = this.getGrouping(real, virtual);
-        for (const column in joint) {
-            const schema = joint[column];
-            if (schema.multiple) {
-                pipeline.push({ $unwind: { path: `\$${schema.local}`, preserveNullAndEmptyArrays: true } });
-            }
-            pipeline.push({
-                $lookup: {
-                    from: Mapping.Schema.getStorage(schema.model),
-                    let: { id: `$${schema.local}` },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $eq: [`$${schema.foreign}`, `$$id`]
-                                }
-                            }
-                        },
-                        {
-                            $group: this.getGrouping(Mapping.Schema.getRealRow(schema.model, view), Mapping.Schema.getVirtualRow(schema.model, view))
-                        }
-                    ],
-                    as: schema.virtual
-                }
-            });
-            const group = { ...grouping };
-            if (schema.multiple) {
-                pipeline.push({ $unwind: { path: `\$${schema.virtual}`, preserveNullAndEmptyArrays: true } });
-                group[schema.local] = { $push: `$${schema.local}` };
-                group[schema.virtual] = { $push: `$${schema.virtual}` };
-            }
-            pipeline.push({ $group: group });
-        }
+    static applyRelations(pipeline, model, views) {
+        const project = this.resolveRelations(pipeline, model, model, views, []);
+        pipeline.push({ $project: project });
     }
     /**
      * Build and get the primary filter based in the specified model type.
@@ -124,29 +332,40 @@ let Fields = class Fields extends Class.Null {
         }
         return sorting;
     }
-    /**
-     * Purge all null fields from the specified entity list.
-     * @param model Entity model.
-     * @param view View mode.
-     * @param entities List of entities to be cleaned.
-     * @returns Returns the cleaned entity list.
-     */
-    static purgeNull(model, view, entities) {
-        const real = Mapping.Schema.getRealRow(model, view);
-        let schema;
-        for (let i = 0; i < entities.length; ++i) {
-            for (const column in entities[i]) {
-                if (entities[i][column] === null && (schema = real[column]) && !schema.formats.includes(Mapping.Types.Format.NULL)) {
-                    delete entities[i][column];
-                }
-            }
-        }
-        return entities;
-    }
 };
 __decorate([
     Class.Private()
+], Fields, "getRealLevel", null);
+__decorate([
+    Class.Private()
+], Fields, "getVirtualLevel", null);
+__decorate([
+    Class.Private()
 ], Fields, "getGrouping", null);
+__decorate([
+    Class.Private()
+], Fields, "getComposedId", null);
+__decorate([
+    Class.Private()
+], Fields, "decomposeAll", null);
+__decorate([
+    Class.Private()
+], Fields, "composeSubgroup", null);
+__decorate([
+    Class.Private()
+], Fields, "composeGroup", null);
+__decorate([
+    Class.Private()
+], Fields, "composeAll", null);
+__decorate([
+    Class.Private()
+], Fields, "resolveForeignRelation", null);
+__decorate([
+    Class.Private()
+], Fields, "resolveNestedRelations", null);
+__decorate([
+    Class.Private()
+], Fields, "resolveRelations", null);
 __decorate([
     Class.Public()
 ], Fields, "applyRelations", null);
@@ -159,9 +378,6 @@ __decorate([
 __decorate([
     Class.Public()
 ], Fields, "getSorting", null);
-__decorate([
-    Class.Public()
-], Fields, "purgeNull", null);
 Fields = __decorate([
     Class.Describe()
 ], Fields);

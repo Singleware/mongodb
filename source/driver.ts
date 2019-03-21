@@ -124,12 +124,12 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Inserts all specified entities into the database.
    * @param model Model type.
-   * @param view View mode.
+   * @param views View modes.
    * @param entities Entity list.
    * @returns Returns the list inserted entities.
    */
   @Class.Public()
-  public async insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, view: string, entities: T[]): Promise<string[]> {
+  public async insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], entities: T[]): Promise<string[]> {
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
     return Object.values((<any>await manager.insertMany(entities)).insertedIds);
   }
@@ -137,7 +137,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Find the corresponding entities from the database.
    * @param model Model type.
-   * @param view View mode.
+   * @param views View modes.
    * @param filter Field filters.
    * @param sort Sorting fields.
    * @param limit Result limits.
@@ -147,7 +147,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
   @Class.Public()
   public async find<T extends Mapping.Types.Entity>(
     model: Mapping.Types.Model<T>,
-    view: string,
+    views: string[],
     filter: Mapping.Statements.Filter,
     sort?: Mapping.Statements.Sort,
     limit?: Mapping.Statements.Limit
@@ -155,7 +155,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
     const pipeline = <any[]>[];
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
     Fields.applyFilters(pipeline, model, filter);
-    Fields.applyRelations(pipeline, model, view);
+    Fields.applyRelations(pipeline, model, views);
     let cursor = manager.aggregate(pipeline);
     if (sort) {
       cursor = cursor.sort(Fields.getSorting(sort));
@@ -163,36 +163,31 @@ export class Driver extends Class.Null implements Mapping.Driver {
     if (limit) {
       cursor = limit ? cursor.skip(limit.start).limit(limit.count) : cursor;
     }
-    return Fields.purgeNull(model, view, await cursor.toArray());
+    return await cursor.toArray();
   }
 
   /**
    * Find the entity that corresponds to the specified entity id.
    * @param model Model type.
-   * @param view View mode.
+   * @param views View modes.
    * @param id Entity id.
    * @returns Returns a promise to get the found entity or undefined when the entity was not found.
    */
   @Class.Public()
-  public async findById<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, view: string, id: any): Promise<T | undefined> {
-    return (await this.find<T>(model, view, Fields.getPrimaryFilter(model, id)))[0];
+  public async findById<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], id: any): Promise<T | undefined> {
+    return (await this.find<T>(model, views, Fields.getPrimaryFilter(model, id)))[0];
   }
 
   /**
    * Update all entities that corresponds to the specified filter.
    * @param model Model type.
-   * @param view View mode.
+   * @param views View modes.
    * @param filter Fields filter.
    * @param entity Entity to be updated.
    * @returns Returns the number of updated entities.
    */
   @Class.Public()
-  public async update(
-    model: Mapping.Types.Model,
-    view: string,
-    filter: Mapping.Statements.Filter,
-    entity: Mapping.Types.Entity
-  ): Promise<number> {
+  public async update(model: Mapping.Types.Model, views: string[], filter: Mapping.Statements.Filter, entity: Mapping.Types.Entity): Promise<number> {
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
     return (await manager.updateMany(Filters.build(model, filter), { $set: entity })).modifiedCount;
   }
@@ -200,14 +195,14 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Updates the entity that corresponds to the specified entity id.
    * @param model Model type.
-   * @param view View mode.
+   * @param views View modes.
    * @param id Entity id.
    * @param entity Entity to be updated.
    * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
    */
   @Class.Public()
-  public async updateById(model: Mapping.Types.Model, view: string, id: any, entity: Mapping.Types.Model): Promise<boolean> {
-    return (await this.update(model, view, Fields.getPrimaryFilter(model, id), entity)) === 1;
+  public async updateById(model: Mapping.Types.Model, views: string[], id: any, entity: Mapping.Types.Model): Promise<boolean> {
+    return (await this.update(model, views, Fields.getPrimaryFilter(model, id), entity)) === 1;
   }
 
   /**

@@ -96,29 +96,29 @@ let Driver = Driver_1 = class Driver extends Class.Null {
     /**
      * Inserts all specified entities into the database.
      * @param model Model type.
-     * @param view View mode.
+     * @param views View modes.
      * @param entities Entity list.
      * @returns Returns the list inserted entities.
      */
-    async insert(model, view, entities) {
+    async insert(model, views, entities) {
         const manager = this.database.collection(Mapping.Schema.getStorage(model));
         return Object.values((await manager.insertMany(entities)).insertedIds);
     }
     /**
      * Find the corresponding entities from the database.
      * @param model Model type.
-     * @param view View mode.
+     * @param views View modes.
      * @param filter Field filters.
      * @param sort Sorting fields.
      * @param limit Result limits.
      * @returns Returns the  promise to get the list of entities found.
      * @returns Returns the list of entities found.
      */
-    async find(model, view, filter, sort, limit) {
+    async find(model, views, filter, sort, limit) {
         const pipeline = [];
         const manager = this.database.collection(Mapping.Schema.getStorage(model));
         fields_1.Fields.applyFilters(pipeline, model, filter);
-        fields_1.Fields.applyRelations(pipeline, model, view);
+        fields_1.Fields.applyRelations(pipeline, model, views);
         let cursor = manager.aggregate(pipeline);
         if (sort) {
             cursor = cursor.sort(fields_1.Fields.getSorting(sort));
@@ -126,40 +126,40 @@ let Driver = Driver_1 = class Driver extends Class.Null {
         if (limit) {
             cursor = limit ? cursor.skip(limit.start).limit(limit.count) : cursor;
         }
-        return fields_1.Fields.purgeNull(model, view, await cursor.toArray());
+        return await cursor.toArray();
     }
     /**
      * Find the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param view View mode.
+     * @param views View modes.
      * @param id Entity id.
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
-    async findById(model, view, id) {
-        return (await this.find(model, view, fields_1.Fields.getPrimaryFilter(model, id)))[0];
+    async findById(model, views, id) {
+        return (await this.find(model, views, fields_1.Fields.getPrimaryFilter(model, id)))[0];
     }
     /**
      * Update all entities that corresponds to the specified filter.
      * @param model Model type.
-     * @param view View mode.
+     * @param views View modes.
      * @param filter Fields filter.
      * @param entity Entity to be updated.
      * @returns Returns the number of updated entities.
      */
-    async update(model, view, filter, entity) {
+    async update(model, views, filter, entity) {
         const manager = this.database.collection(Mapping.Schema.getStorage(model));
         return (await manager.updateMany(filters_1.Filters.build(model, filter), { $set: entity })).modifiedCount;
     }
     /**
      * Updates the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param view View mode.
+     * @param views View modes.
      * @param id Entity id.
      * @param entity Entity to be updated.
      * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
      */
-    async updateById(model, view, id, entity) {
-        return (await this.update(model, view, fields_1.Fields.getPrimaryFilter(model, id), entity)) === 1;
+    async updateById(model, views, id, entity) {
+        return (await this.update(model, views, fields_1.Fields.getPrimaryFilter(model, id), entity)) === 1;
     }
     /**
      * Delete all entities that corresponds to the specified filter.

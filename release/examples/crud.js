@@ -47,6 +47,9 @@ UserEntity = __decorate([
  * Database mapper.
  */
 let UserMapper = class UserMapper extends Mapping.Mapper {
+    /**
+     * Default constructor.
+     */
     constructor() {
         super(driver, UserEntity);
     }
@@ -55,7 +58,7 @@ let UserMapper = class UserMapper extends Mapping.Mapper {
      * @returns Returns the id of new user.
      */
     async create() {
-        return await this.insert('*', { firstName: 'First 1', lastName: 'Last 1' });
+        return await this.insert({ firstName: 'First 1', lastName: 'Last 1' });
     }
     /**
      * Change the test user.
@@ -63,7 +66,7 @@ let UserMapper = class UserMapper extends Mapping.Mapper {
      * @returns Returns the number of updated users.
      */
     async change(id) {
-        return await this.update('*', { id: { operator: Mapping.Statements.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
+        return await this.update({ id: { operator: Mapping.Statements.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
     }
     /**
      * Read the test user.
@@ -71,7 +74,7 @@ let UserMapper = class UserMapper extends Mapping.Mapper {
      * @requires Returns the list of users found.
      */
     async read(id) {
-        return await this.find('*', {
+        return await this.find({
             id: { operator: Mapping.Statements.Operator.EQUAL, value: id }
         }, {
             id: Mapping.Statements.Order.ASCENDING

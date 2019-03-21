@@ -20,16 +20,16 @@ export class Filters extends Class.Null {
    */
   @Class.Private()
   private static castArray<T extends string | number>(input: T[], schema: Mapping.Columns.Real): T[] | BSON.ObjectID[] {
-    if (schema.formats.includes(Mapping.Types.Format.ARRAY) && schema.model === BSON.ObjectID) {
-      const list = [];
-      for (const value of input) {
-        if (BSON.ObjectID.isValid(value)) {
-          list.push(new BSON.ObjectID(value));
-        }
-      }
-      return list;
+    if (!schema.formats.includes(Mapping.Types.Format.ARRAY) || schema.model !== BSON.ObjectID) {
+      return input;
     }
-    return input;
+    const list = [];
+    for (const value of input) {
+      if (BSON.ObjectID.isValid(value)) {
+        list.push(new BSON.ObjectID(value));
+      }
+    }
+    return list;
   }
 
   /**
@@ -59,7 +59,7 @@ export class Filters extends Class.Null {
   public static build(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Mapping.Types.Entity {
     const entity = <Mapping.Types.Entity>{};
     for (const name in filter) {
-      const schema = Mapping.Schema.getRealColumn(model, name, Mapping.Types.View.ALL);
+      const schema = Mapping.Schema.getRealColumn(model, name);
       const column = schema.alias || schema.name;
       const operation = filter[name];
       switch (operation.operator) {

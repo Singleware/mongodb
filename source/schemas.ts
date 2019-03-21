@@ -13,7 +13,7 @@ import * as BSON from './bson';
 @Class.Describe()
 export class Schemas extends Class.Null {
   /**
-   * Sets the specified target property whether the source property has any data.
+   * Sets the specified target property if the specified source property has some data.
    * @param to Target property.
    * @param target Target entity.
    * @param from Source property.
@@ -27,15 +27,29 @@ export class Schemas extends Class.Null {
   }
 
   /**
-   * Build the schema properties based on the specified column schema.
-   * @param real Real column Schema.
+   * Build a new document schema based on the model in the specified column schema.
+   * @param column Column schema.
+   * @returns Returns the new document schema.
+   */
+  @Class.Private()
+  private static buildDocumentSchema(column: Mapping.Columns.Real): Mapping.Columns.RealRow {
+    if (column.model && Mapping.Schema.isEntity(column.model)) {
+      return Schemas.build(Mapping.Schema.getRealRow(column.model, Mapping.Types.View.ALL));
+    } else {
+      return Schemas.build({});
+    }
+  }
+
+  /**
+   * Build a new property schema based on the specified column schema.
+   * @param column Column Schema.
    * @returns Return the generated schema properties.
    * @throws Throws an error when the column type is unsupported.
    */
   @Class.Private()
-  private static buildProperties(real: Mapping.Columns.Real): Mapping.Types.Entity {
+  private static buildPropertySchema(column: Mapping.Columns.Real): Mapping.Types.Entity {
     const entity = <Mapping.Types.Entity>{ bsonType: [] };
-    for (const type of real.formats) {
+    for (const type of column.formats) {
       switch (type) {
         case Mapping.Types.Format.ID:
           entity.bsonType.push('objectId');
@@ -51,30 +65,30 @@ export class Schemas extends Class.Null {
           break;
         case Mapping.Types.Format.INTEGER:
           entity.bsonType.push('int');
-          Schemas.setProperty('minimum', entity, 'minimum', real);
-          Schemas.setProperty('maximum', entity, 'maximum', real);
+          Schemas.setProperty('minimum', entity, 'minimum', column);
+          Schemas.setProperty('maximum', entity, 'maximum', column);
           break;
         case Mapping.Types.Format.DECIMAL:
           entity.bsonType.push('double');
-          Schemas.setProperty('minimum', entity, 'minimum', real);
-          Schemas.setProperty('maximum', entity, 'maximum', real);
+          Schemas.setProperty('minimum', entity, 'minimum', column);
+          Schemas.setProperty('maximum', entity, 'maximum', column);
           break;
         case Mapping.Types.Format.NUMBER:
           entity.bsonType.push('number');
-          Schemas.setProperty('minimum', entity, 'minimum', real);
-          Schemas.setProperty('maximum', entity, 'maximum', real);
+          Schemas.setProperty('minimum', entity, 'minimum', column);
+          Schemas.setProperty('maximum', entity, 'maximum', column);
           break;
         case Mapping.Types.Format.STRING:
           entity.bsonType.push('string');
-          Schemas.setProperty('minLength', entity, 'minimum', real);
-          Schemas.setProperty('maxLength', entity, 'maximum', real);
+          Schemas.setProperty('minLength', entity, 'minimum', column);
+          Schemas.setProperty('maxLength', entity, 'maximum', column);
           break;
         case Mapping.Types.Format.ENUMERATION:
           entity.bsonType.push('string');
-          entity.enum = real.values;
+          entity.enum = column.values;
           break;
         case Mapping.Types.Format.PATTERN:
-          const pattern = (<RegExp>real.pattern).toString();
+          const pattern = (<RegExp>column.pattern).toString();
           entity.bsonType.push('string');
           entity.pattern = pattern.substring(1, pattern.lastIndexOf('/'));
           break;
@@ -86,10 +100,10 @@ export class Schemas extends Class.Null {
           break;
         case Mapping.Types.Format.ARRAY:
           entity.bsonType.push('array');
-          Schemas.setProperty('minItems', entity, 'minimum', real);
-          Schemas.setProperty('maxItems', entity, 'maximum', real);
-          Schemas.setProperty('uniqueItems', entity, 'unique', real);
-          switch (real.model) {
+          Schemas.setProperty('minItems', entity, 'minimum', column);
+          Schemas.setProperty('maxItems', entity, 'maximum', column);
+          Schemas.setProperty('uniqueItems', entity, 'unique', column);
+          switch (column.model) {
             case Object:
               entity.items = { bsonType: 'object' };
               break;
@@ -109,12 +123,12 @@ export class Schemas extends Class.Null {
               entity.items = { bsonType: 'objectId' };
               break;
             default:
-              entity.items = Schemas.build(real.schema || {});
+              entity.items = this.buildDocumentSchema(column);
           }
           break;
         case Mapping.Types.Format.MAP:
           entity.bsonType.push('object');
-          switch (real.model) {
+          switch (column.model) {
             case Object:
               entity.additionalProperties = true;
               break;
@@ -134,11 +148,11 @@ export class Schemas extends Class.Null {
               entity.additionalProperties = { bsonType: 'objectId' };
               break;
             default:
-              entity.additionalProperties = Schemas.build(real.schema || {});
+              entity.additionalProperties = this.buildDocumentSchema(column);
           }
           break;
         case Mapping.Types.Format.OBJECT:
-          const result = Schemas.build(real.schema || {});
+          const result = this.buildDocumentSchema(column);
           entity.bsonType.push('object');
           entity.properties = result.properties;
           entity.additionalProperties = false;
@@ -152,19 +166,19 @@ export class Schemas extends Class.Null {
   }
 
   /**
-   * Build a schema entity based on the specified row schema.
-   * @param real Real row schema.
+   * Build a new entity schema based on the specified row schema.
+   * @param row Row schema.
    * @returns Returns the generated schema entity.
    */
   @Class.Public()
-  public static build(real: Mapping.Columns.RealRow): Mapping.Types.Entity {
+  public static build(row: Mapping.Columns.RealRow): Mapping.Types.Entity {
     const entity = <Mapping.Types.Entity>{
       bsonType: 'object',
       properties: <Mapping.Types.Entity>{},
       additionalProperties: false
     };
-    for (const column in real) {
-      const schema = real[column];
+    for (const column in row) {
+      const schema = row[column];
       const name = schema.alias || schema.name;
       if (schema.required) {
         if (entity.required === void 0) {
@@ -173,7 +187,7 @@ export class Schemas extends Class.Null {
           entity.required.push(name);
         }
       }
-      entity.properties[name] = Schemas.buildProperties(schema);
+      entity.properties[name] = Schemas.buildPropertySchema(schema);
     }
     return entity;
   }

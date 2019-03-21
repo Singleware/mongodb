@@ -1,0 +1,371 @@
+"use strict";
+var __decorate = (this && this.__decorate) || function (decorators, target, key, desc) {
+    var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function") r = Reflect.decorate(decorators, target, key, desc);
+    else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return c > 3 && r && Object.defineProperty(target, key, r), r;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+/*
+ * Copyright (C) 2018-2019 Silas B. Domingos
+ * This source code is licensed under the MIT License as described in the file LICENSE.
+ */
+const Class = require("@singleware/class");
+const Mapping = require("@singleware/mapping");
+const MongoDB = require("../source");
+/**
+ * Connection string.
+ */
+const connection = 'mongodb://127.0.0.1:27017/mapper-test';
+/**
+ * Database driver.
+ */
+const driver = new MongoDB.Driver();
+/**
+ * User entity.
+ */
+let UserEntity = class UserEntity extends Class.Null {
+};
+__decorate([
+    Mapping.Schema.Primary(),
+    Mapping.Schema.Alias('_id'),
+    Mapping.Schema.Id(),
+    Class.Public()
+], UserEntity.prototype, "id", void 0);
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.String(),
+    Class.Public()
+], UserEntity.prototype, "name", void 0);
+UserEntity = __decorate([
+    Mapping.Schema.Entity('Users'),
+    Class.Describe()
+], UserEntity);
+/**
+ * User mapper.
+ */
+let UserMapper = class UserMapper extends Mapping.Mapper {
+    /**
+     * Default constructor.
+     */
+    constructor() {
+        super(driver, UserEntity);
+    }
+    /**
+     * Creates a new user.
+     * @param name User name.
+     * @returns Returns the new user id.
+     */
+    async create(name) {
+        return await this.insert({
+            name: name
+        });
+    }
+};
+__decorate([
+    Class.Public()
+], UserMapper.prototype, "create", null);
+UserMapper = __decorate([
+    Class.Describe()
+], UserMapper);
+/**
+ * Target entity.
+ */
+let TargetEntity = class TargetEntity extends Class.Null {
+};
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Id(),
+    Class.Public()
+], TargetEntity.prototype, "userId", void 0);
+__decorate([
+    Mapping.Schema.Join('id', UserEntity, 'userId'),
+    Class.Public()
+], TargetEntity.prototype, "user", void 0);
+TargetEntity = __decorate([
+    Mapping.Schema.Entity('Targets'),
+    Class.Describe()
+], TargetEntity);
+/**
+ * Description entity.
+ */
+let DescriptionEntity = class DescriptionEntity extends Class.Null {
+};
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Array(TargetEntity),
+    Class.Public()
+], DescriptionEntity.prototype, "targets", void 0);
+DescriptionEntity = __decorate([
+    Mapping.Schema.Entity('Targets'),
+    Class.Describe()
+], DescriptionEntity);
+/**
+ * Notification entity.
+ */
+let NotificationEntity = class NotificationEntity extends Class.Null {
+};
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Id(),
+    Class.Public()
+], NotificationEntity.prototype, "userId", void 0);
+__decorate([
+    Mapping.Schema.Join('id', UserEntity, 'userId'),
+    Class.Public()
+], NotificationEntity.prototype, "user", void 0);
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Object(DescriptionEntity),
+    Class.Public()
+], NotificationEntity.prototype, "description", void 0);
+NotificationEntity = __decorate([
+    Mapping.Schema.Entity('Notifications'),
+    Class.Describe()
+], NotificationEntity);
+/**
+ * Group entity.
+ */
+let GroupEntity = class GroupEntity extends Class.Null {
+};
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Id(),
+    Class.Public()
+], GroupEntity.prototype, "adminId", void 0);
+__decorate([
+    Mapping.Schema.Join('id', UserEntity, 'adminId'),
+    Class.Public()
+], GroupEntity.prototype, "admin", void 0);
+__decorate([
+    Mapping.Schema.Array(MongoDB.BSON.ObjectID),
+    Class.Public()
+], GroupEntity.prototype, "usersIdList", void 0);
+__decorate([
+    Mapping.Schema.Join('id', UserEntity, 'usersIdList'),
+    Class.Public()
+], GroupEntity.prototype, "usersList", void 0);
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Array(NotificationEntity),
+    Class.Public()
+], GroupEntity.prototype, "notifications", void 0);
+GroupEntity = __decorate([
+    Mapping.Schema.Entity('Groups'),
+    Class.Describe()
+], GroupEntity);
+/**
+ * Messages entity.
+ */
+let MessagesEntity = class MessagesEntity extends Class.Null {
+};
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Id(),
+    Class.Public()
+], MessagesEntity.prototype, "adminId", void 0);
+__decorate([
+    Mapping.Schema.Join('id', UserEntity, 'adminId'),
+    Class.Public()
+], MessagesEntity.prototype, "admin", void 0);
+__decorate([
+    Mapping.Schema.Array(MongoDB.BSON.ObjectID),
+    Class.Public()
+], MessagesEntity.prototype, "usersIdList", void 0);
+__decorate([
+    Mapping.Schema.Join('id', UserEntity, 'usersIdList'),
+    Class.Public()
+], MessagesEntity.prototype, "usersList", void 0);
+MessagesEntity = __decorate([
+    Mapping.Schema.Entity('Messages'),
+    Class.Describe()
+], MessagesEntity);
+/**
+ * Settings entity.
+ */
+let SettingsEntity = class SettingsEntity extends Class.Null {
+};
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Id(),
+    Class.Public()
+], SettingsEntity.prototype, "contactId", void 0);
+__decorate([
+    Mapping.Schema.Join('id', UserEntity, 'contactId'),
+    Class.Public()
+], SettingsEntity.prototype, "contact", void 0);
+__decorate([
+    Mapping.Schema.Array(MongoDB.BSON.ObjectID),
+    Class.Public()
+], SettingsEntity.prototype, "sharedUsersIdList", void 0);
+__decorate([
+    Mapping.Schema.Join('id', UserEntity, 'sharedUsersIdList'),
+    Class.Public()
+], SettingsEntity.prototype, "sharedUsersList", void 0);
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Object(MessagesEntity),
+    Class.Public()
+], SettingsEntity.prototype, "messages", void 0);
+__decorate([
+    Mapping.Schema.Array(GroupEntity),
+    Class.Public()
+], SettingsEntity.prototype, "groups", void 0);
+SettingsEntity = __decorate([
+    Mapping.Schema.Entity('Settings'),
+    Class.Describe()
+], SettingsEntity);
+/**
+ * Account entity.
+ */
+let AccountEntity = class AccountEntity extends Class.Null {
+};
+__decorate([
+    Mapping.Schema.Primary(),
+    Mapping.Schema.Alias('_id'),
+    Mapping.Schema.Id(),
+    Class.Public()
+], AccountEntity.prototype, "id", void 0);
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Id(),
+    Class.Public()
+], AccountEntity.prototype, "ownerId", void 0);
+__decorate([
+    Mapping.Schema.Join('id', UserEntity, 'ownerId'),
+    Class.Public()
+], AccountEntity.prototype, "owner", void 0);
+__decorate([
+    Mapping.Schema.Array(MongoDB.BSON.ObjectID),
+    Class.Public()
+], AccountEntity.prototype, "allowedUsersIdList", void 0);
+__decorate([
+    Mapping.Schema.Join('id', UserEntity, 'allowedUsersIdList'),
+    Class.Public()
+], AccountEntity.prototype, "allowedUsersList", void 0);
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Object(SettingsEntity),
+    Class.Public()
+], AccountEntity.prototype, "settings", void 0);
+AccountEntity = __decorate([
+    Mapping.Schema.Entity('Accounts'),
+    Class.Describe()
+], AccountEntity);
+/**
+ * Account mapper.
+ */
+let AccountMapper = class AccountMapper extends Mapping.Mapper {
+    /**
+     * Default constructor.
+     */
+    constructor() {
+        super(driver, AccountEntity);
+    }
+    /**
+     * Creates a new account.
+     * @param ownerId Account owner id.
+     * @param allowedUsersIdList Id list of allows users in this account.
+     * @param sharedUsersIdList Id list of shared users in this account.
+     * @param usersIdGroupA Id list of users in the first account group.
+     * @param usersIdGroupB Id list of users in the second account group.
+     * @returns Returns the new account id.
+     */
+    async create(ownerId, userAId, userBId, userCId) {
+        return await this.insert({
+            ownerId: ownerId,
+            allowedUsersIdList: [userAId, userBId, userCId],
+            settings: {
+                contactId: ownerId,
+                sharedUsersIdList: [userCId, userBId, userAId],
+                messages: {
+                    adminId: ownerId,
+                    usersIdList: [userAId, userBId, userCId]
+                },
+                groups: [
+                    {
+                        adminId: userAId,
+                        usersIdList: [userBId, userCId],
+                        notifications: [
+                            {
+                                userId: userAId,
+                                description: {
+                                    targets: [{ userId: userBId }, { userId: userCId }]
+                                }
+                            },
+                            {
+                                userId: userBId,
+                                description: {
+                                    targets: [{ userId: userCId }]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        adminId: userBId,
+                        usersIdList: [userAId, userCId],
+                        notifications: [
+                            {
+                                userId: userBId,
+                                description: {
+                                    targets: [{ userId: userAId }]
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        adminId: userCId,
+                        usersIdList: [userAId, userBId],
+                        notifications: []
+                    }
+                ]
+            }
+        });
+    }
+    /**
+     * Reads an account entity that corresponds to the specified account id.
+     * @param id Account id.
+     * @returns Returns a promise to get the account entity or undefined when the account was not found.
+     */
+    async read(id) {
+        return await super.findById(id);
+    }
+};
+__decorate([
+    Class.Public()
+], AccountMapper.prototype, "create", null);
+__decorate([
+    Class.Public()
+], AccountMapper.prototype, "read", null);
+AccountMapper = __decorate([
+    Class.Describe()
+], AccountMapper);
+/**
+ * Test operations.
+ */
+async function crudTest() {
+    // Mappers
+    const users = new UserMapper();
+    const accounts = new AccountMapper();
+    // Connect
+    await driver.connect(connection);
+    console.log('Connect');
+    // Creates the account owner.
+    const owner = await users.create('User X');
+    // Creates the account users.
+    const userA = await users.create('User A');
+    const userB = await users.create('User B');
+    const userC = await users.create('User C');
+    // Creates the account.
+    const accountId = await accounts.create(owner, userA, userB, userC);
+    // Reads the account.
+    console.clear();
+    const account = await accounts.read(accountId);
+    if (account) {
+        console.dir(JSON.parse(JSON.stringify(Mapping.Mapper.normalize(AccountEntity, account))), { depth: null, compact: true });
+    }
+    // Disconnect
+    await driver.disconnect();
+    console.log('Disconnect');
+}
+crudTest();

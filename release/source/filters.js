@@ -26,16 +26,16 @@ let Filters = Filters_1 = class Filters extends Class.Null {
      * @returns Returns the original array or the converted array.
      */
     static castArray(input, schema) {
-        if (schema.formats.includes(Mapping.Types.Format.ARRAY) && schema.model === BSON.ObjectID) {
-            const list = [];
-            for (const value of input) {
-                if (BSON.ObjectID.isValid(value)) {
-                    list.push(new BSON.ObjectID(value));
-                }
-            }
-            return list;
+        if (!schema.formats.includes(Mapping.Types.Format.ARRAY) || schema.model !== BSON.ObjectID) {
+            return input;
         }
-        return input;
+        const list = [];
+        for (const value of input) {
+            if (BSON.ObjectID.isValid(value)) {
+                list.push(new BSON.ObjectID(value));
+            }
+        }
+        return list;
     }
     /**
      * Converts the specified input value to an ObjectID when possible.
@@ -61,7 +61,7 @@ let Filters = Filters_1 = class Filters extends Class.Null {
     static build(model, filter) {
         const entity = {};
         for (const name in filter) {
-            const schema = Mapping.Schema.getRealColumn(model, name, Mapping.Types.View.ALL);
+            const schema = Mapping.Schema.getRealColumn(model, name);
             const column = schema.alias || schema.name;
             const operation = filter[name];
             switch (operation.operator) {
