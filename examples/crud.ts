@@ -81,18 +81,18 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
    */
   @Class.Public()
   public async read(id: string): Promise<UserEntity[]> {
-    return await this.find(
-      {
+    return await this.find({
+      pre: {
         id: { operator: Mapping.Statements.Operator.EQUAL, value: id }
       },
-      {
+      sort: {
         id: Mapping.Statements.Order.ASCENDING
       },
-      {
+      limit: {
         start: 0,
         count: 1
       }
-    );
+    });
   }
 
   /**

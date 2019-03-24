@@ -75,12 +75,16 @@ let UserMapper = class UserMapper extends Mapping.Mapper {
      */
     async read(id) {
         return await this.find({
-            id: { operator: Mapping.Statements.Operator.EQUAL, value: id }
-        }, {
-            id: Mapping.Statements.Order.ASCENDING
-        }, {
-            start: 0,
-            count: 1
+            pre: {
+                id: { operator: Mapping.Statements.Operator.EQUAL, value: id }
+            },
+            sort: {
+                id: Mapping.Statements.Order.ASCENDING
+            },
+            limit: {
+                start: 0,
+                count: 1
+            }
         });
     }
     /**

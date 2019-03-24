@@ -48,6 +48,14 @@ class UserEntity extends Class.Null implements UserEntityBase {
   @Mapping.Schema.String()
   @Class.Public()
   public name!: string;
+
+  /**
+   * User status.
+   */
+  @Mapping.Schema.Required()
+  @Mapping.Schema.Enumeration('enabled', 'disabled')
+  @Class.Public()
+  public status!: 'enabled' | 'disabled';
 }
 
 /**
@@ -65,12 +73,87 @@ class UserMapper extends Mapping.Mapper<UserEntityBase> {
   /**
    * Creates a new user.
    * @param name User name.
+   * @param status User status.
    * @returns Returns the new user id.
    */
   @Class.Public()
-  public async create(name: string): Promise<string> {
+  public async create(name: string, status: 'enabled' | 'disabled'): Promise<string> {
     return await this.insert(<UserEntityBase>{
-      name: name
+      name: name,
+      status: status
+    });
+  }
+}
+
+/**
+ * Type entity, base interface.
+ */
+interface TypeEntityBase {
+  /**
+   * Type name.
+   */
+  name: string;
+  /**
+   * Type description.
+   */
+  description: string;
+}
+
+/**
+ * Type entity.
+ */
+@Mapping.Schema.Entity('Types')
+@Class.Describe()
+class TypeEntity extends Class.Null implements TypeEntityBase {
+  /**
+   * Type id
+   */
+  @Mapping.Schema.Primary()
+  @Mapping.Schema.Alias('_id')
+  @Mapping.Schema.Id()
+  @Class.Public()
+  public readonly id!: any;
+
+  /**
+   * Type name.
+   */
+  @Mapping.Schema.Required()
+  @Mapping.Schema.String()
+  @Class.Public()
+  public name!: string;
+
+  /**
+   * Type description.
+   */
+  @Mapping.Schema.Required()
+  @Mapping.Schema.String()
+  @Class.Public()
+  public description!: string;
+}
+
+/**
+ * Type mapper.
+ */
+@Class.Describe()
+class TypeMapper extends Mapping.Mapper<TypeEntityBase> {
+  /**
+   * Default constructor.
+   */
+  constructor() {
+    super(driver, TypeEntity);
+  }
+
+  /**
+   * Creates a new type.
+   * @param name Type name.
+   * @param description Type description.
+   * @returns Returns the new type id.
+   */
+  @Class.Public()
+  public async create(name: string, description: string): Promise<string> {
+    return await this.insert(<TypeEntityBase>{
+      name: name,
+      description: description
     });
   }
 }
@@ -371,6 +454,14 @@ interface AccountEntityBase {
    */
   ownerId: any;
   /**
+   * Account type name.
+   */
+  typeName: string;
+  /**
+   * Account role names.
+   */
+  roleNames: string[];
+  /**
    * Id list of allowed users in this account.
    */
   allowedUsersIdList: any[];
@@ -404,6 +495,49 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
   public ownerId: any;
 
   /**
+   * Account type name.
+   */
+  @Mapping.Schema.Required()
+  @Mapping.Schema.String()
+  @Class.Public()
+  public typeName!: string;
+
+  /**
+   * Account types.
+   */
+  @Mapping.Schema.JoinAll('name', TypeEntity, 'typeName', {
+    sort: {
+      description: Mapping.Statements.Order.DESCENDING
+    },
+    limit: {
+      start: 0,
+      count: 3
+    }
+  })
+  @Class.Public()
+  public typeList!: TypeEntity[];
+
+  /**
+   * Account role names.
+   */
+  @Mapping.Schema.Required()
+  @Mapping.Schema.Array(String)
+  @Class.Public()
+  public roleNames!: string[];
+
+  /**
+   * Account roles.
+   */
+  @Mapping.Schema.JoinAll('name', TypeEntity, 'roleNames', {
+    limit: {
+      start: 0,
+      count: 6
+    }
+  })
+  @Class.Public()
+  public roleList!: TypeEntity[];
+
+  /**
    * Account owner entity.
    */
   @Mapping.Schema.Join('id', UserEntity, 'ownerId')
@@ -420,7 +554,9 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
   /**
    * Entity list of allowed users in this account.
    */
-  @Mapping.Schema.Join('id', UserEntity, 'allowedUsersIdList')
+  @Mapping.Schema.Join('id', UserEntity, 'allowedUsersIdList', {
+    status: { operator: Mapping.Statements.Operator.EQUAL, value: 'enabled' }
+  })
   @Class.Public()
   public readonly allowedUsersList!: UserEntity[];
 
@@ -448,6 +584,8 @@ class AccountMapper extends Mapping.Mapper<AccountEntityBase> {
   /**
    * Creates a new account.
    * @param ownerId Account owner id.
+   * @param type Account type.
+   * @param role Account role types.
    * @param allowedUsersIdList Id list of allows users in this account.
    * @param sharedUsersIdList Id list of shared users in this account.
    * @param usersIdGroupA Id list of users in the first account group.
@@ -455,9 +593,11 @@ class AccountMapper extends Mapping.Mapper<AccountEntityBase> {
    * @returns Returns the new account id.
    */
   @Class.Public()
-  public async create(ownerId: any, userAId: any, userBId: any, userCId: any): Promise<string> {
+  public async create(ownerId: any, type: string, roles: string[], userAId: any, userBId: any, userCId: any): Promise<string> {
     return await this.insert({
       ownerId: ownerId,
+      typeName: type,
+      roleNames: roles,
       allowedUsersIdList: [userAId, userBId, userCId],
       settings: {
         contactId: ownerId,
@@ -524,6 +664,7 @@ class AccountMapper extends Mapping.Mapper<AccountEntityBase> {
 async function crudTest(): Promise<void> {
   // Mappers
   const users = new UserMapper();
+  const types = new TypeMapper();
   const accounts = new AccountMapper();
 
   // Connect
@@ -531,18 +672,25 @@ async function crudTest(): Promise<void> {
   console.log('Connect');
 
   // Creates the account owner.
-  const owner = await users.create('User X');
+  const owner = await users.create('User X', 'enabled');
+
+  // Creates type account types.
+  await types.create('generic', 'Type A');
+  await types.create('generic', 'Type B');
+  await types.create('generic', 'Type C');
+  await types.create('basic', 'Type D');
+  await types.create('basic', 'Type E');
+  await types.create('basic', 'Type F');
 
   // Creates the account users.
-  const userA = await users.create('User A');
-  const userB = await users.create('User B');
-  const userC = await users.create('User C');
+  const userA = await users.create('User A', 'enabled');
+  const userB = await users.create('User B', 'disabled');
+  const userC = await users.create('User C', 'enabled');
 
   // Creates the account.
-  const accountId = await accounts.create(owner, userA, userB, userC);
+  const accountId = await accounts.create(owner, 'generic', ['generic', 'basic'], userA, userB, userC);
 
   // Reads the account.
-  console.clear();
   const account = await accounts.read(accountId);
   if (account) {
     console.dir(JSON.parse(JSON.stringify(Mapping.Mapper.normalize(AccountEntity, account))), { depth: null, compact: true });

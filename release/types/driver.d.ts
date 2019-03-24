@@ -44,7 +44,7 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
     /**
      * Determines whether the collection from the specified model exists or not.
      * @param model Model type.
-     * @returns Returns true when the collection exists, false otherwise.
+     * @returns Returns a promise to get true when the collection exists, false otherwise.
      */
     hasCollection(model: Mapping.Types.Model): Promise<boolean>;
     /**
@@ -52,20 +52,17 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
      * @param model Model type.
      * @param views View modes.
      * @param entities Entity list.
-     * @returns Returns the list inserted entities.
+     * @returns Returns a promise to get the list of inserted entities.
      */
     insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], entities: T[]): Promise<string[]>;
     /**
      * Find the corresponding entities from the database.
      * @param model Model type.
      * @param views View modes.
-     * @param filter Field filters.
-     * @param sort Sorting fields.
-     * @param limit Result limits.
-     * @returns Returns the  promise to get the list of entities found.
-     * @returns Returns the list of entities found.
+     * @param filter Field filter.
+     * @returns Returns a promise to get the list of entities found.
      */
-    find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], filter: Mapping.Statements.Filter, sort?: Mapping.Statements.Sort, limit?: Mapping.Statements.Limit): Promise<T[]>;
+    find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], filter: Mapping.Statements.Filter): Promise<T[]>;
     /**
      * Find the entity that corresponds to the specified entity id.
      * @param model Model type.
@@ -78,11 +75,11 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
      * Update all entities that corresponds to the specified filter.
      * @param model Model type.
      * @param views View modes.
-     * @param filter Fields filter.
+     * @param match Matching fields.
      * @param entity Entity to be updated.
-     * @returns Returns the number of updated entities.
+     * @returns Returns a promise to get the number of updated entities.
      */
-    update(model: Mapping.Types.Model, views: string[], filter: Mapping.Statements.Filter, entity: Mapping.Types.Entity): Promise<number>;
+    update(model: Mapping.Types.Model, views: string[], match: Mapping.Statements.Match, entity: Mapping.Types.Entity): Promise<number>;
     /**
      * Updates the entity that corresponds to the specified entity id.
      * @param model Model type.
@@ -95,10 +92,10 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
     /**
      * Delete all entities that corresponds to the specified filter.
      * @param model Model type.
-     * @param filter Fields filter.
-     * @return Returns the number of deleted entities.
+     * @param match Matching fields.
+     * @return Returns a promise to get the number of deleted entities.
      */
-    delete(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Promise<number>;
+    delete(model: Mapping.Types.Model, match: Mapping.Statements.Match): Promise<number>;
     /**
      * Deletes the entity that corresponds to the specified id.
      * @param model Model type.
@@ -106,4 +103,12 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
      * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
      */
     deleteById(model: Mapping.Types.Model, id: any): Promise<boolean>;
+    /**
+     * Count all corresponding entities from the storage.
+     * @param model Model type.
+     * @param views View modes.
+     * @param filter Field field.
+     * @returns Returns a promise to get the total of entities found.
+     */
+    count(model: Mapping.Types.Model, views: string[], filter: Mapping.Statements.Filter): Promise<number>;
 }

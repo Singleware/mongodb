@@ -15,8 +15,8 @@ var Driver_1;
 const Mongodb = require("mongodb");
 const Class = require("@singleware/class");
 const Mapping = require("@singleware/mapping");
-const fields_1 = require("./fields");
 const filters_1 = require("./filters");
+const matches_1 = require("./matches");
 const schemas_1 = require("./schemas");
 /**
  * MongoDb driver class.
@@ -88,7 +88,7 @@ let Driver = Driver_1 = class Driver extends Class.Null {
     /**
      * Determines whether the collection from the specified model exists or not.
      * @param model Model type.
-     * @returns Returns true when the collection exists, false otherwise.
+     * @returns Returns a promise to get true when the collection exists, false otherwise.
      */
     async hasCollection(model) {
         return (await this.database.listCollections({ name: Mapping.Schema.getStorage(model) }).toArray()).length === 1;
@@ -98,7 +98,7 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @param model Model type.
      * @param views View modes.
      * @param entities Entity list.
-     * @returns Returns the list inserted entities.
+     * @returns Returns a promise to get the list of inserted entities.
      */
     async insert(model, views, entities) {
         const manager = this.database.collection(Mapping.Schema.getStorage(model));
@@ -108,25 +108,12 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * Find the corresponding entities from the database.
      * @param model Model type.
      * @param views View modes.
-     * @param filter Field filters.
-     * @param sort Sorting fields.
-     * @param limit Result limits.
-     * @returns Returns the  promise to get the list of entities found.
-     * @returns Returns the list of entities found.
+     * @param filter Field filter.
+     * @returns Returns a promise to get the list of entities found.
      */
-    async find(model, views, filter, sort, limit) {
-        const pipeline = [];
+    async find(model, views, filter) {
         const manager = this.database.collection(Mapping.Schema.getStorage(model));
-        fields_1.Fields.applyFilters(pipeline, model, filter);
-        fields_1.Fields.applyRelations(pipeline, model, views);
-        let cursor = manager.aggregate(pipeline);
-        if (sort) {
-            cursor = cursor.sort(fields_1.Fields.getSorting(sort));
-        }
-        if (limit) {
-            cursor = limit ? cursor.skip(limit.start).limit(limit.count) : cursor;
-        }
-        return await cursor.toArray();
+        return await manager.aggregate(filters_1.Filters.getPipeline(model, views, filter)).toArray();
     }
     /**
      * Find the entity that corresponds to the specified entity id.
@@ -136,19 +123,19 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
     async findById(model, views, id) {
-        return (await this.find(model, views, fields_1.Fields.getPrimaryFilter(model, id)))[0];
+        return (await this.find(model, views, { pre: filters_1.Filters.getPrimaryIdMatch(model, id) }))[0];
     }
     /**
      * Update all entities that corresponds to the specified filter.
      * @param model Model type.
      * @param views View modes.
-     * @param filter Fields filter.
+     * @param match Matching fields.
      * @param entity Entity to be updated.
-     * @returns Returns the number of updated entities.
+     * @returns Returns a promise to get the number of updated entities.
      */
-    async update(model, views, filter, entity) {
+    async update(model, views, match, entity) {
         const manager = this.database.collection(Mapping.Schema.getStorage(model));
-        return (await manager.updateMany(filters_1.Filters.build(model, filter), { $set: entity })).modifiedCount;
+        return (await manager.updateMany(matches_1.Matches.build(model, match), { $set: entity })).modifiedCount;
     }
     /**
      * Updates the entity that corresponds to the specified entity id.
@@ -159,17 +146,17 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
      */
     async updateById(model, views, id, entity) {
-        return (await this.update(model, views, fields_1.Fields.getPrimaryFilter(model, id), entity)) === 1;
+        return (await this.update(model, views, filters_1.Filters.getPrimaryIdMatch(model, id), entity)) === 1;
     }
     /**
      * Delete all entities that corresponds to the specified filter.
      * @param model Model type.
-     * @param filter Fields filter.
-     * @return Returns the number of deleted entities.
+     * @param match Matching fields.
+     * @return Returns a promise to get the number of deleted entities.
      */
-    async delete(model, filter) {
+    async delete(model, match) {
         const manager = this.database.collection(Mapping.Schema.getStorage(model));
-        return (await manager.deleteMany(filters_1.Filters.build(model, filter))).deletedCount || 0;
+        return (await manager.deleteMany(matches_1.Matches.build(model, match))).deletedCount || 0;
     }
     /**
      * Deletes the entity that corresponds to the specified id.
@@ -178,7 +165,18 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
      */
     async deleteById(model, id) {
-        return (await this.delete(model, fields_1.Fields.getPrimaryFilter(model, id))) === 1;
+        return (await this.delete(model, filters_1.Filters.getPrimaryIdMatch(model, id))) === 1;
+    }
+    /**
+     * Count all corresponding entities from the storage.
+     * @param model Model type.
+     * @param views View modes.
+     * @param filter Field field.
+     * @returns Returns a promise to get the total of entities found.
+     */
+    async count(model, views, filter) {
+        const manager = this.database.collection(Mapping.Schema.getStorage(model));
+        return (await manager.aggregate(filters_1.Filters.getPipeline(model, views, filter)).toArray()).length;
     }
 };
 /**
@@ -230,6 +228,9 @@ __decorate([
 __decorate([
     Class.Public()
 ], Driver.prototype, "deleteById", null);
+__decorate([
+    Class.Public()
+], Driver.prototype, "count", null);
 __decorate([
     Class.Private()
 ], Driver, "options", void 0);

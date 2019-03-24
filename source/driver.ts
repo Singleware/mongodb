@@ -6,8 +6,8 @@ import * as Mongodb from 'mongodb';
 import * as Class from '@singleware/class';
 import * as Mapping from '@singleware/mapping';
 
-import { Fields } from './fields';
 import { Filters } from './filters';
+import { Matches } from './matches';
 import { Schemas } from './schemas';
 
 /**
@@ -114,7 +114,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Determines whether the collection from the specified model exists or not.
    * @param model Model type.
-   * @returns Returns true when the collection exists, false otherwise.
+   * @returns Returns a promise to get true when the collection exists, false otherwise.
    */
   @Class.Public()
   public async hasCollection(model: Mapping.Types.Model): Promise<boolean> {
@@ -126,7 +126,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @param model Model type.
    * @param views View modes.
    * @param entities Entity list.
-   * @returns Returns the list inserted entities.
+   * @returns Returns a promise to get the list of inserted entities.
    */
   @Class.Public()
   public async insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], entities: T[]): Promise<string[]> {
@@ -138,32 +138,13 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * Find the corresponding entities from the database.
    * @param model Model type.
    * @param views View modes.
-   * @param filter Field filters.
-   * @param sort Sorting fields.
-   * @param limit Result limits.
-   * @returns Returns the  promise to get the list of entities found.
-   * @returns Returns the list of entities found.
+   * @param filter Field filter.
+   * @returns Returns a promise to get the list of entities found.
    */
   @Class.Public()
-  public async find<T extends Mapping.Types.Entity>(
-    model: Mapping.Types.Model<T>,
-    views: string[],
-    filter: Mapping.Statements.Filter,
-    sort?: Mapping.Statements.Sort,
-    limit?: Mapping.Statements.Limit
-  ): Promise<T[]> {
-    const pipeline = <any[]>[];
+  public async find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], filter: Mapping.Statements.Filter): Promise<T[]> {
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
-    Fields.applyFilters(pipeline, model, filter);
-    Fields.applyRelations(pipeline, model, views);
-    let cursor = manager.aggregate(pipeline);
-    if (sort) {
-      cursor = cursor.sort(Fields.getSorting(sort));
-    }
-    if (limit) {
-      cursor = limit ? cursor.skip(limit.start).limit(limit.count) : cursor;
-    }
-    return await cursor.toArray();
+    return await manager.aggregate(Filters.getPipeline(model, views, filter)).toArray();
   }
 
   /**
@@ -175,21 +156,21 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async findById<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], id: any): Promise<T | undefined> {
-    return (await this.find<T>(model, views, Fields.getPrimaryFilter(model, id)))[0];
+    return (await this.find(model, views, { pre: Filters.getPrimaryIdMatch(model, id) }))[0];
   }
 
   /**
    * Update all entities that corresponds to the specified filter.
    * @param model Model type.
    * @param views View modes.
-   * @param filter Fields filter.
+   * @param match Matching fields.
    * @param entity Entity to be updated.
-   * @returns Returns the number of updated entities.
+   * @returns Returns a promise to get the number of updated entities.
    */
   @Class.Public()
-  public async update(model: Mapping.Types.Model, views: string[], filter: Mapping.Statements.Filter, entity: Mapping.Types.Entity): Promise<number> {
+  public async update(model: Mapping.Types.Model, views: string[], match: Mapping.Statements.Match, entity: Mapping.Types.Entity): Promise<number> {
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
-    return (await manager.updateMany(Filters.build(model, filter), { $set: entity })).modifiedCount;
+    return (await manager.updateMany(Matches.build(model, match), { $set: entity })).modifiedCount;
   }
 
   /**
@@ -202,19 +183,19 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async updateById(model: Mapping.Types.Model, views: string[], id: any, entity: Mapping.Types.Model): Promise<boolean> {
-    return (await this.update(model, views, Fields.getPrimaryFilter(model, id), entity)) === 1;
+    return (await this.update(model, views, Filters.getPrimaryIdMatch(model, id), entity)) === 1;
   }
 
   /**
    * Delete all entities that corresponds to the specified filter.
    * @param model Model type.
-   * @param filter Fields filter.
-   * @return Returns the number of deleted entities.
+   * @param match Matching fields.
+   * @return Returns a promise to get the number of deleted entities.
    */
   @Class.Public()
-  public async delete(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Promise<number> {
+  public async delete(model: Mapping.Types.Model, match: Mapping.Statements.Match): Promise<number> {
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
-    return (await manager.deleteMany(Filters.build(model, filter))).deletedCount || 0;
+    return (await manager.deleteMany(Matches.build(model, match))).deletedCount || 0;
   }
 
   /**
@@ -225,6 +206,19 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async deleteById(model: Mapping.Types.Model, id: any): Promise<boolean> {
-    return (await this.delete(model, Fields.getPrimaryFilter(model, id))) === 1;
+    return (await this.delete(model, Filters.getPrimaryIdMatch(model, id))) === 1;
+  }
+
+  /**
+   * Count all corresponding entities from the storage.
+   * @param model Model type.
+   * @param views View modes.
+   * @param filter Field field.
+   * @returns Returns a promise to get the total of entities found.
+   */
+  @Class.Public()
+  public async count(model: Mapping.Types.Model, views: string[], filter: Mapping.Statements.Filter): Promise<number> {
+    const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
+    return (await manager.aggregate(Filters.getPipeline(model, views, filter)).toArray()).length;
   }
 }

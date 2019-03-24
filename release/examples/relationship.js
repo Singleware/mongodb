@@ -37,6 +37,11 @@ __decorate([
     Mapping.Schema.String(),
     Class.Public()
 ], UserEntity.prototype, "name", void 0);
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Enumeration('enabled', 'disabled'),
+    Class.Public()
+], UserEntity.prototype, "status", void 0);
 UserEntity = __decorate([
     Mapping.Schema.Entity('Users'),
     Class.Describe()
@@ -54,11 +59,13 @@ let UserMapper = class UserMapper extends Mapping.Mapper {
     /**
      * Creates a new user.
      * @param name User name.
+     * @param status User status.
      * @returns Returns the new user id.
      */
-    async create(name) {
+    async create(name, status) {
         return await this.insert({
-            name: name
+            name: name,
+            status: status
         });
     }
 };
@@ -68,6 +75,60 @@ __decorate([
 UserMapper = __decorate([
     Class.Describe()
 ], UserMapper);
+/**
+ * Type entity.
+ */
+let TypeEntity = class TypeEntity extends Class.Null {
+};
+__decorate([
+    Mapping.Schema.Primary(),
+    Mapping.Schema.Alias('_id'),
+    Mapping.Schema.Id(),
+    Class.Public()
+], TypeEntity.prototype, "id", void 0);
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.String(),
+    Class.Public()
+], TypeEntity.prototype, "name", void 0);
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.String(),
+    Class.Public()
+], TypeEntity.prototype, "description", void 0);
+TypeEntity = __decorate([
+    Mapping.Schema.Entity('Types'),
+    Class.Describe()
+], TypeEntity);
+/**
+ * Type mapper.
+ */
+let TypeMapper = class TypeMapper extends Mapping.Mapper {
+    /**
+     * Default constructor.
+     */
+    constructor() {
+        super(driver, TypeEntity);
+    }
+    /**
+     * Creates a new type.
+     * @param name Type name.
+     * @param description Type description.
+     * @returns Returns the new type id.
+     */
+    async create(name, description) {
+        return await this.insert({
+            name: name,
+            description: description
+        });
+    }
+};
+__decorate([
+    Class.Public()
+], TypeMapper.prototype, "create", null);
+TypeMapper = __decorate([
+    Class.Describe()
+], TypeMapper);
 /**
  * Target entity.
  */
@@ -232,6 +293,37 @@ __decorate([
     Class.Public()
 ], AccountEntity.prototype, "ownerId", void 0);
 __decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.String(),
+    Class.Public()
+], AccountEntity.prototype, "typeName", void 0);
+__decorate([
+    Mapping.Schema.JoinAll('name', TypeEntity, 'typeName', {
+        sort: {
+            description: Mapping.Statements.Order.DESCENDING
+        },
+        limit: {
+            start: 0,
+            count: 3
+        }
+    }),
+    Class.Public()
+], AccountEntity.prototype, "typeList", void 0);
+__decorate([
+    Mapping.Schema.Required(),
+    Mapping.Schema.Array(String),
+    Class.Public()
+], AccountEntity.prototype, "roleNames", void 0);
+__decorate([
+    Mapping.Schema.JoinAll('name', TypeEntity, 'roleNames', {
+        limit: {
+            start: 0,
+            count: 6
+        }
+    }),
+    Class.Public()
+], AccountEntity.prototype, "roleList", void 0);
+__decorate([
     Mapping.Schema.Join('id', UserEntity, 'ownerId'),
     Class.Public()
 ], AccountEntity.prototype, "owner", void 0);
@@ -240,7 +332,9 @@ __decorate([
     Class.Public()
 ], AccountEntity.prototype, "allowedUsersIdList", void 0);
 __decorate([
-    Mapping.Schema.Join('id', UserEntity, 'allowedUsersIdList'),
+    Mapping.Schema.Join('id', UserEntity, 'allowedUsersIdList', {
+        status: { operator: Mapping.Statements.Operator.EQUAL, value: 'enabled' }
+    }),
     Class.Public()
 ], AccountEntity.prototype, "allowedUsersList", void 0);
 __decorate([
@@ -265,15 +359,19 @@ let AccountMapper = class AccountMapper extends Mapping.Mapper {
     /**
      * Creates a new account.
      * @param ownerId Account owner id.
+     * @param type Account type.
+     * @param role Account role types.
      * @param allowedUsersIdList Id list of allows users in this account.
      * @param sharedUsersIdList Id list of shared users in this account.
      * @param usersIdGroupA Id list of users in the first account group.
      * @param usersIdGroupB Id list of users in the second account group.
      * @returns Returns the new account id.
      */
-    async create(ownerId, userAId, userBId, userCId) {
+    async create(ownerId, type, roles, userAId, userBId, userCId) {
         return await this.insert({
             ownerId: ownerId,
+            typeName: type,
+            roleNames: roles,
             allowedUsersIdList: [userAId, userBId, userCId],
             settings: {
                 contactId: ownerId,
@@ -346,20 +444,27 @@ AccountMapper = __decorate([
 async function crudTest() {
     // Mappers
     const users = new UserMapper();
+    const types = new TypeMapper();
     const accounts = new AccountMapper();
     // Connect
     await driver.connect(connection);
     console.log('Connect');
     // Creates the account owner.
-    const owner = await users.create('User X');
+    const owner = await users.create('User X', 'enabled');
+    // Creates type account types.
+    await types.create('generic', 'Type A');
+    await types.create('generic', 'Type B');
+    await types.create('generic', 'Type C');
+    await types.create('basic', 'Type D');
+    await types.create('basic', 'Type E');
+    await types.create('basic', 'Type F');
     // Creates the account users.
-    const userA = await users.create('User A');
-    const userB = await users.create('User B');
-    const userC = await users.create('User C');
+    const userA = await users.create('User A', 'enabled');
+    const userB = await users.create('User B', 'disabled');
+    const userC = await users.create('User C', 'enabled');
     // Creates the account.
-    const accountId = await accounts.create(owner, userA, userB, userC);
+    const accountId = await accounts.create(owner, 'generic', ['generic', 'basic'], userA, userB, userC);
     // Reads the account.
-    console.clear();
     const account = await accounts.read(accountId);
     if (account) {
         console.dir(JSON.parse(JSON.stringify(Mapping.Mapper.normalize(AccountEntity, account))), { depth: null, compact: true });
