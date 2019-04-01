@@ -228,14 +228,7 @@ export class Filters extends Class.Null {
    * @param levels List of current levels.
    */
   @Class.Private()
-  private static resolveForeignRelation(
-    pipeline: Mapping.Types.Entity[],
-    project: Mapping.Types.Entity,
-    base: Mapping.Types.Model,
-    model: Mapping.Types.Model,
-    views: string[],
-    levels: any[]
-  ): void {
+  private static resolveForeignRelation(pipeline: Mapping.Types.Entity[], project: Mapping.Types.Entity, base: Mapping.Types.Model, model: Mapping.Types.Model, views: string[], levels: any[]): void {
     const row = Mapping.Schema.getVirtualRow(model, ...views);
     const fields = this.getGrouping(base, views);
     for (const name in row) {
@@ -288,14 +281,7 @@ export class Filters extends Class.Null {
    * @param levels List of current levels.
    */
   @Class.Private()
-  private static resolveNestedRelations(
-    pipeline: Mapping.Types.Entity[],
-    project: Mapping.Types.Entity,
-    base: Mapping.Types.Model,
-    model: Mapping.Types.Model,
-    views: string[],
-    levels: any[]
-  ): void {
+  private static resolveNestedRelations(pipeline: Mapping.Types.Entity[], project: Mapping.Types.Entity, base: Mapping.Types.Model, model: Mapping.Types.Model, views: string[], levels: any[]): void {
     const real = Mapping.Schema.getRealRow(model, ...views);
     for (const name in real) {
       const schema = real[name];

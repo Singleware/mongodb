@@ -693,7 +693,7 @@ async function crudTest(): Promise<void> {
   // Reads the account.
   const account = await accounts.read(accountId);
   if (account) {
-    console.dir(JSON.parse(JSON.stringify(Mapping.Mapper.normalize(AccountEntity, account))), { depth: null, compact: true });
+    console.dir(JSON.parse(JSON.stringify(Mapping.Helper.normalize(AccountEntity, account))), { depth: null, compact: true });
   }
 
   // Disconnect
