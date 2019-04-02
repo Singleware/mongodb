@@ -108,7 +108,7 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
      * @param model Model type.
      * @param views View modes.
      * @param filter Field field.
-     * @returns Returns a promise to get the total of entities found.
+     * @returns Returns a promise to get the total amount of found entities.
      */
     count(model: Mapping.Types.Model, views: string[], filter: Mapping.Statements.Filter): Promise<number>;
 }

@@ -76,14 +76,20 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @param model Model type.
      */
     async modifyCollection(model) {
-        await this.database.command({ collMod: Mapping.Schema.getStorage(model), ...Driver_1.getCollectionSchema(model) });
+        await this.database.command({
+            collMod: Mapping.Schema.getStorage(model),
+            ...Driver_1.getCollectionSchema(model)
+        });
     }
     /**
      * Creates a new collection by the specified model type.
      * @param model Model type.
      */
     async createCollection(model) {
-        await this.database.command({ create: Mapping.Schema.getStorage(model), ...Driver_1.getCollectionSchema(model) });
+        await this.database.command({
+            create: Mapping.Schema.getStorage(model),
+            ...Driver_1.getCollectionSchema(model)
+        });
     }
     /**
      * Determines whether the collection from the specified model exists or not.
@@ -91,7 +97,9 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @returns Returns a promise to get true when the collection exists, false otherwise.
      */
     async hasCollection(model) {
-        return (await this.database.listCollections({ name: Mapping.Schema.getStorage(model) }).toArray()).length === 1;
+        const filter = { name: Mapping.Schema.getStorage(model) };
+        const options = { nameOnly: true };
+        return (await this.database.listCollections(filter, options).toArray()).length === 1;
     }
     /**
      * Inserts all specified entities into the database.
@@ -112,8 +120,10 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @returns Returns a promise to get the list of entities found.
      */
     async find(model, views, filter) {
+        const pipeline = filters_1.Filters.getPipeline(model, views, filter);
+        const options = { allowDiskUse: true };
         const manager = this.database.collection(Mapping.Schema.getStorage(model));
-        return await manager.aggregate(filters_1.Filters.getPipeline(model, views, filter)).toArray();
+        return (await manager.aggregate(pipeline, options)).toArray();
     }
     /**
      * Find the entity that corresponds to the specified entity id.
@@ -172,11 +182,13 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @param model Model type.
      * @param views View modes.
      * @param filter Field field.
-     * @returns Returns a promise to get the total of entities found.
+     * @returns Returns a promise to get the total amount of found entities.
      */
     async count(model, views, filter) {
+        const pipeline = [...filters_1.Filters.getPipeline(model, views, filter), { $count: 'records' }];
+        const options = { allowDiskUse: true };
         const manager = this.database.collection(Mapping.Schema.getStorage(model));
-        return (await manager.aggregate(filters_1.Filters.getPipeline(model, views, filter)).toArray()).length;
+        return (await manager.aggregate(pipeline, options).toArray())[0].records || 0;
     }
 };
 /**

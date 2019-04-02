@@ -99,7 +99,10 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async modifyCollection(model: Class.Constructor<Mapping.Types.Entity>): Promise<void> {
-    await (<Mongodb.Db>this.database).command({ collMod: Mapping.Schema.getStorage(model), ...Driver.getCollectionSchema(model) });
+    await (<Mongodb.Db>this.database).command({
+      collMod: Mapping.Schema.getStorage(model),
+      ...Driver.getCollectionSchema(model)
+    });
   }
 
   /**
@@ -108,7 +111,10 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async createCollection(model: Mapping.Types.Model): Promise<void> {
-    await (<Mongodb.Db>this.database).command({ create: Mapping.Schema.getStorage(model), ...Driver.getCollectionSchema(model) });
+    await (<Mongodb.Db>this.database).command({
+      create: Mapping.Schema.getStorage(model),
+      ...Driver.getCollectionSchema(model)
+    });
   }
 
   /**
@@ -118,7 +124,9 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async hasCollection(model: Mapping.Types.Model): Promise<boolean> {
-    return (await (<Mongodb.Db>this.database).listCollections({ name: Mapping.Schema.getStorage(model) }).toArray()).length === 1;
+    const filter = { name: Mapping.Schema.getStorage(model) };
+    const options = { nameOnly: true };
+    return (await (<Mongodb.Db>this.database).listCollections(filter, options).toArray()).length === 1;
   }
 
   /**
@@ -143,8 +151,10 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], filter: Mapping.Statements.Filter): Promise<T[]> {
+    const pipeline = Filters.getPipeline(model, views, filter);
+    const options = { allowDiskUse: true };
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
-    return await manager.aggregate(Filters.getPipeline(model, views, filter)).toArray();
+    return (await manager.aggregate(pipeline, options)).toArray();
   }
 
   /**
@@ -214,11 +224,13 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @param model Model type.
    * @param views View modes.
    * @param filter Field field.
-   * @returns Returns a promise to get the total of entities found.
+   * @returns Returns a promise to get the total amount of found entities.
    */
   @Class.Public()
   public async count(model: Mapping.Types.Model, views: string[], filter: Mapping.Statements.Filter): Promise<number> {
+    const pipeline = [...Filters.getPipeline(model, views, filter), { $count: 'records' }];
+    const options = { allowDiskUse: true };
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
-    return (await manager.aggregate(Filters.getPipeline(model, views, filter)).toArray()).length;
+    return (await manager.aggregate(pipeline, options).toArray())[0].records || 0;
   }
 }
