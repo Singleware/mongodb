@@ -288,7 +288,12 @@ export class Filters extends Class.Null {
       const column = schema.alias || schema.name;
       if (schema.model && Mapping.Schema.isEntity(schema.model)) {
         levels.push(this.getRealLevel(schema, levels));
-        project[column] = this.applyRelationship(pipeline, base, schema.model, views, levels);
+        const projection = this.applyRelationship(pipeline, base, schema.model, views, levels);
+        if (schema.formats.includes(Mapping.Types.Format.MAP)) {
+          project[column] = true;
+        } else {
+          project[column] = projection;
+        }
         levels.pop();
       } else {
         project[column] = true;
