@@ -152,9 +152,9 @@ export class Driver extends Class.Null implements Mapping.Driver {
   @Class.Public()
   public async find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], filter: Mapping.Statements.Filter): Promise<T[]> {
     const pipeline = Filters.getPipeline(model, views, filter);
-    const options = { allowDiskUse: true };
+    const settings = { allowDiskUse: true };
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
-    return (await manager.aggregate(pipeline, options)).toArray();
+    return (await manager.aggregate(pipeline, settings)).toArray();
   }
 
   /**
@@ -229,8 +229,9 @@ export class Driver extends Class.Null implements Mapping.Driver {
   @Class.Public()
   public async count(model: Mapping.Types.Model, views: string[], filter: Mapping.Statements.Filter): Promise<number> {
     const pipeline = [...Filters.getPipeline(model, views, filter), { $count: 'records' }];
-    const options = { allowDiskUse: true };
+    const settings = { allowDiskUse: true };
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
-    return (await manager.aggregate(pipeline, options).toArray())[0].records || 0;
+    const result = await manager.aggregate(pipeline, settings).toArray();
+    return result.length ? result[0].records || 0 : 0;
   }
 }

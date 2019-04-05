@@ -121,9 +121,9 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      */
     async find(model, views, filter) {
         const pipeline = filters_1.Filters.getPipeline(model, views, filter);
-        const options = { allowDiskUse: true };
+        const settings = { allowDiskUse: true };
         const manager = this.database.collection(Mapping.Schema.getStorage(model));
-        return (await manager.aggregate(pipeline, options)).toArray();
+        return (await manager.aggregate(pipeline, settings)).toArray();
     }
     /**
      * Find the entity that corresponds to the specified entity id.
@@ -186,9 +186,10 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      */
     async count(model, views, filter) {
         const pipeline = [...filters_1.Filters.getPipeline(model, views, filter), { $count: 'records' }];
-        const options = { allowDiskUse: true };
+        const settings = { allowDiskUse: true };
         const manager = this.database.collection(Mapping.Schema.getStorage(model));
-        return (await manager.aggregate(pipeline, options).toArray())[0].records || 0;
+        const result = await manager.aggregate(pipeline, settings).toArray();
+        return result.length ? result[0].records || 0 : 0;
     }
 };
 /**
