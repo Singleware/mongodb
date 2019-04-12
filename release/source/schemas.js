@@ -133,7 +133,7 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                     entity.bsonType.push('object');
                     switch (column.model) {
                         case Object:
-                            entity.additionalProperties = true;
+                            entity.additionalProperties = { bsonType: 'object' };
                             break;
                         case String:
                             entity.additionalProperties = { bsonType: 'string' };
@@ -155,11 +155,16 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                     }
                     break;
                 case Mapping.Types.Format.OBJECT:
-                    const result = this.buildDocumentSchema(column);
                     entity.bsonType.push('object');
-                    entity.properties = result.properties;
-                    entity.additionalProperties = false;
-                    Schemas_1.setProperty('required', entity, 'required', result);
+                    if (column.model === Object) {
+                        entity.additionalProperties = true;
+                    }
+                    else {
+                        const result = this.buildDocumentSchema(column);
+                        entity.properties = result.properties;
+                        entity.additionalProperties = false;
+                        Schemas_1.setProperty('required', entity, 'required', result);
+                    }
                     break;
                 default:
                     throw new TypeError(`Unsupported column schema type '${type}'`);
