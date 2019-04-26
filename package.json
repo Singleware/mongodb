@@ -7,7 +7,7 @@
   "name": "@singleware/mongodb",
   "description": "Singleware MongoDB driver package.",
   "license": "MIT",
-  "version": "1.2.10",
+  "version": "1.2.12",
   "main": "release/source/index.js",
   "types": "release/types/index.d.ts",
   "keywords": [
@@ -26,13 +26,13 @@
   },
   "dependencies": {
     "@singleware/class": "^1.1.19",
-    "@singleware/mapping": "^1.2.37"
+    "@singleware/mapping": "^1.2.39"
   },
   "devDependencies": {
-    "@types/mongodb": "^3.1.22",
-    "@types/node": "^10.14.4",
-    "mongodb": "^3.2.2",
-    "prettier": "^1.16.4",
+    "@types/mongodb": "^3.1.25",
+    "@types/node": "^10.14.5",
+    "mongodb": "^3.2.3",
+    "prettier": "^1.17.0",
     "typescript": "^2.9.2"
   },
   "prettier": {
