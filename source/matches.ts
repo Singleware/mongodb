@@ -78,7 +78,7 @@ export class Matches extends Class.Null {
           entity[column] = { $eq: this.castValue(operation.value, schema) };
           break;
         case Mapping.Statements.Operator.NOT_EQUAL:
-          entity[column] = { $neq: this.castValue(operation.value, schema) };
+          entity[column] = { $ne: this.castValue(operation.value, schema) };
           break;
         case Mapping.Statements.Operator.GREATER_OR_EQUAL:
           entity[column] = { $gte: this.castValue(operation.value, schema) };
