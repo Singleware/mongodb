@@ -1,4 +1,4 @@
-/*
+/*!
  * Copyright (C) 2018-2019 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
@@ -362,9 +362,14 @@ export class Filters extends Class.Null {
         }
         pipeline.push({ $limit: filter.limit.count });
       }
-      pipeline.push({ $project: project });
+      if (project.length > 0) {
+        pipeline.push({ $project: project });
+      }
     } else {
-      pipeline.push({ $project: this.applyRelationship(pipeline, model, model, views, []) });
+      const project = this.applyRelationship(pipeline, model, model, views, []);
+      if (project.length > 0) {
+        pipeline.push({ $project: project });
+      }
     }
     return pipeline;
   }
