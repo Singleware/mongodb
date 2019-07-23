@@ -34,7 +34,7 @@ export class Schemas extends Class.Null {
   @Class.Private()
   private static buildDocumentSchema(column: Mapping.Columns.Real): Mapping.Columns.RealRow {
     if (column.model && Mapping.Schema.isEntity(column.model)) {
-      return Schemas.build(Mapping.Schema.getRealRow(column.model, Mapping.Types.View.ALL));
+      return Schemas.build(Mapping.Schema.getRealRow(column.model));
     } else {
       return Schemas.build({});
     }

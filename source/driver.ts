@@ -45,7 +45,7 @@ export class Driver extends Class.Null implements Mapping.Driver {
   private static getCollectionSchema(model: Mapping.Types.Model): Object {
     return {
       validator: {
-        $jsonSchema: Schemas.build(Mapping.Schema.getRealRow(model, Mapping.Types.View.ALL))
+        $jsonSchema: Schemas.build(Mapping.Schema.getRealRow(model))
       },
       validationLevel: 'strict',
       validationAction: 'error'
@@ -58,19 +58,17 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async connect(uri: string): Promise<void> {
-    await new Promise<Mongodb.Db>(
-      (resolve: Function, reject: Function): void => {
-        Mongodb.MongoClient.connect(uri, Driver.options, (error: Mongodb.MongoError, connection: Mongodb.MongoClient) => {
-          if (error) {
-            reject(error);
-          } else {
-            this.connection = connection;
-            this.database = connection.db();
-            resolve();
-          }
-        });
-      }
-    );
+    await new Promise<Mongodb.Db>((resolve: Function, reject: Function): void => {
+      Mongodb.MongoClient.connect(uri, Driver.options, (error: Mongodb.MongoError, connection: Mongodb.MongoClient) => {
+        if (error) {
+          reject(error);
+        } else {
+          this.connection = connection;
+          this.database = connection.db();
+          resolve();
+        }
+      });
+    });
   }
 
   /**
@@ -78,19 +76,17 @@ export class Driver extends Class.Null implements Mapping.Driver {
    */
   @Class.Public()
   public async disconnect(): Promise<void> {
-    return new Promise<void>(
-      (resolve: Function, reject: Function): void => {
-        (<Mongodb.MongoClient>this.connection).close((error: Mongodb.MongoError) => {
-          if (error) {
-            reject(error);
-          } else {
-            this.connection = void 0;
-            this.database = void 0;
-            resolve();
-          }
-        });
-      }
-    );
+    return new Promise<void>((resolve: Function, reject: Function): void => {
+      (<Mongodb.MongoClient>this.connection).close((error: Mongodb.MongoError) => {
+        if (error) {
+          reject(error);
+        } else {
+          this.connection = void 0;
+          this.database = void 0;
+          resolve();
+        }
+      });
+    });
   }
 
   /**
@@ -132,12 +128,11 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Inserts all specified entities into the database.
    * @param model Model type.
-   * @param views View modes.
    * @param entities Entity list.
    * @returns Returns a promise to get the list of inserted entities.
    */
   @Class.Public()
-  public async insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], entities: T[]): Promise<string[]> {
+  public async insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, entities: T[]): Promise<string[]> {
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
     return Object.values((<any>await manager.insertMany(entities)).insertedIds);
   }
@@ -145,13 +140,13 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Find the corresponding entities from the database.
    * @param model Model type.
-   * @param views View modes.
    * @param filter Field filter.
+   * @param fields Fields to be selected.
    * @returns Returns a promise to get the list of entities found.
    */
   @Class.Public()
-  public async find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], filter: Mapping.Statements.Filter): Promise<T[]> {
-    const pipeline = Filters.getPipeline(model, views, filter);
+  public async find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, filter: Mapping.Statements.Filter, fields: string[]): Promise<T[]> {
+    const pipeline = Filters.getPipeline(model, filter, fields);
     const settings = { allowDiskUse: true };
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
     return (await manager.aggregate(pipeline, settings)).toArray();
@@ -160,25 +155,24 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Find the entity that corresponds to the specified entity id.
    * @param model Model type.
-   * @param views View modes.
    * @param id Entity id.
+   * @param fields Fields to be selected.
    * @returns Returns a promise to get the found entity or undefined when the entity was not found.
    */
   @Class.Public()
-  public async findById<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], id: any): Promise<T | undefined> {
-    return (await this.find(model, views, { pre: Filters.getPrimaryIdMatch(model, id) }))[0];
+  public async findById<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, id: any, fields: string[]): Promise<T | undefined> {
+    return (await this.find(model, { pre: Filters.getPrimaryIdMatch(model, id) }, fields))[0];
   }
 
   /**
    * Update all entities that corresponds to the specified filter.
    * @param model Model type.
-   * @param views View modes.
    * @param match Matching fields.
    * @param entity Entity to be updated.
    * @returns Returns a promise to get the number of updated entities.
    */
   @Class.Public()
-  public async update(model: Mapping.Types.Model, views: string[], match: Mapping.Statements.Match, entity: Mapping.Types.Entity): Promise<number> {
+  public async update(model: Mapping.Types.Model, match: Mapping.Statements.Match, entity: Mapping.Types.Entity): Promise<number> {
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
     return (await manager.updateMany(Matches.build(model, match), { $set: entity })).modifiedCount;
   }
@@ -186,14 +180,13 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Updates the entity that corresponds to the specified entity id.
    * @param model Model type.
-   * @param views View modes.
    * @param id Entity id.
    * @param entity Entity to be updated.
    * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
    */
   @Class.Public()
-  public async updateById(model: Mapping.Types.Model, views: string[], id: any, entity: Mapping.Types.Model): Promise<boolean> {
-    return (await this.update(model, views, Filters.getPrimaryIdMatch(model, id), entity)) === 1;
+  public async updateById(model: Mapping.Types.Model, id: any, entity: Mapping.Types.Model): Promise<boolean> {
+    return (await this.update(model, Filters.getPrimaryIdMatch(model, id), entity)) === 1;
   }
 
   /**
@@ -222,13 +215,12 @@ export class Driver extends Class.Null implements Mapping.Driver {
   /**
    * Count all corresponding entities from the storage.
    * @param model Model type.
-   * @param views View modes.
    * @param filter Field field.
    * @returns Returns a promise to get the total amount of found entities.
    */
   @Class.Public()
-  public async count(model: Mapping.Types.Model, views: string[], filter: Mapping.Statements.Filter): Promise<number> {
-    const pipeline = [...Filters.getPipeline(model, views, filter), { $count: 'records' }];
+  public async count(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Promise<number> {
+    const pipeline = [...Filters.getPipeline(model, filter, []), { $count: 'records' }];
     const settings = { allowDiskUse: true };
     const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
     const result = await manager.aggregate(pipeline, settings).toArray();

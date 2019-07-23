@@ -23,9 +23,9 @@ export declare class Filters extends Class.Null {
      */
     private static getVirtualLevel;
     /**
-     * Builds and get a new grouping entity based on the specified model type and view modes.
+     * Builds and get a new grouping entity based on the specified model type and fields.
      * @param model Model type.
-     * @param views Views modes.
+     * @param fields Fields to be selected.
      * @param path Path to determine whether this group is a subgroup.
      * @returns Returns the generated group.
      */
@@ -54,7 +54,7 @@ export declare class Filters extends Class.Null {
      * Compose a subgroup to the given pipeline.
      * @param pipeline Current pipeline.
      * @param group Parent group.
-     * @param views Current view modes.
+     * @param fields Fields to be selected.
      * @param level Current level.
      * @param last Last level.
      */
@@ -69,8 +69,8 @@ export declare class Filters extends Class.Null {
     /**
      * Compose all decomposed levels to the given pipeline.
      * @param pipeline Current pipeline.
-     * @param fields List of fields.
-     * @param views View modes.
+     * @param properties List of fields.
+     * @param fields Fields to be selected.
      * @param level First decomposed level.
      * @param multiples List of decomposed levels.
      */
@@ -81,7 +81,7 @@ export declare class Filters extends Class.Null {
      * @param project Current projection.
      * @param base Base model type.
      * @param model Current model type.
-     * @param views View mode.
+     * @param fields Fields to be selected.
      * @param levels List of current levels.
      */
     private static resolveForeignRelation;
@@ -91,7 +91,7 @@ export declare class Filters extends Class.Null {
      * @param project Current projection.
      * @param base Base model type.
      * @param model Current model type.
-     * @param views View modes.
+     * @param fields Fields to be selected
      * @param levels List of current levels.
      */
     private static resolveNestedRelations;
@@ -100,7 +100,7 @@ export declare class Filters extends Class.Null {
      * @param pipeline Current pipeline.
      * @param base Base model type.
      * @param model Current model type.
-     * @param views View modes.
+     * @param fields Fields to be selected.
      * @param levels List of current levels.
      * @returns Returns the pipeline projection.
      */
@@ -113,11 +113,11 @@ export declare class Filters extends Class.Null {
      */
     static getPrimaryIdMatch(model: Mapping.Types.Model, value: any): Mapping.Statements.Match;
     /**
-     * Builds and get the filter pipeline based on the specified model type, view modes and filter.
+     * Builds and get the filter pipeline based on the specified model type, fields and filter.
      * @param model Model type.
-     * @param views View modes.
+     * @param fields Fields to be selected.
      * @param filter Fields filter.
      * @returns Returns the filter pipeline.
      */
-    static getPipeline(model: Mapping.Types.Model, views: string[], filter?: Mapping.Statements.Filter): Mapping.Types.Entity[];
+    static getPipeline(model: Mapping.Types.Model, filter: Mapping.Statements.Filter, fields: string[]): Mapping.Types.Entity[];
 }

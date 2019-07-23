@@ -10,3 +10,4 @@ var converters_1 = require("./converters");
 exports.Converters = converters_1.Converters;
 const BSON = require("./bson");
 exports.BSON = BSON;
+//# sourceMappingURL=index.js.map

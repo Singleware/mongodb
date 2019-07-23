@@ -13,3 +13,4 @@ exports.ObjectID = Source.ObjectID;
  * Type to represents binary data.
  */
 exports.Binary = Source.Binary;
+//# sourceMappingURL=bson.js.map

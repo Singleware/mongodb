@@ -49,18 +49,18 @@ export class Filters extends Class.Null {
   }
 
   /**
-   * Builds and get a new grouping entity based on the specified model type and view modes.
+   * Builds and get a new grouping entity based on the specified model type and fields.
    * @param model Model type.
-   * @param views Views modes.
+   * @param fields Fields to be selected.
    * @param path Path to determine whether this group is a subgroup.
    * @returns Returns the generated group.
    */
   @Class.Private()
-  private static getGrouping(model: Mapping.Types.Model, views: string[], path?: string): Mapping.Types.Entity {
+  private static getGrouping(model: Mapping.Types.Model, fields: string[], path?: string): Mapping.Types.Entity {
     const group = <Mapping.Types.Entity>{};
     const columns = <Mapping.Columns.RealRow | Mapping.Columns.VirtualRow>{
-      ...Mapping.Schema.getRealRow(model, ...views),
-      ...Mapping.Schema.getVirtualRow(model, ...views)
+      ...Mapping.Schema.getRealRow(model, ...fields),
+      ...Mapping.Schema.getVirtualRow(model, ...fields)
     };
     for (const name in columns) {
       const schema = columns[name];
@@ -136,14 +136,14 @@ export class Filters extends Class.Null {
    * Compose a subgroup to the given pipeline.
    * @param pipeline Current pipeline.
    * @param group Parent group.
-   * @param views Current view modes.
+   * @param fields Fields to be selected.
    * @param level Current level.
    * @param last Last level.
    */
   @Class.Private()
-  private static composeSubgroup(pipeline: Mapping.Types.Entity[], group: Mapping.Types.Entity, views: string[], level: any, last: any): void {
+  private static composeSubgroup(pipeline: Mapping.Types.Entity[], group: Mapping.Types.Entity, fields: string[], level: any, last: any): void {
     const name = level.previous ? `_${level.column.name}` : level.column.name;
-    const internal = this.getGrouping(<Mapping.Types.Model>level.column.model, views, level.name);
+    const internal = this.getGrouping(<Mapping.Types.Model>level.column.model, fields, level.name);
     internal[last.column.name] = `$_${last.column.name}`;
     if (last.column.type === 'virtual') {
       internal[last.column.local] = `$_${last.column.local}`;
@@ -184,18 +184,18 @@ export class Filters extends Class.Null {
   /**
    * Compose all decomposed levels to the given pipeline.
    * @param pipeline Current pipeline.
-   * @param fields List of fields.
-   * @param views View modes.
+   * @param properties List of fields.
+   * @param fields Fields to be selected.
    * @param level First decomposed level.
    * @param multiples List of decomposed levels.
    */
   @Class.Private()
-  private static composeAll(pipeline: Mapping.Types.Entity[], fields: Mapping.Types.Entity, views: string[], level: any, multiples: any[]): void {
+  private static composeAll(pipeline: Mapping.Types.Entity[], properties: Mapping.Types.Entity, fields: string[], level: any, multiples: any[]): void {
     let multiple = multiples.pop();
     let currentId = '$_id';
     let last;
     do {
-      const group = { ...fields };
+      const group = { ...properties };
       if (level.previous) {
         group['_realId'] = { $first: currentId };
       }
@@ -209,7 +209,7 @@ export class Filters extends Class.Null {
         group['_id'] = currentId;
       }
       if (last) {
-        this.composeSubgroup(pipeline, group, views, level, last);
+        this.composeSubgroup(pipeline, group, fields, level, last);
       } else {
         this.composeGroup(pipeline, group, level);
       }
@@ -224,13 +224,13 @@ export class Filters extends Class.Null {
    * @param project Current projection.
    * @param base Base model type.
    * @param model Current model type.
-   * @param views View mode.
+   * @param fields Fields to be selected.
    * @param levels List of current levels.
    */
   @Class.Private()
-  private static resolveForeignRelation(pipeline: Mapping.Types.Entity[], project: Mapping.Types.Entity, base: Mapping.Types.Model, model: Mapping.Types.Model, views: string[], levels: any[]): void {
-    const row = Mapping.Schema.getVirtualRow(model, ...views);
-    const fields = this.getGrouping(base, views);
+  private static resolveForeignRelation(pipeline: Mapping.Types.Entity[], project: Mapping.Types.Entity, base: Mapping.Types.Model, model: Mapping.Types.Model, fields: string[], levels: any[]): void {
+    const row = Mapping.Schema.getVirtualRow(model, ...fields);
+    const group = this.getGrouping(base, fields);
     for (const name in row) {
       const schema = row[name];
       const level = this.getVirtualLevel(schema, levels);
@@ -244,7 +244,7 @@ export class Filters extends Class.Null {
             {
               $match: { $expr: { $eq: [`$${schema.foreign}`, `$$id`] } }
             },
-            ...this.getPipeline(schema.model, views, schema.filter)
+            ...this.getPipeline(schema.model, schema.filter || {}, fields)
           ],
           as: level.virtual
         }
@@ -259,12 +259,12 @@ export class Filters extends Class.Null {
       }
       if (multiples.length > 0) {
         const current = multiples.pop();
-        const newer = { ...fields };
+        const newer = { ...group };
         for (const level of multiples) {
           const column = `_${level.column.name}Index`;
           newer[column] = { $first: `$${column}` };
         }
-        this.composeAll(pipeline, newer, views, current, multiples);
+        this.composeAll(pipeline, newer, fields, current, multiples);
       }
       levels.pop();
       project[schema.name] = true;
@@ -277,18 +277,18 @@ export class Filters extends Class.Null {
    * @param project Current projection.
    * @param base Base model type.
    * @param model Current model type.
-   * @param views View modes.
+   * @param fields Fields to be selected
    * @param levels List of current levels.
    */
   @Class.Private()
-  private static resolveNestedRelations(pipeline: Mapping.Types.Entity[], project: Mapping.Types.Entity, base: Mapping.Types.Model, model: Mapping.Types.Model, views: string[], levels: any[]): void {
-    const real = Mapping.Schema.getRealRow(model, ...views);
+  private static resolveNestedRelations(pipeline: Mapping.Types.Entity[], project: Mapping.Types.Entity, base: Mapping.Types.Model, model: Mapping.Types.Model, fields: string[], levels: any[]): void {
+    const real = Mapping.Schema.getRealRow(model, ...fields);
     for (const name in real) {
       const schema = real[name];
       const column = schema.alias || schema.name;
       if (schema.model && Mapping.Schema.isEntity(schema.model)) {
         levels.push(this.getRealLevel(schema, levels));
-        const projection = this.applyRelationship(pipeline, base, schema.model, views, levels);
+        const projection = this.applyRelationship(pipeline, base, schema.model, fields, levels);
         if (schema.formats.includes(Mapping.Types.Format.MAP)) {
           project[column] = true;
         } else {
@@ -306,15 +306,15 @@ export class Filters extends Class.Null {
    * @param pipeline Current pipeline.
    * @param base Base model type.
    * @param model Current model type.
-   * @param views View modes.
+   * @param fields Fields to be selected.
    * @param levels List of current levels.
    * @returns Returns the pipeline projection.
    */
   @Class.Private()
-  private static applyRelationship(pipeline: Mapping.Types.Entity[], base: Mapping.Types.Model, model: Mapping.Types.Model, views: string[], levels: any[]): Mapping.Types.Entity {
+  private static applyRelationship(pipeline: Mapping.Types.Entity[], base: Mapping.Types.Model, model: Mapping.Types.Model, fields: string[], levels: any[]): Mapping.Types.Entity {
     const project = {};
-    this.resolveForeignRelation(pipeline, project, base, model, views, levels);
-    this.resolveNestedRelations(pipeline, project, base, model, views, levels);
+    this.resolveForeignRelation(pipeline, project, base, model, fields, levels);
+    this.resolveNestedRelations(pipeline, project, base, model, fields, levels);
     return project;
   }
 
@@ -336,40 +336,33 @@ export class Filters extends Class.Null {
   }
 
   /**
-   * Builds and get the filter pipeline based on the specified model type, view modes and filter.
+   * Builds and get the filter pipeline based on the specified model type, fields and filter.
    * @param model Model type.
-   * @param views View modes.
+   * @param fields Fields to be selected.
    * @param filter Fields filter.
    * @returns Returns the filter pipeline.
    */
   @Class.Public()
-  public static getPipeline(model: Mapping.Types.Model, views: string[], filter?: Mapping.Statements.Filter): Mapping.Types.Entity[] {
+  public static getPipeline(model: Mapping.Types.Model, filter: Mapping.Statements.Filter, fields: string[]): Mapping.Types.Entity[] {
     const pipeline = <Mapping.Types.Entity[]>[];
-    if (filter) {
-      if (filter.pre) {
-        pipeline.push({ $match: Matches.build(model, filter.pre) });
+    if (filter.pre) {
+      pipeline.push({ $match: Matches.build(model, filter.pre) });
+    }
+    const project = this.applyRelationship(pipeline, model, model, fields, []);
+    if (filter.post) {
+      pipeline.push({ $match: Matches.build(model, filter.post) });
+    }
+    if (filter.sort) {
+      pipeline.push({ $sort: this.getSorting(filter.sort) });
+    }
+    if (filter.limit) {
+      if (filter.limit.start > 0) {
+        pipeline.push({ $skip: filter.limit.start });
       }
-      const project = this.applyRelationship(pipeline, model, model, views, []);
-      if (filter.post) {
-        pipeline.push({ $match: Matches.build(model, filter.post) });
-      }
-      if (filter.sort) {
-        pipeline.push({ $sort: this.getSorting(filter.sort) });
-      }
-      if (filter.limit) {
-        if (filter.limit.start > 0) {
-          pipeline.push({ $skip: filter.limit.start });
-        }
-        pipeline.push({ $limit: filter.limit.count });
-      }
-      if (project.length > 0) {
-        pipeline.push({ $project: project });
-      }
-    } else {
-      const project = this.applyRelationship(pipeline, model, model, views, []);
-      if (project.length > 0) {
-        pipeline.push({ $project: project });
-      }
+      pipeline.push({ $limit: filter.limit.count });
+    }
+    if (project.length > 0) {
+      pipeline.push({ $project: project });
     }
     return pipeline;
   }

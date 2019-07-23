@@ -50,45 +50,42 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
     /**
      * Inserts all specified entities into the database.
      * @param model Model type.
-     * @param views View modes.
      * @param entities Entity list.
      * @returns Returns a promise to get the list of inserted entities.
      */
-    insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], entities: T[]): Promise<string[]>;
+    insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, entities: T[]): Promise<string[]>;
     /**
      * Find the corresponding entities from the database.
      * @param model Model type.
-     * @param views View modes.
      * @param filter Field filter.
+     * @param fields Fields to be selected.
      * @returns Returns a promise to get the list of entities found.
      */
-    find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], filter: Mapping.Statements.Filter): Promise<T[]>;
+    find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, filter: Mapping.Statements.Filter, fields: string[]): Promise<T[]>;
     /**
      * Find the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param views View modes.
      * @param id Entity id.
+     * @param fields Fields to be selected.
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
-    findById<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, views: string[], id: any): Promise<T | undefined>;
+    findById<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, id: any, fields: string[]): Promise<T | undefined>;
     /**
      * Update all entities that corresponds to the specified filter.
      * @param model Model type.
-     * @param views View modes.
      * @param match Matching fields.
      * @param entity Entity to be updated.
      * @returns Returns a promise to get the number of updated entities.
      */
-    update(model: Mapping.Types.Model, views: string[], match: Mapping.Statements.Match, entity: Mapping.Types.Entity): Promise<number>;
+    update(model: Mapping.Types.Model, match: Mapping.Statements.Match, entity: Mapping.Types.Entity): Promise<number>;
     /**
      * Updates the entity that corresponds to the specified entity id.
      * @param model Model type.
-     * @param views View modes.
      * @param id Entity id.
      * @param entity Entity to be updated.
      * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
      */
-    updateById(model: Mapping.Types.Model, views: string[], id: any, entity: Mapping.Types.Model): Promise<boolean>;
+    updateById(model: Mapping.Types.Model, id: any, entity: Mapping.Types.Model): Promise<boolean>;
     /**
      * Delete all entities that corresponds to the specified filter.
      * @param model Model type.
@@ -106,9 +103,8 @@ export declare class Driver extends Class.Null implements Mapping.Driver {
     /**
      * Count all corresponding entities from the storage.
      * @param model Model type.
-     * @param views View modes.
      * @param filter Field field.
      * @returns Returns a promise to get the total amount of found entities.
      */
-    count(model: Mapping.Types.Model, views: string[], filter: Mapping.Statements.Filter): Promise<number>;
+    count(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Promise<number>;
 }
