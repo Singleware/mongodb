@@ -3,7 +3,6 @@
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
-import * as Mapping from '@singleware/mapping';
 import * as MongoDB from '../source';
 
 /**
@@ -19,21 +18,21 @@ const driver = new MongoDB.Driver();
 /**
  * Test sub entity.
  */
-@Mapping.Schema.Entity('TestEntitySub')
+@MongoDB.Schema.Entity('TestEntitySub')
 @Class.Describe()
 class TestEntitySub extends Class.Null {
   /**
    * Id.
    */
-  @Mapping.Schema.Id()
-  @Mapping.Schema.Alias('_id')
+  @MongoDB.Schema.Id()
+  @MongoDB.Schema.Alias('_id')
   @Class.Public()
   public id?: any;
   /**
    * Some value.
    */
-  @Mapping.Schema.String()
-  @Mapping.Schema.Number()
+  @MongoDB.Schema.String()
+  @MongoDB.Schema.Number()
   @Class.Public()
   public value?: string | number;
 }
@@ -41,206 +40,206 @@ class TestEntitySub extends Class.Null {
 /**
  * Test entity.
  */
-@Mapping.Schema.Entity('TestEntity')
+@MongoDB.Schema.Entity('TestEntity')
 @Class.Describe()
 class TestEntity extends Class.Null {
   // Id type.
-  @Mapping.Schema.Id()
-  @Mapping.Schema.Alias('_id')
+  @MongoDB.Schema.Id()
+  @MongoDB.Schema.Alias('_id')
   @Class.Public()
   public id?: any;
 
   // Null type.
-  @Mapping.Schema.Null()
+  @MongoDB.Schema.Null()
   @Class.Public()
   public null?: null;
 
   // Binary types.
-  @Mapping.Schema.Binary()
+  @MongoDB.Schema.Binary()
   @Class.Public()
   public binary?: string;
 
   // Boolean types.
-  @Mapping.Schema.Boolean()
+  @MongoDB.Schema.Boolean()
   @Class.Public()
   public boolean?: boolean;
 
   // Integer types.
-  @Mapping.Schema.Integer()
+  @MongoDB.Schema.Integer()
   @Class.Public()
   public integer?: number;
 
-  @Mapping.Schema.Integer(1)
+  @MongoDB.Schema.Integer(1)
   @Class.Public()
   public minInteger?: number;
 
-  @Mapping.Schema.Integer(void 0, 2)
+  @MongoDB.Schema.Integer(void 0, 2)
   @Class.Public()
   public maxInteger?: number;
 
-  @Mapping.Schema.Integer(1, 2)
+  @MongoDB.Schema.Integer(1, 2)
   @Class.Public()
   public rangeInteger?: number;
 
   // Decimal types.
-  @Mapping.Schema.Decimal()
+  @MongoDB.Schema.Decimal()
   @Class.Public()
   public decimal?: number;
 
-  @Mapping.Schema.Decimal(1)
+  @MongoDB.Schema.Decimal(1)
   @Class.Public()
   public minDecimal?: number;
 
-  @Mapping.Schema.Decimal(void 0, 2)
+  @MongoDB.Schema.Decimal(void 0, 2)
   @Class.Public()
   public maxDecimal?: number;
 
-  @Mapping.Schema.Decimal(1, 2)
+  @MongoDB.Schema.Decimal(1, 2)
   @Class.Public()
   public rangeDecimal?: number;
 
   // Number types.
-  @Mapping.Schema.Number()
+  @MongoDB.Schema.Number()
   @Class.Public()
   public number?: number;
 
-  @Mapping.Schema.Number(1)
+  @MongoDB.Schema.Number(1)
   @Class.Public()
   public minNumber?: number;
 
-  @Mapping.Schema.Number(void 0, 2)
+  @MongoDB.Schema.Number(void 0, 2)
   @Class.Public()
   public maxNumber?: number;
 
-  @Mapping.Schema.Number(1, 2)
+  @MongoDB.Schema.Number(1, 2)
   @Class.Public()
   public rangeNumber?: number;
 
   // String types.
-  @Mapping.Schema.String()
+  @MongoDB.Schema.String()
   @Class.Public()
   public string?: string;
 
-  @Mapping.Schema.String(1)
+  @MongoDB.Schema.String(1)
   @Class.Public()
   public minString?: string;
 
-  @Mapping.Schema.String(void 0, 2)
+  @MongoDB.Schema.String(void 0, 2)
   @Class.Public()
   public maxString?: string;
 
-  @Mapping.Schema.String(1, 2)
+  @MongoDB.Schema.String(1, 2)
   @Class.Public()
   public rangeString?: string;
 
   // Enumeration type.
-  @Mapping.Schema.Enumeration('a', 'b', 'c')
+  @MongoDB.Schema.Enumeration('a', 'b', 'c')
   @Class.Public()
   public enumeration?: 'a' | 'b' | 'c';
 
   // Pattern type.
-  @Mapping.Schema.Pattern(/^([a-z]+)$/)
+  @MongoDB.Schema.Pattern(/^([a-z]+)$/)
   @Class.Public()
   public pattern?: string;
 
   // Timestamp types.
-  @Mapping.Schema.Timestamp()
+  @MongoDB.Schema.Timestamp()
   @Class.Public()
   public timestamp?: Date;
 
-  @Mapping.Schema.Timestamp(new Date(2000, 1, 1, 0, 0, 0, 0))
+  @MongoDB.Schema.Timestamp(new Date(2000, 1, 1, 0, 0, 0, 0))
   @Class.Public()
   public minTimestamp?: Date;
 
-  @Mapping.Schema.Timestamp(void 0, new Date(2010, 1, 1, 0, 0, 0, 0))
+  @MongoDB.Schema.Timestamp(void 0, new Date(2010, 1, 1, 0, 0, 0, 0))
   @Class.Public()
   public maxTimestamp?: Date;
 
-  @Mapping.Schema.Timestamp(new Date(2000, 1, 1, 0, 0, 0, 0), new Date(2010, 1, 1, 0, 0, 0, 0))
+  @MongoDB.Schema.Timestamp(new Date(2000, 1, 1, 0, 0, 0, 0), new Date(2010, 1, 1, 0, 0, 0, 0))
   @Class.Public()
   public rangeTimestamp?: Date;
 
   // Date types.
-  @Mapping.Schema.Date()
+  @MongoDB.Schema.Date()
   @Class.Public()
   public date?: Date;
 
-  @Mapping.Schema.Date(new Date(2000, 1, 1, 0, 0, 0, 0))
+  @MongoDB.Schema.Date(new Date(2000, 1, 1, 0, 0, 0, 0))
   @Class.Public()
   public minDate?: Date;
 
-  @Mapping.Schema.Date(void 0, new Date(2010, 1, 1, 0, 0, 0, 0))
+  @MongoDB.Schema.Date(void 0, new Date(2010, 1, 1, 0, 0, 0, 0))
   @Class.Public()
   public maxDate?: Date;
 
-  @Mapping.Schema.Date(new Date(2000, 1, 1, 0, 0, 0, 0), new Date(2010, 1, 1, 0, 0, 0, 0))
+  @MongoDB.Schema.Date(new Date(2000, 1, 1, 0, 0, 0, 0), new Date(2010, 1, 1, 0, 0, 0, 0))
   @Class.Public()
   public rangeDate?: Date;
 
   // Array types.
-  @Mapping.Schema.Array(String)
+  @MongoDB.Schema.Array(String)
   @Class.Public()
   public stringArray?: string[];
 
-  @Mapping.Schema.Array(String, true)
+  @MongoDB.Schema.Array(String, true)
   @Class.Public()
   public stringUniqueArray?: string[];
 
-  @Mapping.Schema.Array(String, void 0, 1)
+  @MongoDB.Schema.Array(String, void 0, 1)
   @Class.Public()
   public stringMinArray?: string[];
 
-  @Mapping.Schema.Array(String, void 0, void 0, 2)
+  @MongoDB.Schema.Array(String, void 0, void 0, 2)
   @Class.Public()
   public stringMaxArray?: string[];
 
-  @Mapping.Schema.Array(String, void 0, 1, 2)
+  @MongoDB.Schema.Array(String, void 0, 1, 2)
   @Class.Public()
   public stringRangeArray?: string[];
 
-  @Mapping.Schema.Array(Number)
+  @MongoDB.Schema.Array(Number)
   @Class.Public()
   public numberArray?: string[];
 
-  @Mapping.Schema.Array(Boolean)
+  @MongoDB.Schema.Array(Boolean)
   @Class.Public()
   public booleanArray?: boolean[];
 
-  @Mapping.Schema.Array(Date)
+  @MongoDB.Schema.Array(Date)
   @Class.Public()
   public dateArray?: Date[];
 
-  @Mapping.Schema.Array(Object)
+  @MongoDB.Schema.Array(Object)
   @Class.Public()
   public objectArray?: Date[];
 
-  @Mapping.Schema.Array(TestEntitySub)
+  @MongoDB.Schema.Array(TestEntitySub)
   @Class.Public()
   public entityArray?: TestEntitySub[];
 
   // Map type.
-  @Mapping.Schema.Map(String)
+  @MongoDB.Schema.Map(String)
   @Class.Public()
-  public stringMap?: Mapping.Types.Map<string>;
+  public stringMap?: MongoDB.Map<string>;
 
-  @Mapping.Schema.Map(Number)
+  @MongoDB.Schema.Map(Number)
   @Class.Public()
-  public numberMap?: Mapping.Types.Map<number>;
+  public numberMap?: MongoDB.Map<number>;
 
-  @Mapping.Schema.Map(Boolean)
+  @MongoDB.Schema.Map(Boolean)
   @Class.Public()
-  public booleanMap?: Mapping.Types.Map<boolean>;
+  public booleanMap?: MongoDB.Map<boolean>;
 
-  @Mapping.Schema.Map(Date)
+  @MongoDB.Schema.Map(Date)
   @Class.Public()
-  public dateMap?: Mapping.Types.Map<Date>;
+  public dateMap?: MongoDB.Map<Date>;
 
-  @Mapping.Schema.Map(TestEntitySub)
+  @MongoDB.Schema.Map(TestEntitySub)
   @Class.Public()
-  public entityMap?: Mapping.Types.Map<TestEntitySub>;
+  public entityMap?: MongoDB.Map<TestEntitySub>;
 
   // Object type.
-  @Mapping.Schema.Object(TestEntitySub)
+  @MongoDB.Schema.Object(TestEntitySub)
   @Class.Public()
   public entityObject?: TestEntitySub;
 }
@@ -256,10 +255,11 @@ async function test(): Promise<void> {
   // Apply schema
   if (!(await driver.hasCollection(TestEntity))) {
     await driver.createCollection(TestEntity);
+    console.log('Created');
   } else {
     await driver.modifyCollection(TestEntity);
+    console.log('Modified');
   }
-  console.log('Modified');
 
   // Disconnect
   await driver.disconnect();

@@ -3,15 +3,16 @@
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
-import * as Mapping from '@singleware/mapping';
 
-import { Matches } from './matches';
+import * as Aliases from '../aliases';
+
+import { Match } from './match';
 
 /**
- * Filters helper class.
+ * Pipeline helper class.
  */
 @Class.Describe()
-export class Filters extends Class.Null {
+export class Pipeline extends Class.Null {
   /**
    * Gets a new real level entity based on the specified column.
    * @param column Level column schema.
@@ -19,11 +20,11 @@ export class Filters extends Class.Null {
    * @returns Returns the generated level entity.
    */
   @Class.Private()
-  private static getRealLevel(column: Mapping.Columns.Real, levels: any[]): any {
+  private static getRealLevel(column: Aliases.Columns.Real, levels: any[]): any {
     const current = levels[levels.length - 1];
     return {
       name: current ? `${current.name}.${column.name}` : column.name,
-      multiple: column.formats.includes(Mapping.Types.Format.ARRAY),
+      multiple: column.formats.includes(Aliases.Format.Array),
       column: column,
       previous: current
     };
@@ -36,38 +37,51 @@ export class Filters extends Class.Null {
    * @returns Returns the level entity.
    */
   @Class.Private()
-  private static getVirtualLevel(column: Mapping.Columns.Virtual, levels: any[]): any {
+  private static getVirtualLevel(column: Aliases.Columns.Virtual, levels: any[]): any {
     const current = levels[levels.length - 1];
     return {
       name: current ? `${current.name}.${column.local}` : column.local,
       virtual: current ? `${current.name}.${column.name}` : column.name,
       multiple: column.multiple,
-      filter: column.filter,
       column: column,
       previous: current
     };
   }
 
   /**
-   * Builds and get a new grouping entity based on the specified model type and fields.
+   * Builds and get a new grouping entity based on the specified model type and viewed fields.
    * @param model Model type.
-   * @param fields Fields to be selected.
-   * @param path Path to determine whether this group is a subgroup.
+   * @param fields Viewed fields.
+   * @param path Path to determine whether is a subgroup.
    * @returns Returns the generated group.
    */
   @Class.Private()
-  private static getGrouping(model: Mapping.Types.Model, fields: string[], path?: string): Mapping.Types.Entity {
-    const group = <Mapping.Types.Entity>{};
-    const columns = <Mapping.Columns.RealRow | Mapping.Columns.VirtualRow>{
-      ...Mapping.Schema.getRealRow(model, ...fields),
-      ...Mapping.Schema.getVirtualRow(model, ...fields)
+  private static getGrouping(model: Aliases.Model, fields: string[], path?: string): Aliases.Entity {
+    const group = <Aliases.Entity>{};
+    const columns = <Aliases.Columns.RealRow | Aliases.Columns.VirtualRow>{
+      ...Aliases.Schema.getRealRow(model, ...fields),
+      ...Aliases.Schema.getVirtualRow(model, ...fields)
     };
     for (const name in columns) {
       const schema = columns[name];
-      const column = (<Mapping.Types.Entity>schema).alias || schema.name;
+      const column = (<Aliases.Entity>schema).alias || schema.name;
       group[column] = path ? `$${path}.${column}` : { $first: `$${column}` };
     }
     return group;
+  }
+
+  /**
+   * Builds and get a new projection entity based on the specified model type and viewed fields.
+   * @param group Current group.
+   * @returns Returns the generated group.
+   */
+  @Class.Private()
+  private static getProjection(group: Aliases.Entity): Aliases.Entity {
+    const project = <Aliases.Entity>{};
+    for (const name in group) {
+      project[name] = { $ifNull: [`$${name}`, '$$REMOVE'] };
+    }
+    return project;
   }
 
   /**
@@ -76,14 +90,14 @@ export class Filters extends Class.Null {
    * @returns Returns the generated sorting.
    */
   @Class.Private()
-  private static getSorting(sort: Mapping.Statements.Sort): Mapping.Types.Entity {
-    const sorting = <Mapping.Types.Entity>{};
+  private static getSorting(sort: Aliases.Sort): Aliases.Entity {
+    const sorting = <Aliases.Entity>{};
     for (const column in sort) {
       switch (sort[column]) {
-        case Mapping.Statements.Order.ASCENDING:
+        case Aliases.Order.Ascending:
           sorting[column] = 1;
           break;
-        case Mapping.Statements.Order.DESCENDING:
+        case Aliases.Order.Descending:
           sorting[column] = -1;
           break;
       }
@@ -98,8 +112,8 @@ export class Filters extends Class.Null {
    * @returns Returns the composed id object.
    */
   @Class.Private()
-  private static getComposedId(id: string, ...levels: any[]): Mapping.Types.Entity {
-    const compound = <Mapping.Types.Entity>{
+  private static getComposedId(id: string, ...levels: any[]): Aliases.Entity {
+    const compound = <Aliases.Entity>{
       _id: `${id}`
     };
     for (const level of levels) {
@@ -115,7 +129,7 @@ export class Filters extends Class.Null {
    * @returns Returns the list of decomposed levels.
    */
   @Class.Private()
-  private static decomposeAll(pipeline: Mapping.Types.Entity, levels: any[]): any[] {
+  private static decomposeAll(pipeline: Aliases.Entity, levels: any[]): any[] {
     let multiples = [];
     for (const level of levels) {
       if (level.multiple) {
@@ -136,20 +150,21 @@ export class Filters extends Class.Null {
    * Compose a subgroup to the given pipeline.
    * @param pipeline Current pipeline.
    * @param group Parent group.
-   * @param fields Fields to be selected.
+   * @param fields Viewed fields.
    * @param level Current level.
    * @param last Last level.
    */
   @Class.Private()
-  private static composeSubgroup(pipeline: Mapping.Types.Entity[], group: Mapping.Types.Entity, fields: string[], level: any, last: any): void {
+  private static composeSubgroup(pipeline: Aliases.Entity[], group: Aliases.Entity, fields: string[], level: any, last: any): void {
     const name = level.previous ? `_${level.column.name}` : level.column.name;
-    const internal = this.getGrouping(<Mapping.Types.Model>level.column.model, fields, level.name);
+    const internal = this.getGrouping(<Aliases.Model>level.column.model, fields, level.name);
     internal[last.column.name] = `$_${last.column.name}`;
     if (last.column.type === 'virtual') {
       internal[last.column.local] = `$_${last.column.local}`;
     }
     group[name] = { $push: internal };
     pipeline.push({ $group: group });
+    pipeline.push({ $project: this.getProjection(group) });
     if (!level.multiple && !level.all) {
       pipeline.push({ $unwind: { path: `$${name}` } });
     }
@@ -162,10 +177,12 @@ export class Filters extends Class.Null {
    * @param level Current level.
    */
   @Class.Private()
-  private static composeGroup(pipeline: Mapping.Types.Entity[], group: Mapping.Types.Entity, level: any): void {
+  private static composeGroup(pipeline: Aliases.Entity[], group: Aliases.Entity, level: any): void {
     const name = level.previous ? `_${level.column.name}` : level.column.name;
     if (level.column.type === 'virtual') {
-      const local = level.previous ? `_${(level.column as Mapping.Columns.Virtual).local}` : (level.column as Mapping.Columns.Virtual).local;
+      const local = level.previous
+        ? `_${(level.column as Aliases.Columns.Virtual).local}`
+        : (level.column as Aliases.Columns.Virtual).local;
       if (level.multiple) {
         group[name] = { $push: `$${level.virtual}` };
         group[local] = { $push: `$${level.name}` };
@@ -179,18 +196,19 @@ export class Filters extends Class.Null {
       group[name] = { $first: `$${level.name}` };
     }
     pipeline.push({ $group: group });
+    pipeline.push({ $project: this.getProjection(group) });
   }
 
   /**
    * Compose all decomposed levels to the given pipeline.
    * @param pipeline Current pipeline.
    * @param properties List of fields.
-   * @param fields Fields to be selected.
+   * @param fields Viewed fields.
    * @param level First decomposed level.
    * @param multiples List of decomposed levels.
    */
   @Class.Private()
-  private static composeAll(pipeline: Mapping.Types.Entity[], properties: Mapping.Types.Entity, fields: string[], level: any, multiples: any[]): void {
+  private static composeAll(pipeline: Aliases.Entity[], properties: Aliases.Entity, fields: string[], level: any, multiples: any[]): void {
     let multiple = multiples.pop();
     let currentId = '$_id';
     let last;
@@ -224,12 +242,19 @@ export class Filters extends Class.Null {
    * @param project Current projection.
    * @param base Base model type.
    * @param model Current model type.
-   * @param fields Fields to be selected.
+   * @param fields Viewed fields.
    * @param levels List of current levels.
    */
   @Class.Private()
-  private static resolveForeignRelation(pipeline: Mapping.Types.Entity[], project: Mapping.Types.Entity, base: Mapping.Types.Model, model: Mapping.Types.Model, fields: string[], levels: any[]): void {
-    const row = Mapping.Schema.getVirtualRow(model, ...fields);
+  private static resolveForeignRelation(
+    pipeline: Aliases.Entity[],
+    project: Aliases.Entity,
+    base: Aliases.Model,
+    model: Aliases.Model,
+    fields: string[],
+    levels: any[]
+  ): void {
+    const row = Aliases.Schema.getVirtualRow(model, ...fields);
     const group = this.getGrouping(base, fields);
     for (const name in row) {
       const schema = row[name];
@@ -238,13 +263,13 @@ export class Filters extends Class.Null {
       const multiples = this.decomposeAll(pipeline, levels);
       pipeline.push({
         $lookup: {
-          from: Mapping.Schema.getStorage(schema.model),
+          from: Aliases.Schema.getStorageName(schema.model),
           let: { id: `$${level.name}` },
           pipeline: [
             {
               $match: { $expr: { $eq: [`$${schema.foreign}`, `$$id`] } }
             },
-            ...this.getPipeline(schema.model, schema.filter || {}, fields)
+            ...this.build(schema.model, schema.query || {}, fields)
           ],
           as: level.virtual
         }
@@ -281,15 +306,22 @@ export class Filters extends Class.Null {
    * @param levels List of current levels.
    */
   @Class.Private()
-  private static resolveNestedRelations(pipeline: Mapping.Types.Entity[], project: Mapping.Types.Entity, base: Mapping.Types.Model, model: Mapping.Types.Model, fields: string[], levels: any[]): void {
-    const real = Mapping.Schema.getRealRow(model, ...fields);
+  private static resolveNestedRelations(
+    pipeline: Aliases.Entity[],
+    project: Aliases.Entity,
+    base: Aliases.Model,
+    model: Aliases.Model,
+    fields: string[],
+    levels: any[]
+  ): void {
+    const real = Aliases.Schema.getRealRow(model, ...fields);
     for (const name in real) {
       const schema = real[name];
       const column = schema.alias || schema.name;
-      if (schema.model && Mapping.Schema.isEntity(schema.model)) {
+      if (schema.model && Aliases.Schema.isEntity(schema.model)) {
         levels.push(this.getRealLevel(schema, levels));
         const projection = this.applyRelationship(pipeline, base, schema.model, fields, levels);
-        if (schema.formats.includes(Mapping.Types.Format.MAP)) {
+        if (schema.formats.includes(Aliases.Format.Map)) {
           project[column] = true;
         } else {
           project[column] = projection;
@@ -306,12 +338,18 @@ export class Filters extends Class.Null {
    * @param pipeline Current pipeline.
    * @param base Base model type.
    * @param model Current model type.
-   * @param fields Fields to be selected.
+   * @param fields Viewed fields.
    * @param levels List of current levels.
    * @returns Returns the pipeline projection.
    */
   @Class.Private()
-  private static applyRelationship(pipeline: Mapping.Types.Entity[], base: Mapping.Types.Model, model: Mapping.Types.Model, fields: string[], levels: any[]): Mapping.Types.Entity {
+  private static applyRelationship(
+    pipeline: Aliases.Entity[],
+    base: Aliases.Model,
+    model: Aliases.Model,
+    fields: string[],
+    levels: any[]
+  ): Aliases.Entity {
     const project = {};
     this.resolveForeignRelation(pipeline, project, base, model, fields, levels);
     this.resolveNestedRelations(pipeline, project, base, model, fields, levels);
@@ -319,49 +357,32 @@ export class Filters extends Class.Null {
   }
 
   /**
-   * Builds and get the primary id filter based on the specified model type.
+   * Build a new pipeline entity based on the specified model type, fields and query filter.
    * @param model Model type.
-   * @param value Primary id value.
-   * @returns Returns the primary filter.
+   * @param fields Viewed fields.
+   * @param query Query filter.
+   * @returns Returns the new pipeline entity.
    */
   @Class.Public()
-  public static getPrimaryIdMatch(model: Mapping.Types.Model, value: any): Mapping.Statements.Match {
-    const primary = Mapping.Schema.getPrimaryColumn(model);
-    const filters = <Mapping.Statements.Match>{};
-    filters[primary.name] = {
-      operator: Mapping.Statements.Operator.EQUAL,
-      value: value
-    };
-    return filters;
-  }
-
-  /**
-   * Builds and get the filter pipeline based on the specified model type, fields and filter.
-   * @param model Model type.
-   * @param fields Fields to be selected.
-   * @param filter Fields filter.
-   * @returns Returns the filter pipeline.
-   */
-  @Class.Public()
-  public static getPipeline(model: Mapping.Types.Model, filter: Mapping.Statements.Filter, fields: string[]): Mapping.Types.Entity[] {
-    const pipeline = <Mapping.Types.Entity[]>[];
-    if (filter.pre) {
-      pipeline.push({ $match: Matches.build(model, filter.pre) });
+  public static build(model: Aliases.Model, query: Aliases.Query, fields: string[]): Aliases.Entity[] {
+    const pipeline = <Aliases.Entity[]>[];
+    if (query.pre) {
+      pipeline.push({ $match: Match.build(model, query.pre) });
     }
     const project = this.applyRelationship(pipeline, model, model, fields, []);
-    if (filter.post) {
-      pipeline.push({ $match: Matches.build(model, filter.post) });
+    if (query.post) {
+      pipeline.push({ $match: Match.build(model, query.post) });
     }
-    if (filter.sort) {
-      pipeline.push({ $sort: this.getSorting(filter.sort) });
+    if (query.sort) {
+      pipeline.push({ $sort: this.getSorting(query.sort) });
     }
-    if (filter.limit) {
-      if (filter.limit.start > 0) {
-        pipeline.push({ $skip: filter.limit.start });
+    if (query.limit) {
+      if (query.limit.start > 0) {
+        pipeline.push({ $skip: query.limit.start });
       }
-      pipeline.push({ $limit: filter.limit.count });
+      pipeline.push({ $limit: query.limit.count });
     }
-    if (project.length > 0) {
+    if (fields.length > 0) {
       pipeline.push({ $project: project });
     }
     return pipeline;

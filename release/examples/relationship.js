@@ -11,7 +11,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
-const Mapping = require("@singleware/mapping");
 const MongoDB = require("../source");
 /**
  * Connection string.
@@ -27,29 +26,29 @@ const driver = new MongoDB.Driver();
 let UserEntity = class UserEntity extends Class.Null {
 };
 __decorate([
-    Mapping.Schema.Primary(),
-    Mapping.Schema.Alias('_id'),
-    Mapping.Schema.Id(),
+    MongoDB.Schema.Primary(),
+    MongoDB.Schema.Alias('_id'),
+    MongoDB.Schema.Id(),
     Class.Public()
 ], UserEntity.prototype, "id", void 0);
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.String(),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.String(),
     Class.Public()
 ], UserEntity.prototype, "name", void 0);
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Enumeration('enabled', 'disabled'),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Enumeration('enabled', 'disabled'),
     Class.Public()
 ], UserEntity.prototype, "status", void 0);
 UserEntity = __decorate([
-    Mapping.Schema.Entity('Users'),
+    MongoDB.Schema.Entity('Users'),
     Class.Describe()
 ], UserEntity);
 /**
  * User mapper.
  */
-let UserMapper = class UserMapper extends Mapping.Mapper {
+let UserMapper = class UserMapper extends MongoDB.Mapper {
     /**
      * Default constructor.
      */
@@ -81,29 +80,29 @@ UserMapper = __decorate([
 let TypeEntity = class TypeEntity extends Class.Null {
 };
 __decorate([
-    Mapping.Schema.Primary(),
-    Mapping.Schema.Alias('_id'),
-    Mapping.Schema.Id(),
+    MongoDB.Schema.Primary(),
+    MongoDB.Schema.Alias('_id'),
+    MongoDB.Schema.Id(),
     Class.Public()
 ], TypeEntity.prototype, "id", void 0);
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.String(),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.String(),
     Class.Public()
 ], TypeEntity.prototype, "name", void 0);
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.String(),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.String(),
     Class.Public()
 ], TypeEntity.prototype, "description", void 0);
 TypeEntity = __decorate([
-    Mapping.Schema.Entity('Types'),
+    MongoDB.Schema.Entity('Types'),
     Class.Describe()
 ], TypeEntity);
 /**
  * Type mapper.
  */
-let TypeMapper = class TypeMapper extends Mapping.Mapper {
+let TypeMapper = class TypeMapper extends MongoDB.Mapper {
     /**
      * Default constructor.
      */
@@ -135,16 +134,16 @@ TypeMapper = __decorate([
 let TargetEntity = class TargetEntity extends Class.Null {
 };
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Id(),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Id(),
     Class.Public()
 ], TargetEntity.prototype, "userId", void 0);
 __decorate([
-    Mapping.Schema.Join('id', UserEntity, 'userId'),
+    MongoDB.Schema.Join('id', UserEntity, 'userId'),
     Class.Public()
 ], TargetEntity.prototype, "user", void 0);
 TargetEntity = __decorate([
-    Mapping.Schema.Entity('Targets'),
+    MongoDB.Schema.Entity('Targets'),
     Class.Describe()
 ], TargetEntity);
 /**
@@ -153,12 +152,12 @@ TargetEntity = __decorate([
 let DescriptionEntity = class DescriptionEntity extends Class.Null {
 };
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Array(TargetEntity),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Array(TargetEntity),
     Class.Public()
 ], DescriptionEntity.prototype, "targets", void 0);
 DescriptionEntity = __decorate([
-    Mapping.Schema.Entity('Targets'),
+    MongoDB.Schema.Entity('Targets'),
     Class.Describe()
 ], DescriptionEntity);
 /**
@@ -167,21 +166,21 @@ DescriptionEntity = __decorate([
 let NotificationEntity = class NotificationEntity extends Class.Null {
 };
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Id(),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Id(),
     Class.Public()
 ], NotificationEntity.prototype, "userId", void 0);
 __decorate([
-    Mapping.Schema.Join('id', UserEntity, 'userId'),
+    MongoDB.Schema.Join('id', UserEntity, 'userId'),
     Class.Public()
 ], NotificationEntity.prototype, "user", void 0);
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Object(DescriptionEntity),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Object(DescriptionEntity),
     Class.Public()
 ], NotificationEntity.prototype, "description", void 0);
 NotificationEntity = __decorate([
-    Mapping.Schema.Entity('Notifications'),
+    MongoDB.Schema.Entity('Notifications'),
     Class.Describe()
 ], NotificationEntity);
 /**
@@ -190,29 +189,29 @@ NotificationEntity = __decorate([
 let GroupEntity = class GroupEntity extends Class.Null {
 };
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Id(),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Id(),
     Class.Public()
 ], GroupEntity.prototype, "adminId", void 0);
 __decorate([
-    Mapping.Schema.Join('id', UserEntity, 'adminId'),
+    MongoDB.Schema.Join('id', UserEntity, 'adminId'),
     Class.Public()
 ], GroupEntity.prototype, "admin", void 0);
 __decorate([
-    Mapping.Schema.Array(MongoDB.BSON.ObjectID),
+    MongoDB.Schema.ArrayIds(),
     Class.Public()
 ], GroupEntity.prototype, "usersIdList", void 0);
 __decorate([
-    Mapping.Schema.Join('id', UserEntity, 'usersIdList'),
+    MongoDB.Schema.Join('id', UserEntity, 'usersIdList'),
     Class.Public()
 ], GroupEntity.prototype, "usersList", void 0);
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Array(NotificationEntity),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Array(NotificationEntity),
     Class.Public()
 ], GroupEntity.prototype, "notifications", void 0);
 GroupEntity = __decorate([
-    Mapping.Schema.Entity('Groups'),
+    MongoDB.Schema.Entity('Groups'),
     Class.Describe()
 ], GroupEntity);
 /**
@@ -221,24 +220,24 @@ GroupEntity = __decorate([
 let MessagesEntity = class MessagesEntity extends Class.Null {
 };
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Id(),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Id(),
     Class.Public()
 ], MessagesEntity.prototype, "adminId", void 0);
 __decorate([
-    Mapping.Schema.Join('id', UserEntity, 'adminId'),
+    MongoDB.Schema.Join('id', UserEntity, 'adminId'),
     Class.Public()
 ], MessagesEntity.prototype, "admin", void 0);
 __decorate([
-    Mapping.Schema.Array(MongoDB.BSON.ObjectID),
+    MongoDB.Schema.ArrayIds(),
     Class.Public()
 ], MessagesEntity.prototype, "usersIdList", void 0);
 __decorate([
-    Mapping.Schema.Join('id', UserEntity, 'usersIdList'),
+    MongoDB.Schema.Join('id', UserEntity, 'usersIdList'),
     Class.Public()
 ], MessagesEntity.prototype, "usersList", void 0);
 MessagesEntity = __decorate([
-    Mapping.Schema.Entity('Messages'),
+    MongoDB.Schema.Entity('Messages'),
     Class.Describe()
 ], MessagesEntity);
 /**
@@ -247,33 +246,33 @@ MessagesEntity = __decorate([
 let SettingsEntity = class SettingsEntity extends Class.Null {
 };
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Id(),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Id(),
     Class.Public()
 ], SettingsEntity.prototype, "contactId", void 0);
 __decorate([
-    Mapping.Schema.Join('id', UserEntity, 'contactId'),
+    MongoDB.Schema.Join('id', UserEntity, 'contactId'),
     Class.Public()
 ], SettingsEntity.prototype, "contact", void 0);
 __decorate([
-    Mapping.Schema.Array(MongoDB.BSON.ObjectID),
+    MongoDB.Schema.ArrayIds(),
     Class.Public()
 ], SettingsEntity.prototype, "sharedUsersIdList", void 0);
 __decorate([
-    Mapping.Schema.Join('id', UserEntity, 'sharedUsersIdList'),
+    MongoDB.Schema.Join('id', UserEntity, 'sharedUsersIdList'),
     Class.Public()
 ], SettingsEntity.prototype, "sharedUsersList", void 0);
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Object(MessagesEntity),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Object(MessagesEntity),
     Class.Public()
 ], SettingsEntity.prototype, "messages", void 0);
 __decorate([
-    Mapping.Schema.Array(GroupEntity),
+    MongoDB.Schema.Array(GroupEntity),
     Class.Public()
 ], SettingsEntity.prototype, "groups", void 0);
 SettingsEntity = __decorate([
-    Mapping.Schema.Entity('Settings'),
+    MongoDB.Schema.Entity('Settings'),
     Class.Describe()
 ], SettingsEntity);
 /**
@@ -282,25 +281,25 @@ SettingsEntity = __decorate([
 let AccountEntity = class AccountEntity extends Class.Null {
 };
 __decorate([
-    Mapping.Schema.Primary(),
-    Mapping.Schema.Alias('_id'),
-    Mapping.Schema.Id(),
+    MongoDB.Schema.Primary(),
+    MongoDB.Schema.Alias('_id'),
+    MongoDB.Schema.Id(),
     Class.Public()
 ], AccountEntity.prototype, "id", void 0);
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Id(),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Id(),
     Class.Public()
 ], AccountEntity.prototype, "ownerId", void 0);
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.String(),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.String(),
     Class.Public()
 ], AccountEntity.prototype, "typeName", void 0);
 __decorate([
-    Mapping.Schema.JoinAll('name', TypeEntity, 'typeName', {
+    MongoDB.Schema.JoinAll('name', TypeEntity, 'typeName', {
         sort: {
-            description: Mapping.Statements.Order.DESCENDING
+            description: MongoDB.Order.Descending
         },
         limit: {
             start: 0,
@@ -310,12 +309,12 @@ __decorate([
     Class.Public()
 ], AccountEntity.prototype, "typeList", void 0);
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Array(String),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Array(String),
     Class.Public()
 ], AccountEntity.prototype, "roleNames", void 0);
 __decorate([
-    Mapping.Schema.JoinAll('name', TypeEntity, 'roleNames', {
+    MongoDB.Schema.JoinAll('name', TypeEntity, 'roleNames', {
         limit: {
             start: 0,
             count: 6
@@ -324,32 +323,32 @@ __decorate([
     Class.Public()
 ], AccountEntity.prototype, "roleList", void 0);
 __decorate([
-    Mapping.Schema.Join('id', UserEntity, 'ownerId'),
+    MongoDB.Schema.Join('id', UserEntity, 'ownerId'),
     Class.Public()
 ], AccountEntity.prototype, "owner", void 0);
 __decorate([
-    Mapping.Schema.Array(MongoDB.BSON.ObjectID),
+    MongoDB.Schema.ArrayIds(),
     Class.Public()
 ], AccountEntity.prototype, "allowedUsersIdList", void 0);
 __decorate([
-    Mapping.Schema.Join('id', UserEntity, 'allowedUsersIdList', {
-        status: { operator: Mapping.Statements.Operator.EQUAL, value: 'enabled' }
+    MongoDB.Schema.Join('id', UserEntity, 'allowedUsersIdList', {
+        status: { operator: MongoDB.Operator.Equal, value: 'enabled' }
     }),
     Class.Public()
 ], AccountEntity.prototype, "allowedUsersList", void 0);
 __decorate([
-    Mapping.Schema.Required(),
-    Mapping.Schema.Object(SettingsEntity),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Object(SettingsEntity),
     Class.Public()
 ], AccountEntity.prototype, "settings", void 0);
 AccountEntity = __decorate([
-    Mapping.Schema.Entity('Accounts'),
+    MongoDB.Schema.Entity('Accounts'),
     Class.Describe()
 ], AccountEntity);
 /**
  * Account mapper.
  */
-let AccountMapper = class AccountMapper extends Mapping.Mapper {
+let AccountMapper = class AccountMapper extends MongoDB.Mapper {
     /**
      * Default constructor.
      */
@@ -467,7 +466,7 @@ async function crudTest() {
     // Reads the account.
     const account = await accounts.read(accountId);
     if (account) {
-        console.dir(JSON.parse(JSON.stringify(Mapping.Entity.normalize(AccountEntity, account))), { depth: null, compact: true });
+        console.dir(JSON.parse(JSON.stringify(MongoDB.Entity.normalize(AccountEntity, account))), { depth: null, compact: true });
     }
     // Disconnect
     await driver.disconnect();

@@ -3,7 +3,6 @@
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
-import * as Mapping from '@singleware/mapping';
 import * as MongoDB from '../source';
 
 /**
@@ -29,31 +28,31 @@ interface UserEntityBase {
 /**
  * User entity.
  */
-@Mapping.Schema.Entity('Users')
+@MongoDB.Schema.Entity('Users')
 @Class.Describe()
 class UserEntity extends Class.Null implements UserEntityBase {
   /**
    * User id
    */
-  @Mapping.Schema.Primary()
-  @Mapping.Schema.Alias('_id')
-  @Mapping.Schema.Id()
+  @MongoDB.Schema.Primary()
+  @MongoDB.Schema.Alias('_id')
+  @MongoDB.Schema.Id()
   @Class.Public()
   public readonly id!: any;
 
   /**
    * User name.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.String()
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.String()
   @Class.Public()
   public name!: string;
 
   /**
    * User status.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Enumeration('enabled', 'disabled')
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Enumeration('enabled', 'disabled')
   @Class.Public()
   public status!: 'enabled' | 'disabled';
 }
@@ -62,7 +61,7 @@ class UserEntity extends Class.Null implements UserEntityBase {
  * User mapper.
  */
 @Class.Describe()
-class UserMapper extends Mapping.Mapper<UserEntityBase> {
+class UserMapper extends MongoDB.Mapper<UserEntityBase> {
   /**
    * Default constructor.
    */
@@ -102,31 +101,31 @@ interface TypeEntityBase {
 /**
  * Type entity.
  */
-@Mapping.Schema.Entity('Types')
+@MongoDB.Schema.Entity('Types')
 @Class.Describe()
 class TypeEntity extends Class.Null implements TypeEntityBase {
   /**
    * Type id
    */
-  @Mapping.Schema.Primary()
-  @Mapping.Schema.Alias('_id')
-  @Mapping.Schema.Id()
+  @MongoDB.Schema.Primary()
+  @MongoDB.Schema.Alias('_id')
+  @MongoDB.Schema.Id()
   @Class.Public()
   public readonly id!: any;
 
   /**
    * Type name.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.String()
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.String()
   @Class.Public()
   public name!: string;
 
   /**
    * Type description.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.String()
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.String()
   @Class.Public()
   public description!: string;
 }
@@ -135,7 +134,7 @@ class TypeEntity extends Class.Null implements TypeEntityBase {
  * Type mapper.
  */
 @Class.Describe()
-class TypeMapper extends Mapping.Mapper<TypeEntityBase> {
+class TypeMapper extends MongoDB.Mapper<TypeEntityBase> {
   /**
    * Default constructor.
    */
@@ -171,21 +170,21 @@ interface TargetEntityBase {
 /**
  * Target entity.
  */
-@Mapping.Schema.Entity('Targets')
+@MongoDB.Schema.Entity('Targets')
 @Class.Describe()
 class TargetEntity extends Class.Null implements TargetEntityBase {
   /**
    * Target user id.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Id()
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Id()
   @Class.Public()
   public userId: any;
 
   /**
    * Target user entity.
    */
-  @Mapping.Schema.Join('id', UserEntity, 'userId')
+  @MongoDB.Schema.Join('id', UserEntity, 'userId')
   @Class.Public()
   public readonly user: any;
 }
@@ -203,14 +202,14 @@ interface DescriptionEntityBase {
 /**
  * Description entity.
  */
-@Mapping.Schema.Entity('Targets')
+@MongoDB.Schema.Entity('Targets')
 @Class.Describe()
 class DescriptionEntity extends Class.Null implements DescriptionEntityBase {
   /**
    * Target user id.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Array(TargetEntity)
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Array(TargetEntity)
   @Class.Public()
   public targets!: TargetEntityBase[];
 }
@@ -232,29 +231,29 @@ interface NotificationEntityBase {
 /**
  * Notification entity.
  */
-@Mapping.Schema.Entity('Notifications')
+@MongoDB.Schema.Entity('Notifications')
 @Class.Describe()
 class NotificationEntity extends Class.Null implements NotificationEntityBase {
   /**
    * Notification user id.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Id()
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Id()
   @Class.Public()
   public userId: any;
 
   /**
    * Notification user entity.
    */
-  @Mapping.Schema.Join('id', UserEntity, 'userId')
+  @MongoDB.Schema.Join('id', UserEntity, 'userId')
   @Class.Public()
   public readonly user: any;
 
   /**
    * Notification description.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Object(DescriptionEntity)
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Object(DescriptionEntity)
   @Class.Public()
   public description!: DescriptionEntityBase;
 }
@@ -280,43 +279,43 @@ interface GroupEntityBase {
 /**
  * Group entity.
  */
-@Mapping.Schema.Entity('Groups')
+@MongoDB.Schema.Entity('Groups')
 @Class.Describe()
 class GroupEntity extends Class.Null implements GroupEntityBase {
   /**
    * Group admin id.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Id()
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Id()
   @Class.Public()
   public adminId: any;
 
   /**
    * Group admin entity.
    */
-  @Mapping.Schema.Join('id', UserEntity, 'adminId')
+  @MongoDB.Schema.Join('id', UserEntity, 'adminId')
   @Class.Public()
   public readonly admin: any;
 
   /**
    * Id list of users in this group.
    */
-  @Mapping.Schema.Array(MongoDB.BSON.ObjectID)
+  @MongoDB.Schema.ArrayIds()
   @Class.Public()
   public usersIdList!: any[];
 
   /**
    * Entity list of users in this group.
    */
-  @Mapping.Schema.Join('id', UserEntity, 'usersIdList')
+  @MongoDB.Schema.Join('id', UserEntity, 'usersIdList')
   @Class.Public()
   public readonly usersList!: UserEntity[];
 
   /**
    * Notifications of this group
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Array(NotificationEntity)
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Array(NotificationEntity)
   @Class.Public()
   public notifications!: NotificationEntityBase[];
 }
@@ -339,35 +338,35 @@ interface MessagesEntityBase {
 /**
  * Messages entity.
  */
-@Mapping.Schema.Entity('Messages')
+@MongoDB.Schema.Entity('Messages')
 @Class.Describe()
 class MessagesEntity extends Class.Null implements MessagesEntityBase {
   /**
    * Messages admin id.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Id()
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Id()
   @Class.Public()
   public adminId: any;
 
   /**
    * Messages admin entity.
    */
-  @Mapping.Schema.Join('id', UserEntity, 'adminId')
+  @MongoDB.Schema.Join('id', UserEntity, 'adminId')
   @Class.Public()
   public readonly admin!: UserEntity;
 
   /**
    * Id list of users for messages.
    */
-  @Mapping.Schema.Array(MongoDB.BSON.ObjectID)
+  @MongoDB.Schema.ArrayIds()
   @Class.Public()
   public usersIdList: any;
 
   /**
    * Entity list of users for messages.
    */
-  @Mapping.Schema.Join('id', UserEntity, 'usersIdList')
+  @MongoDB.Schema.Join('id', UserEntity, 'usersIdList')
   @Class.Public()
   public readonly usersList!: UserEntity[];
 }
@@ -397,50 +396,50 @@ interface SettingsEntityBase {
 /**
  * Settings entity.
  */
-@Mapping.Schema.Entity('Settings')
+@MongoDB.Schema.Entity('Settings')
 @Class.Describe()
 class SettingsEntity extends Class.Null implements SettingsEntityBase {
   /**
    * Settings contact id.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Id()
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Id()
   @Class.Public()
   public contactId: any;
 
   /**
    * Settings contact entity.
    */
-  @Mapping.Schema.Join('id', UserEntity, 'contactId')
+  @MongoDB.Schema.Join('id', UserEntity, 'contactId')
   @Class.Public()
   public readonly contact: any;
 
   /**
    * Id list of shared users in this account.
    */
-  @Mapping.Schema.Array(MongoDB.BSON.ObjectID)
+  @MongoDB.Schema.ArrayIds()
   @Class.Public()
   public sharedUsersIdList!: any[];
 
   /**
    * Entity list of shared users in this account.
    */
-  @Mapping.Schema.Join('id', UserEntity, 'sharedUsersIdList')
+  @MongoDB.Schema.Join('id', UserEntity, 'sharedUsersIdList')
   @Class.Public()
   public readonly sharedUsersList!: UserEntity[];
 
   /**
    * Settings for messages.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Object(MessagesEntity)
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Object(MessagesEntity)
   @Class.Public()
   public messages!: MessagesEntityBase;
 
   /**
    * Group of users in this account.
    */
-  @Mapping.Schema.Array(GroupEntity)
+  @MongoDB.Schema.Array(GroupEntity)
   @Class.Public()
   public groups!: GroupEntityBase[];
 }
@@ -474,40 +473,40 @@ interface AccountEntityBase {
 /**
  * Account entity.
  */
-@Mapping.Schema.Entity('Accounts')
+@MongoDB.Schema.Entity('Accounts')
 @Class.Describe()
 class AccountEntity extends Class.Null implements AccountEntityBase {
   /**
    * Account id
    */
-  @Mapping.Schema.Primary()
-  @Mapping.Schema.Alias('_id')
-  @Mapping.Schema.Id()
+  @MongoDB.Schema.Primary()
+  @MongoDB.Schema.Alias('_id')
+  @MongoDB.Schema.Id()
   @Class.Public()
   public readonly id: any;
 
   /**
    * Account owner id.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Id()
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Id()
   @Class.Public()
   public ownerId: any;
 
   /**
    * Account type name.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.String()
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.String()
   @Class.Public()
   public typeName!: string;
 
   /**
    * Account types.
    */
-  @Mapping.Schema.JoinAll('name', TypeEntity, 'typeName', {
+  @MongoDB.Schema.JoinAll('name', TypeEntity, 'typeName', {
     sort: {
-      description: Mapping.Statements.Order.DESCENDING
+      description: MongoDB.Order.Descending
     },
     limit: {
       start: 0,
@@ -520,15 +519,15 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
   /**
    * Account role names.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Array(String)
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Array(String)
   @Class.Public()
   public roleNames!: string[];
 
   /**
    * Account roles.
    */
-  @Mapping.Schema.JoinAll('name', TypeEntity, 'roleNames', {
+  @MongoDB.Schema.JoinAll('name', TypeEntity, 'roleNames', {
     limit: {
       start: 0,
       count: 6
@@ -540,22 +539,22 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
   /**
    * Account owner entity.
    */
-  @Mapping.Schema.Join('id', UserEntity, 'ownerId')
+  @MongoDB.Schema.Join('id', UserEntity, 'ownerId')
   @Class.Public()
   public readonly owner: any;
 
   /**
    * Id list of allowed users in this account.
    */
-  @Mapping.Schema.Array(MongoDB.BSON.ObjectID)
+  @MongoDB.Schema.ArrayIds()
   @Class.Public()
   public allowedUsersIdList!: any[];
 
   /**
    * Entity list of allowed users in this account.
    */
-  @Mapping.Schema.Join('id', UserEntity, 'allowedUsersIdList', {
-    status: { operator: Mapping.Statements.Operator.EQUAL, value: 'enabled' }
+  @MongoDB.Schema.Join('id', UserEntity, 'allowedUsersIdList', {
+    status: { operator: MongoDB.Operator.Equal, value: 'enabled' }
   })
   @Class.Public()
   public readonly allowedUsersList!: UserEntity[];
@@ -563,8 +562,8 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
   /**
    * Account settings.
    */
-  @Mapping.Schema.Required()
-  @Mapping.Schema.Object(SettingsEntity)
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Object(SettingsEntity)
   @Class.Public()
   public settings!: SettingsEntity;
 }
@@ -573,7 +572,7 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
  * Account mapper.
  */
 @Class.Describe()
-class AccountMapper extends Mapping.Mapper<AccountEntityBase> {
+class AccountMapper extends MongoDB.Mapper<AccountEntityBase> {
   /**
    * Default constructor.
    */
@@ -693,7 +692,7 @@ async function crudTest(): Promise<void> {
   // Reads the account.
   const account = await accounts.read(accountId);
   if (account) {
-    console.dir(JSON.parse(JSON.stringify(Mapping.Entity.normalize(AccountEntity, account))), { depth: null, compact: true });
+    console.dir(JSON.parse(JSON.stringify(MongoDB.Entity.normalize(AccountEntity, account))), { depth: null, compact: true });
   }
 
   // Disconnect

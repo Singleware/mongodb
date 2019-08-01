@@ -3,11 +3,11 @@
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
-import * as Mapping from '@singleware/mapping';
+import * as Aliases from '../aliases';
 /**
- * MongoDb schemas class.
+ * Schema helper class.
  */
-export declare class Schemas extends Class.Null {
+export declare class Schema extends Class.Null {
     /**
      * Sets the specified target property if the specified source property has some data.
      * @param to Target property.
@@ -34,5 +34,5 @@ export declare class Schemas extends Class.Null {
      * @param row Row schema.
      * @returns Returns the generated schema entity.
      */
-    static build(row: Mapping.Columns.RealRow): Mapping.Types.Entity;
+    static build(row: Aliases.Columns.RealRow): Aliases.Entity;
 }

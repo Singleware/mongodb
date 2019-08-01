@@ -3,6 +3,12 @@
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 export { Driver } from './driver';
-export { Converters } from './converters';
-import * as BSON from './bson';
-export import BSON = BSON;
+export { Caster } from './caster';
+export { Schema } from './schema';
+export { Entity, Model, Mapper, Map } from './aliases';
+export { Query, Match, Operator, Sort, Order, Limit } from './aliases';
+import * as Engine from './engine';
+/**
+ * Engine namespace.
+ */
+export import Engine = Engine;

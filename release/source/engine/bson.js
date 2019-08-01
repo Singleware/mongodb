@@ -6,11 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const Source = require("mongodb");
 /**
- * Type to represents documents Id.
+ * Documents Id.
  */
-exports.ObjectID = Source.ObjectID;
+exports.ObjectId = Source.ObjectID;
 /**
- * Type to represents binary data.
+ * Binary data.
  */
 exports.Binary = Source.Binary;
 //# sourceMappingURL=bson.js.map

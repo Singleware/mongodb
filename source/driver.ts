@@ -4,17 +4,15 @@
  */
 import * as Mongodb from 'mongodb';
 import * as Class from '@singleware/class';
-import * as Mapping from '@singleware/mapping';
 
-import { Filters } from './filters';
-import { Matches } from './matches';
-import { Schemas } from './schemas';
+import * as Aliases from './aliases';
+import * as Engine from './engine';
 
 /**
  * MongoDb driver class.
  */
 @Class.Describe()
-export class Driver extends Class.Null implements Mapping.Driver {
+export class Driver extends Class.Null implements Aliases.Driver {
   /**
    * Connection options.
    */
@@ -42,10 +40,10 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @returns Returns the collection validation object.
    */
   @Class.Private()
-  private static getCollectionSchema(model: Mapping.Types.Model): Object {
+  private static getCollectionSchema(model: Aliases.Model): Object {
     return {
       validator: {
-        $jsonSchema: Schemas.build(Mapping.Schema.getRealRow(model))
+        $jsonSchema: Engine.Schema.build(Aliases.Schema.getRealRow(model))
       },
       validationLevel: 'strict',
       validationAction: 'error'
@@ -94,9 +92,9 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @param model Model type.
    */
   @Class.Public()
-  public async modifyCollection(model: Class.Constructor<Mapping.Types.Entity>): Promise<void> {
+  public async modifyCollection(model: Class.Constructor<Aliases.Entity>): Promise<void> {
     await (<Mongodb.Db>this.database).command({
-      collMod: Mapping.Schema.getStorage(model),
+      collMod: Aliases.Schema.getStorageName(model),
       ...Driver.getCollectionSchema(model)
     });
   }
@@ -106,9 +104,9 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @param model Model type.
    */
   @Class.Public()
-  public async createCollection(model: Mapping.Types.Model): Promise<void> {
+  public async createCollection(model: Aliases.Model): Promise<void> {
     await (<Mongodb.Db>this.database).command({
-      create: Mapping.Schema.getStorage(model),
+      create: Aliases.Schema.getStorageName(model),
       ...Driver.getCollectionSchema(model)
     });
   }
@@ -119,10 +117,9 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @returns Returns a promise to get true when the collection exists, false otherwise.
    */
   @Class.Public()
-  public async hasCollection(model: Mapping.Types.Model): Promise<boolean> {
-    const filter = { name: Mapping.Schema.getStorage(model) };
-    const options = { nameOnly: true };
-    return (await (<Mongodb.Db>this.database).listCollections(filter, options).toArray()).length === 1;
+  public async hasCollection(model: Aliases.Model): Promise<boolean> {
+    const filter = { name: Aliases.Schema.getStorageName(model) };
+    return (await (<Mongodb.Db>this.database).listCollections(filter, { nameOnly: true }).toArray()).length === 1;
   }
 
   /**
@@ -132,73 +129,84 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @returns Returns a promise to get the list of inserted entities.
    */
   @Class.Public()
-  public async insert<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, entities: T[]): Promise<string[]> {
-    const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
+  public async insert<T extends Aliases.Entity>(model: Aliases.Model<T>, entities: T[]): Promise<string[]> {
+    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
     return Object.values((<any>await manager.insertMany(entities)).insertedIds);
   }
 
   /**
    * Find the corresponding entities from the database.
    * @param model Model type.
-   * @param filter Field filter.
-   * @param fields Fields to be selected.
+   * @param query Query filter.
+   * @param fields Viewed fields.
    * @returns Returns a promise to get the list of entities found.
    */
   @Class.Public()
-  public async find<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, filter: Mapping.Statements.Filter, fields: string[]): Promise<T[]> {
-    const pipeline = Filters.getPipeline(model, filter, fields);
-    const settings = { allowDiskUse: true };
-    const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
-    return (await manager.aggregate(pipeline, settings)).toArray();
+  public async find<T extends Aliases.Entity>(model: Aliases.Model<T>, query: Aliases.Query, fields: string[]): Promise<T[]> {
+    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
+    return (await manager.aggregate(Engine.Pipeline.build(model, query, fields), { allowDiskUse: true })).toArray();
   }
 
   /**
    * Find the entity that corresponds to the specified entity id.
    * @param model Model type.
    * @param id Entity id.
-   * @param fields Fields to be selected.
+   * @param fields Viewed fields.
    * @returns Returns a promise to get the found entity or undefined when the entity was not found.
    */
   @Class.Public()
-  public async findById<T extends Mapping.Types.Entity>(model: Mapping.Types.Model<T>, id: any, fields: string[]): Promise<T | undefined> {
-    return (await this.find(model, { pre: Filters.getPrimaryIdMatch(model, id) }, fields))[0];
+  public async findById<T extends Aliases.Entity>(model: Aliases.Model<T>, id: any, fields: string[]): Promise<T | undefined> {
+    return (await this.find(model, { pre: Engine.Filter.byPrimaryId(model, id) }, fields))[0];
   }
 
   /**
    * Update all entities that corresponds to the specified filter.
    * @param model Model type.
-   * @param match Matching fields.
-   * @param entity Entity to be updated.
+   * @param match Matching filter.
+   * @param entity Entity data.
    * @returns Returns a promise to get the number of updated entities.
    */
   @Class.Public()
-  public async update(model: Mapping.Types.Model, match: Mapping.Statements.Match, entity: Mapping.Types.Entity): Promise<number> {
-    const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
-    return (await manager.updateMany(Matches.build(model, match), { $set: entity })).modifiedCount;
+  public async update(model: Aliases.Model, match: Aliases.Match, entity: Aliases.Entity): Promise<number> {
+    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
+    return (await manager.updateMany(Engine.Match.build(model, match), { $set: entity })).modifiedCount;
   }
 
   /**
    * Updates the entity that corresponds to the specified entity id.
    * @param model Model type.
    * @param id Entity id.
-   * @param entity Entity to be updated.
+   * @param entity Entity data.
    * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
    */
   @Class.Public()
-  public async updateById(model: Mapping.Types.Model, id: any, entity: Mapping.Types.Model): Promise<boolean> {
-    return (await this.update(model, Filters.getPrimaryIdMatch(model, id), entity)) === 1;
+  public async updateById(model: Aliases.Model, id: any, entity: Aliases.Model): Promise<boolean> {
+    return (await this.update(model, Engine.Filter.byPrimaryId(model, id), entity)) === 1;
+  }
+
+  /**
+   * Replace the entity that corresponds to the specified entity id.
+   * @param model Model type.
+   * @param id Entity id.
+   * @param entity Entity data.
+   * @returns Returns a promise to get the true when the entity has been replaced or false otherwise.
+   */
+  @Class.Public()
+  public async replaceById(model: Aliases.Model, id: any, entity: Aliases.Model): Promise<boolean> {
+    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
+    return (await manager.replaceOne(Engine.Match.build(model, Engine.Filter.byPrimaryId(model, id)), entity)).modifiedCount === 1;
   }
 
   /**
    * Delete all entities that corresponds to the specified filter.
    * @param model Model type.
-   * @param match Matching fields.
+   * @param match Matching filter.
    * @return Returns a promise to get the number of deleted entities.
    */
   @Class.Public()
-  public async delete(model: Mapping.Types.Model, match: Mapping.Statements.Match): Promise<number> {
-    const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
-    return (await manager.deleteMany(Matches.build(model, match))).deletedCount || 0;
+  public async delete(model: Aliases.Model, match: Aliases.Match): Promise<number> {
+    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
+    return (await manager.deleteMany(Engine.Match.build(model, match))).deletedCount || 0;
   }
 
   /**
@@ -208,22 +216,21 @@ export class Driver extends Class.Null implements Mapping.Driver {
    * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
    */
   @Class.Public()
-  public async deleteById(model: Mapping.Types.Model, id: any): Promise<boolean> {
-    return (await this.delete(model, Filters.getPrimaryIdMatch(model, id))) === 1;
+  public async deleteById(model: Aliases.Model, id: any): Promise<boolean> {
+    return (await this.delete(model, Engine.Filter.byPrimaryId(model, id))) === 1;
   }
 
   /**
    * Count all corresponding entities from the storage.
    * @param model Model type.
-   * @param filter Field field.
+   * @param query Query filter.
    * @returns Returns a promise to get the total amount of found entities.
    */
   @Class.Public()
-  public async count(model: Mapping.Types.Model, filter: Mapping.Statements.Filter): Promise<number> {
-    const pipeline = [...Filters.getPipeline(model, filter, []), { $count: 'records' }];
-    const settings = { allowDiskUse: true };
-    const manager = (<Mongodb.Db>this.database).collection(Mapping.Schema.getStorage(model));
-    const result = await manager.aggregate(pipeline, settings).toArray();
+  public async count(model: Aliases.Model, query: Aliases.Query): Promise<number> {
+    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
+    const pipeline = [...Engine.Pipeline.build(model, query, []), { $count: 'records' }];
+    const result = await manager.aggregate(pipeline, { allowDiskUse: true }).toArray();
     return result.length ? result[0].records || 0 : 0;
   }
 }

@@ -3,7 +3,6 @@
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
-import * as Mapping from '@singleware/mapping';
 import * as MongoDB from '../source';
 
 /**
@@ -19,35 +18,45 @@ const driver = new MongoDB.Driver();
 /**
  * Test class.
  */
-@Mapping.Schema.Entity('UserEntity')
+@MongoDB.Schema.Entity('UserEntity')
 @Class.Describe()
 class UserEntity extends Class.Null {
   /**
    * User id.
    */
-  @Mapping.Schema.Id()
-  @Mapping.Schema.Alias('_id')
+  @MongoDB.Schema.Id()
+  @MongoDB.Schema.Primary()
+  @MongoDB.Schema.Alias('_id')
   @Class.Public()
   public id?: string;
+
   /**
    * User first name.
    */
-  @Mapping.Schema.String()
+  @MongoDB.Schema.String()
   @Class.Public()
   public firstName?: string;
+
   /**
    * User last name.
    */
-  @Mapping.Schema.String()
+  @MongoDB.Schema.String()
   @Class.Public()
   public lastName?: string;
+
+  /**
+   * Birth date.
+   */
+  @MongoDB.Schema.Date()
+  @Class.Public()
+  public birthDate?: Date;
 }
 
 /**
  * Database mapper.
  */
 @Class.Describe()
-class UserMapper extends Mapping.Mapper<UserEntity> {
+class UserMapper extends MongoDB.Mapper<UserEntity> {
   /**
    * Default constructor.
    */
@@ -57,36 +66,46 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
 
   /**
    * Create a test user.
-   * @returns Returns the id of new user.
+   * @returns Returns a promise to get the new user id.
    */
   @Class.Public()
   public async create(): Promise<string> {
-    return await this.insert({ firstName: 'First 1', lastName: 'Last 1' });
+    return await this.insert({ firstName: 'First 1', lastName: 'Last 1', birthDate: new Date() });
   }
 
   /**
    * Change the test user.
-   * @param id USer id.
-   * @returns Returns the number of updated users.
+   * @param id User id.
+   * @returns Returns a promise to get the number of updated users.
    */
   @Class.Public()
   public async change(id: string): Promise<number> {
-    return await this.update({ id: { operator: Mapping.Statements.Operator.EQUAL, value: id } }, { firstName: 'Changed!' });
+    return await this.update({ id: { operator: MongoDB.Operator.Equal, value: id } }, { firstName: 'Changed!' });
+  }
+
+  /**
+   * Replace the test user.
+   * @param id User id.
+   * @returns Returns a promise to get the replacement status.
+   */
+  @Class.Public()
+  public async replace(id: string): Promise<boolean> {
+    return await this.replaceById(id, { id: id, firstName: 'Replaced!' });
   }
 
   /**
    * Read the test user.
    * @param id User id.
-   * @requires Returns the list of users found.
+   * @returns Returns a promise to get the list of found users.
    */
   @Class.Public()
   public async read(id: string): Promise<UserEntity[]> {
     return await this.find({
       pre: {
-        id: { operator: Mapping.Statements.Operator.EQUAL, value: id }
+        id: { operator: MongoDB.Operator.Equal, value: id }
       },
       sort: {
-        id: Mapping.Statements.Order.ASCENDING
+        id: MongoDB.Order.Ascending
       },
       limit: {
         start: 0,
@@ -98,10 +117,11 @@ class UserMapper extends Mapping.Mapper<UserEntity> {
   /**
    * Remove the test user.
    * @param id User id.
+   * @returns Returns a promise to get the number of removed users.
    */
   @Class.Public()
   public async remove(id: string): Promise<number> {
-    return await this.delete({ id: { operator: Mapping.Statements.Operator.EQUAL, value: id } });
+    return await this.delete({ id: { operator: MongoDB.Operator.Equal, value: id } });
   }
 }
 
@@ -116,20 +136,29 @@ async function crudTest(): Promise<void> {
   await driver.connect(connection);
   console.log('Connect');
 
+  // Setup collection
+  if (!(await driver.hasCollection(UserEntity))) {
+    await driver.createCollection(UserEntity);
+    console.log('Created');
+  } else {
+    await driver.modifyCollection(UserEntity);
+    console.log('Modified');
+  }
+
   // Create user
   const id = await mapper.create();
-  console.log('Create:', id);
-
-  // Read user
-  const before = await mapper.read(id);
-  console.log('Read before:', before[0].firstName, before[0].lastName);
+  const before = (await mapper.read(id))[0];
+  console.log('Create:', id, before.firstName, before.lastName, before.birthDate);
 
   // Update user
-  console.log('Update:', await mapper.change(id));
-  const after = await mapper.read(id);
+  const update = await mapper.change(id);
+  const middle = (await mapper.read(id))[0];
+  console.log('Update:', update, middle.firstName, middle.lastName, middle.birthDate);
 
-  // Read user
-  console.log('Read after:', after[0].firstName, after[0].lastName);
+  // Replace user
+  const replace = await mapper.replace(id);
+  const after = (await mapper.read(id))[0];
+  console.log('Replace:', replace, after.firstName, after.lastName, after.birthDate);
 
   // Delete user
   console.log('Delete:', await mapper.remove(id));

@@ -11,102 +11,96 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
-const Mapping = require("@singleware/mapping");
+const Aliases = require("../aliases");
 const BSON = require("./bson");
 /**
- * Matches helper class.
+ * Match helper class.
  */
-let Matches = class Matches extends Class.Null {
+let Match = class Match extends Class.Null {
     /**
-     * Converts the specified input array to an array of ObjectID when possible.
+     * Try to convert the specified input array to an ObjectID array.
      * @param input Input array.
      * @param schema Column schema.
-     * @returns Returns the original value or the converted array.
+     * @returns Returns the array containing all converted and not converted values
      * @throws Throws an type error when the specified value isn't an array.
      */
     static castArray(input, schema) {
         if (!(input instanceof Array)) {
             throw new TypeError(`The filter input must be an array.`);
         }
-        else if (schema.model !== BSON.ObjectID) {
-            return input;
+        else if (schema.model === BSON.ObjectId) {
+            return input.map(value => (BSON.ObjectId.isValid(value) ? new BSON.ObjectId(value) : value));
         }
         else {
-            const list = [];
-            for (const value of input) {
-                if (BSON.ObjectID.isValid(value)) {
-                    list.push(new BSON.ObjectID(value));
-                }
-            }
-            return list;
+            return input;
         }
     }
     /**
-     * Converts the specified input value to an ObjectID when possible.
+     * Try to convert the specified input value to an ObjectID.
      * @param value Input value.
-     * @param schema Real column schema.
-     * @returns Returns the original value or the converted value.
+     * @param schema Column schema.
+     * @returns Returns the converted value when the operation was successful, otherwise returns the input value.
      */
     static castValue(value, schema) {
-        if (schema.formats.includes(Mapping.Types.Format.ID) && (typeof value === 'string' || typeof value === 'number') && BSON.ObjectID.isValid(value)) {
-            return new BSON.ObjectID(value);
+        if (schema.formats.includes(Aliases.Format.Id) && BSON.ObjectId.isValid(value)) {
+            return new BSON.ObjectId(value);
         }
         else {
             return value;
         }
     }
     /**
-     * Build a match entity from the specified match expression.
+     * Build a new match entity from the specified match expression.
      * @param model Model type.
      * @param match Match expression.
-     * @returns Returns the generated match entity.
+     * @returns Returns the new match entity.
      */
     static buildMatch(model, match) {
         const entity = {};
         for (const name in match) {
-            const schema = Mapping.Schema.getRealColumn(model, name);
+            const schema = Aliases.Schema.getRealColumn(model, name);
             const column = schema.alias || schema.name;
             const operation = match[name];
             switch (operation.operator) {
-                case Mapping.Statements.Operator.REGEX:
-                    entity[column] = { $regex: this.castValue(operation.value, schema) };
-                    break;
-                case Mapping.Statements.Operator.LESS:
+                case Aliases.Operator.Less:
                     entity[column] = { $lt: this.castValue(operation.value, schema) };
                     break;
-                case Mapping.Statements.Operator.LESS_OR_EQUAL:
+                case Aliases.Operator.LessOrEqual:
                     entity[column] = { $lte: this.castValue(operation.value, schema) };
                     break;
-                case Mapping.Statements.Operator.EQUAL:
+                case Aliases.Operator.Equal:
                     entity[column] = { $eq: this.castValue(operation.value, schema) };
                     break;
-                case Mapping.Statements.Operator.NOT_EQUAL:
+                case Aliases.Operator.NotEqual:
                     entity[column] = { $ne: this.castValue(operation.value, schema) };
                     break;
-                case Mapping.Statements.Operator.GREATER_OR_EQUAL:
+                case Aliases.Operator.GreaterOrEqual:
                     entity[column] = { $gte: this.castValue(operation.value, schema) };
                     break;
-                case Mapping.Statements.Operator.GREATER:
+                case Aliases.Operator.Greater:
                     entity[column] = { $gt: this.castValue(operation.value, schema) };
                     break;
-                case Mapping.Statements.Operator.BETWEEN:
+                case Aliases.Operator.Between:
                     entity[column] = { $gte: this.castValue(operation.value[0], schema), $lte: this.castValue(operation.value[1], schema) };
                     break;
-                case Mapping.Statements.Operator.CONTAIN:
+                case Aliases.Operator.Contain:
                     entity[column] = { $in: this.castArray(operation.value, schema) };
                     break;
-                case Mapping.Statements.Operator.NOT_CONTAIN:
+                case Aliases.Operator.NotContain:
                     entity[column] = { $nin: this.castArray(operation.value, schema) };
+                    break;
+                case Aliases.Operator.RegEx:
+                    entity[column] = { $regex: this.castValue(operation.value, schema) };
                     break;
             }
         }
         return entity;
     }
     /**
-     * Build a match entity from the specified match expression.
+     * Build a new match entity from the specified match expression.
      * @param model Model type.
-     * @param match Match expression or list of match expressions.
-     * @returns Returns a single generated match entity or the generated match entity list.
+     * @param match Match expression.
+     * @returns Returns a new match entity.
      */
     static build(model, match) {
         if (match instanceof Array) {
@@ -119,18 +113,18 @@ let Matches = class Matches extends Class.Null {
 };
 __decorate([
     Class.Private()
-], Matches, "castArray", null);
+], Match, "castArray", null);
 __decorate([
     Class.Private()
-], Matches, "castValue", null);
+], Match, "castValue", null);
+__decorate([
+    Class.Private()
+], Match, "buildMatch", null);
 __decorate([
     Class.Public()
-], Matches, "buildMatch", null);
-__decorate([
-    Class.Public()
-], Matches, "build", null);
-Matches = __decorate([
+], Match, "build", null);
+Match = __decorate([
     Class.Describe()
-], Matches);
-exports.Matches = Matches;
-//# sourceMappingURL=matches.js.map
+], Match);
+exports.Match = Match;
+//# sourceMappingURL=match.js.map

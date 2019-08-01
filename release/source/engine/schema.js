@@ -5,20 +5,18 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-var Schemas_1;
 Object.defineProperty(exports, "__esModule", { value: true });
-"use strict";
 /*!
  * Copyright (C) 2018-2019 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
-const Mapping = require("@singleware/mapping");
+const Aliases = require("../aliases");
 const BSON = require("./bson");
 /**
- * MongoDb schemas class.
+ * Schema helper class.
  */
-let Schemas = Schemas_1 = class Schemas extends Class.Null {
+let Schema = class Schema extends Class.Null {
     /**
      * Sets the specified target property if the specified source property has some data.
      * @param to Target property.
@@ -37,11 +35,11 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
      * @returns Returns the new document schema.
      */
     static buildDocumentSchema(column) {
-        if (column.model && Mapping.Schema.isEntity(column.model)) {
-            return Schemas_1.build(Mapping.Schema.getRealRow(column.model));
+        if (column.model && Aliases.Schema.isEntity(column.model)) {
+            return this.build(Aliases.Schema.getRealRow(column.model));
         }
         else {
-            return Schemas_1.build({});
+            return this.build({});
         }
     }
     /**
@@ -54,58 +52,58 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
         const entity = { bsonType: [] };
         for (const type of column.formats) {
             switch (type) {
-                case Mapping.Types.Format.ID:
+                case Aliases.Format.Id:
                     entity.bsonType.push('objectId');
                     break;
-                case Mapping.Types.Format.NULL:
+                case Aliases.Format.Null:
                     entity.bsonType.push('null');
                     break;
-                case Mapping.Types.Format.BINARY:
+                case Aliases.Format.Binary:
                     entity.bsonType.push('binData');
                     break;
-                case Mapping.Types.Format.BOOLEAN:
+                case Aliases.Format.Boolean:
                     entity.bsonType.push('bool');
                     break;
-                case Mapping.Types.Format.INTEGER:
+                case Aliases.Format.Integer:
                     entity.bsonType.push('int');
-                    Schemas_1.setProperty('minimum', entity, 'minimum', column);
-                    Schemas_1.setProperty('maximum', entity, 'maximum', column);
+                    this.setProperty('minimum', entity, 'minimum', column);
+                    this.setProperty('maximum', entity, 'maximum', column);
                     break;
-                case Mapping.Types.Format.DECIMAL:
+                case Aliases.Format.Decimal:
                     entity.bsonType.push('double');
-                    Schemas_1.setProperty('minimum', entity, 'minimum', column);
-                    Schemas_1.setProperty('maximum', entity, 'maximum', column);
+                    this.setProperty('minimum', entity, 'minimum', column);
+                    this.setProperty('maximum', entity, 'maximum', column);
                     break;
-                case Mapping.Types.Format.NUMBER:
+                case Aliases.Format.Number:
                     entity.bsonType.push('number');
-                    Schemas_1.setProperty('minimum', entity, 'minimum', column);
-                    Schemas_1.setProperty('maximum', entity, 'maximum', column);
+                    this.setProperty('minimum', entity, 'minimum', column);
+                    this.setProperty('maximum', entity, 'maximum', column);
                     break;
-                case Mapping.Types.Format.STRING:
+                case Aliases.Format.String:
                     entity.bsonType.push('string');
-                    Schemas_1.setProperty('minLength', entity, 'minimum', column);
-                    Schemas_1.setProperty('maxLength', entity, 'maximum', column);
+                    this.setProperty('minLength', entity, 'minimum', column);
+                    this.setProperty('maxLength', entity, 'maximum', column);
                     break;
-                case Mapping.Types.Format.ENUMERATION:
+                case Aliases.Format.Enumeration:
                     entity.bsonType.push('string');
                     entity.enum = column.values;
                     break;
-                case Mapping.Types.Format.PATTERN:
+                case Aliases.Format.Pattern:
                     const pattern = column.pattern.toString();
                     entity.bsonType.push('string');
                     entity.pattern = pattern.substring(1, pattern.lastIndexOf('/'));
                     break;
-                case Mapping.Types.Format.TIMESTAMP:
+                case Aliases.Format.Timestamp:
                     entity.bsonType.push('timestamp');
                     break;
-                case Mapping.Types.Format.DATE:
+                case Aliases.Format.Date:
                     entity.bsonType.push('date');
                     break;
-                case Mapping.Types.Format.ARRAY:
+                case Aliases.Format.Array:
                     entity.bsonType.push('array');
-                    Schemas_1.setProperty('minItems', entity, 'minimum', column);
-                    Schemas_1.setProperty('maxItems', entity, 'maximum', column);
-                    Schemas_1.setProperty('uniqueItems', entity, 'unique', column);
+                    this.setProperty('minItems', entity, 'minimum', column);
+                    this.setProperty('maxItems', entity, 'maximum', column);
+                    this.setProperty('uniqueItems', entity, 'unique', column);
                     switch (column.model) {
                         case Object:
                             entity.items = { bsonType: 'object' };
@@ -122,14 +120,14 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                         case Date:
                             entity.items = { bsonType: 'date' };
                             break;
-                        case BSON.ObjectID:
+                        case BSON.ObjectId:
                             entity.items = { bsonType: 'objectId' };
                             break;
                         default:
                             entity.items = this.buildDocumentSchema(column);
                     }
                     break;
-                case Mapping.Types.Format.MAP:
+                case Aliases.Format.Map:
                     entity.bsonType.push('object');
                     switch (column.model) {
                         case Object:
@@ -147,14 +145,14 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                         case Date:
                             entity.additionalProperties = { bsonType: 'date' };
                             break;
-                        case BSON.ObjectID:
+                        case BSON.ObjectId:
                             entity.additionalProperties = { bsonType: 'objectId' };
                             break;
                         default:
                             entity.additionalProperties = this.buildDocumentSchema(column);
                     }
                     break;
-                case Mapping.Types.Format.OBJECT:
+                case Aliases.Format.Object:
                     entity.bsonType.push('object');
                     if (column.model === Object) {
                         entity.additionalProperties = true;
@@ -163,7 +161,7 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                         const result = this.buildDocumentSchema(column);
                         entity.properties = result.properties;
                         entity.additionalProperties = false;
-                        Schemas_1.setProperty('required', entity, 'required', result);
+                        this.setProperty('required', entity, 'required', result);
                     }
                     break;
                 default:
@@ -194,25 +192,25 @@ let Schemas = Schemas_1 = class Schemas extends Class.Null {
                     entity.required.push(name);
                 }
             }
-            entity.properties[name] = Schemas_1.buildPropertySchema(schema);
+            entity.properties[name] = this.buildPropertySchema(schema);
         }
         return entity;
     }
 };
 __decorate([
     Class.Private()
-], Schemas, "setProperty", null);
+], Schema, "setProperty", null);
 __decorate([
     Class.Private()
-], Schemas, "buildDocumentSchema", null);
+], Schema, "buildDocumentSchema", null);
 __decorate([
     Class.Private()
-], Schemas, "buildPropertySchema", null);
+], Schema, "buildPropertySchema", null);
 __decorate([
     Class.Public()
-], Schemas, "build", null);
-Schemas = Schemas_1 = __decorate([
+], Schema, "build", null);
+Schema = __decorate([
     Class.Describe()
-], Schemas);
-exports.Schemas = Schemas;
-//# sourceMappingURL=schemas.js.map
+], Schema);
+exports.Schema = Schema;
+//# sourceMappingURL=schema.js.map
