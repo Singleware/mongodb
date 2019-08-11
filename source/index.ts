@@ -7,6 +7,7 @@ export { Caster } from './caster';
 export { Schema } from './schema';
 export { Entity, Model, Mapper, Map } from './aliases';
 export { Query, Match, Operator, Sort, Order, Limit } from './aliases';
+export { Inputer, Outputer, Normalizer, Castings } from './aliases';
 
 // Imported aliases.
 import * as Engine from './engine';

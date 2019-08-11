@@ -27,8 +27,7 @@ let UserEntity = class UserEntity extends Class.Null {
 };
 __decorate([
     MongoDB.Schema.Primary(),
-    MongoDB.Schema.Alias('_id'),
-    MongoDB.Schema.Id(),
+    MongoDB.Schema.DocumentId(),
     Class.Public()
 ], UserEntity.prototype, "id", void 0);
 __decorate([
@@ -81,8 +80,7 @@ let TypeEntity = class TypeEntity extends Class.Null {
 };
 __decorate([
     MongoDB.Schema.Primary(),
-    MongoDB.Schema.Alias('_id'),
-    MongoDB.Schema.Id(),
+    MongoDB.Schema.DocumentId(),
     Class.Public()
 ], TypeEntity.prototype, "id", void 0);
 __decorate([
@@ -135,7 +133,7 @@ let TargetEntity = class TargetEntity extends Class.Null {
 };
 __decorate([
     MongoDB.Schema.Required(),
-    MongoDB.Schema.Id(),
+    MongoDB.Schema.ObjectId(),
     Class.Public()
 ], TargetEntity.prototype, "userId", void 0);
 __decorate([
@@ -167,7 +165,7 @@ let NotificationEntity = class NotificationEntity extends Class.Null {
 };
 __decorate([
     MongoDB.Schema.Required(),
-    MongoDB.Schema.Id(),
+    MongoDB.Schema.ObjectId(),
     Class.Public()
 ], NotificationEntity.prototype, "userId", void 0);
 __decorate([
@@ -190,7 +188,7 @@ let GroupEntity = class GroupEntity extends Class.Null {
 };
 __decorate([
     MongoDB.Schema.Required(),
-    MongoDB.Schema.Id(),
+    MongoDB.Schema.ObjectId(),
     Class.Public()
 ], GroupEntity.prototype, "adminId", void 0);
 __decorate([
@@ -221,7 +219,7 @@ let MessagesEntity = class MessagesEntity extends Class.Null {
 };
 __decorate([
     MongoDB.Schema.Required(),
-    MongoDB.Schema.Id(),
+    MongoDB.Schema.ObjectId(),
     Class.Public()
 ], MessagesEntity.prototype, "adminId", void 0);
 __decorate([
@@ -247,7 +245,7 @@ let SettingsEntity = class SettingsEntity extends Class.Null {
 };
 __decorate([
     MongoDB.Schema.Required(),
-    MongoDB.Schema.Id(),
+    MongoDB.Schema.ObjectId(),
     Class.Public()
 ], SettingsEntity.prototype, "contactId", void 0);
 __decorate([
@@ -282,13 +280,12 @@ let AccountEntity = class AccountEntity extends Class.Null {
 };
 __decorate([
     MongoDB.Schema.Primary(),
-    MongoDB.Schema.Alias('_id'),
-    MongoDB.Schema.Id(),
+    MongoDB.Schema.DocumentId(),
     Class.Public()
 ], AccountEntity.prototype, "id", void 0);
 __decorate([
     MongoDB.Schema.Required(),
-    MongoDB.Schema.Id(),
+    MongoDB.Schema.ObjectId(),
     Class.Public()
 ], AccountEntity.prototype, "ownerId", void 0);
 __decorate([
@@ -466,7 +463,8 @@ async function crudTest() {
     // Reads the account.
     const account = await accounts.read(accountId);
     if (account) {
-        console.dir(JSON.parse(JSON.stringify(MongoDB.Entity.normalize(AccountEntity, account))), { depth: null, compact: true });
+        const entity = MongoDB.Normalizer.create(AccountEntity, account, false, true);
+        console.dir(JSON.parse(JSON.stringify(entity)), { depth: null, compact: true });
     }
     // Disconnect
     await driver.disconnect();

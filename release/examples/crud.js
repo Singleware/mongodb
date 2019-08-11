@@ -21,14 +21,34 @@ const connection = 'mongodb://127.0.0.1:27017/mapper-test';
  */
 const driver = new MongoDB.Driver();
 /**
- * Test class.
+ * User details, entity class.
+ */
+let UserDetailsEntity = class UserDetailsEntity extends Class.Null {
+};
+__decorate([
+    MongoDB.Schema.Date(),
+    Class.Public()
+], UserDetailsEntity.prototype, "birthDate", void 0);
+__decorate([
+    MongoDB.Schema.String(),
+    Class.Public()
+], UserDetailsEntity.prototype, "phone", void 0);
+__decorate([
+    MongoDB.Schema.String(),
+    Class.Public()
+], UserDetailsEntity.prototype, "email", void 0);
+UserDetailsEntity = __decorate([
+    MongoDB.Schema.Entity('UserDetailsEntity'),
+    Class.Describe()
+], UserDetailsEntity);
+/**
+ * User entity class.
  */
 let UserEntity = class UserEntity extends Class.Null {
 };
 __decorate([
-    MongoDB.Schema.Id(),
     MongoDB.Schema.Primary(),
-    MongoDB.Schema.Alias('_id'),
+    MongoDB.Schema.DocumentId(),
     Class.Public()
 ], UserEntity.prototype, "id", void 0);
 __decorate([
@@ -40,9 +60,10 @@ __decorate([
     Class.Public()
 ], UserEntity.prototype, "lastName", void 0);
 __decorate([
-    MongoDB.Schema.Date(),
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Object(UserDetailsEntity),
     Class.Public()
-], UserEntity.prototype, "birthDate", void 0);
+], UserEntity.prototype, "details", void 0);
 UserEntity = __decorate([
     MongoDB.Schema.Entity('UserEntity'),
     Class.Describe()
@@ -62,7 +83,13 @@ let UserMapper = class UserMapper extends MongoDB.Mapper {
      * @returns Returns a promise to get the new user id.
      */
     async create() {
-        return await this.insert({ firstName: 'First 1', lastName: 'Last 1', birthDate: new Date() });
+        return await this.insert({
+            firstName: 'First 1',
+            lastName: 'Last 1',
+            details: {
+                birthDate: new Date()
+            }
+        });
     }
     /**
      * Change the test user.
@@ -70,7 +97,14 @@ let UserMapper = class UserMapper extends MongoDB.Mapper {
      * @returns Returns a promise to get the number of updated users.
      */
     async change(id) {
-        return await this.update({ id: { operator: MongoDB.Operator.Equal, value: id } }, { firstName: 'Changed!' });
+        return await this.update({
+            id: { operator: MongoDB.Operator.Equal, value: id }
+        }, {
+            firstName: 'Changed!',
+            details: {
+                phone: '+551199999999'
+            }
+        });
     }
     /**
      * Replace the test user.
@@ -78,7 +112,11 @@ let UserMapper = class UserMapper extends MongoDB.Mapper {
      * @returns Returns a promise to get the replacement status.
      */
     async replace(id) {
-        return await this.replaceById(id, { id: id, firstName: 'Replaced!' });
+        return await this.replaceById(id, {
+            id: id,
+            firstName: 'Replaced!',
+            details: {}
+        });
     }
     /**
      * Read the test user.
@@ -105,7 +143,9 @@ let UserMapper = class UserMapper extends MongoDB.Mapper {
      * @returns Returns a promise to get the number of removed users.
      */
     async remove(id) {
-        return await this.delete({ id: { operator: MongoDB.Operator.Equal, value: id } });
+        return await this.delete({
+            id: { operator: MongoDB.Operator.Equal, value: id }
+        });
     }
 };
 __decorate([
@@ -147,15 +187,15 @@ async function crudTest() {
     // Create user
     const id = await mapper.create();
     const before = (await mapper.read(id))[0];
-    console.log('Create:', id, before.firstName, before.lastName, before.birthDate);
+    console.log('Create:', id, before.firstName, before.lastName, before.details.birthDate, before.details.phone, before.details.email);
     // Update user
     const update = await mapper.change(id);
     const middle = (await mapper.read(id))[0];
-    console.log('Update:', update, middle.firstName, middle.lastName, middle.birthDate);
+    console.log('Update:', update, middle.firstName, middle.lastName, middle.details.birthDate, middle.details.phone, middle.details.email);
     // Replace user
     const replace = await mapper.replace(id);
     const after = (await mapper.read(id))[0];
-    console.log('Replace:', replace, after.firstName, after.lastName, after.birthDate);
+    console.log('Replace:', replace, after.firstName, after.lastName, after.details.birthDate, after.details.phone, after.details.email);
     // Delete user
     console.log('Delete:', await mapper.remove(id));
     // Disconnect

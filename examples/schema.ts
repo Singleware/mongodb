@@ -24,8 +24,7 @@ class TestEntitySub extends Class.Null {
   /**
    * Id.
    */
-  @MongoDB.Schema.Id()
-  @MongoDB.Schema.Alias('_id')
+  @MongoDB.Schema.DocumentId()
   @Class.Public()
   public id?: any;
   /**
@@ -44,8 +43,7 @@ class TestEntitySub extends Class.Null {
 @Class.Describe()
 class TestEntity extends Class.Null {
   // Id type.
-  @MongoDB.Schema.Id()
-  @MongoDB.Schema.Alias('_id')
+  @MongoDB.Schema.DocumentId()
   @Class.Public()
   public id?: any;
 

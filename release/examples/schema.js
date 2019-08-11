@@ -26,8 +26,7 @@ const driver = new MongoDB.Driver();
 let TestEntitySub = class TestEntitySub extends Class.Null {
 };
 __decorate([
-    MongoDB.Schema.Id(),
-    MongoDB.Schema.Alias('_id'),
+    MongoDB.Schema.DocumentId(),
     Class.Public()
 ], TestEntitySub.prototype, "id", void 0);
 __decorate([
@@ -45,8 +44,7 @@ TestEntitySub = __decorate([
 let TestEntity = class TestEntity extends Class.Null {
 };
 __decorate([
-    MongoDB.Schema.Id(),
-    MongoDB.Schema.Alias('_id'),
+    MongoDB.Schema.DocumentId(),
     Class.Public()
 ], TestEntity.prototype, "id", void 0);
 __decorate([

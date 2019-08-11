@@ -14,5 +14,5 @@ export declare class Filter extends Class.Null {
      * @param value Primary Id value.
      * @returns Returns the primary filter.
      */
-    static byPrimaryId(model: Aliases.Model, value: any): Aliases.Match;
+    static primaryId(model: Aliases.Model, value: any): Aliases.Match;
 }

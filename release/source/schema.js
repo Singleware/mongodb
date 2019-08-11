@@ -11,13 +11,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
-const Mapping = require("@singleware/mapping");
+const Aliases = require("./aliases");
 const Engine = require("./engine");
 const caster_1 = require("./caster");
 /**
  * Schema helper class.
  */
-let Schema = class Schema extends Mapping.Schema {
+let Schema = class Schema extends Aliases.Schema {
     /**
      * Decorates the specified property to be an object Id column.
      * @returns Returns the decorator method.
@@ -29,10 +29,10 @@ let Schema = class Schema extends Mapping.Schema {
         };
     }
     /**
-     * Decorates the specified property to be the main object Id column.
+     * Decorates the specified property to be the document object Id column.
      * @returns Returns the decorator method.
      */
-    static MainId() {
+    static DocumentId() {
         return (scope, property, descriptor) => {
             this.ObjectId()(scope, property, descriptor);
             return super.Alias('_id')(scope, property, descriptor);
@@ -67,7 +67,7 @@ __decorate([
 ], Schema, "ObjectId", null);
 __decorate([
     Class.Public()
-], Schema, "MainId", null);
+], Schema, "DocumentId", null);
 __decorate([
     Class.Public()
 ], Schema, "ArrayIds", null);

@@ -11,11 +11,15 @@ exports.Caster = caster_1.Caster;
 var schema_1 = require("./schema");
 exports.Schema = schema_1.Schema;
 var aliases_1 = require("./aliases");
-exports.Entity = aliases_1.Entity;
 exports.Mapper = aliases_1.Mapper;
 var aliases_2 = require("./aliases");
 exports.Operator = aliases_2.Operator;
 exports.Order = aliases_2.Order;
+var aliases_3 = require("./aliases");
+exports.Inputer = aliases_3.Inputer;
+exports.Outputer = aliases_3.Outputer;
+exports.Normalizer = aliases_3.Normalizer;
+exports.Castings = aliases_3.Castings;
 // Imported aliases.
 const Engine = require("./engine");
 /**

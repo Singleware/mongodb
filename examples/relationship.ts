@@ -35,8 +35,7 @@ class UserEntity extends Class.Null implements UserEntityBase {
    * User id
    */
   @MongoDB.Schema.Primary()
-  @MongoDB.Schema.Alias('_id')
-  @MongoDB.Schema.Id()
+  @MongoDB.Schema.DocumentId()
   @Class.Public()
   public readonly id!: any;
 
@@ -108,8 +107,7 @@ class TypeEntity extends Class.Null implements TypeEntityBase {
    * Type id
    */
   @MongoDB.Schema.Primary()
-  @MongoDB.Schema.Alias('_id')
-  @MongoDB.Schema.Id()
+  @MongoDB.Schema.DocumentId()
   @Class.Public()
   public readonly id!: any;
 
@@ -177,7 +175,7 @@ class TargetEntity extends Class.Null implements TargetEntityBase {
    * Target user id.
    */
   @MongoDB.Schema.Required()
-  @MongoDB.Schema.Id()
+  @MongoDB.Schema.ObjectId()
   @Class.Public()
   public userId: any;
 
@@ -238,7 +236,7 @@ class NotificationEntity extends Class.Null implements NotificationEntityBase {
    * Notification user id.
    */
   @MongoDB.Schema.Required()
-  @MongoDB.Schema.Id()
+  @MongoDB.Schema.ObjectId()
   @Class.Public()
   public userId: any;
 
@@ -286,7 +284,7 @@ class GroupEntity extends Class.Null implements GroupEntityBase {
    * Group admin id.
    */
   @MongoDB.Schema.Required()
-  @MongoDB.Schema.Id()
+  @MongoDB.Schema.ObjectId()
   @Class.Public()
   public adminId: any;
 
@@ -345,7 +343,7 @@ class MessagesEntity extends Class.Null implements MessagesEntityBase {
    * Messages admin id.
    */
   @MongoDB.Schema.Required()
-  @MongoDB.Schema.Id()
+  @MongoDB.Schema.ObjectId()
   @Class.Public()
   public adminId: any;
 
@@ -403,7 +401,7 @@ class SettingsEntity extends Class.Null implements SettingsEntityBase {
    * Settings contact id.
    */
   @MongoDB.Schema.Required()
-  @MongoDB.Schema.Id()
+  @MongoDB.Schema.ObjectId()
   @Class.Public()
   public contactId: any;
 
@@ -480,8 +478,7 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
    * Account id
    */
   @MongoDB.Schema.Primary()
-  @MongoDB.Schema.Alias('_id')
-  @MongoDB.Schema.Id()
+  @MongoDB.Schema.DocumentId()
   @Class.Public()
   public readonly id: any;
 
@@ -489,7 +486,7 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
    * Account owner id.
    */
   @MongoDB.Schema.Required()
-  @MongoDB.Schema.Id()
+  @MongoDB.Schema.ObjectId()
   @Class.Public()
   public ownerId: any;
 
@@ -692,7 +689,8 @@ async function crudTest(): Promise<void> {
   // Reads the account.
   const account = await accounts.read(accountId);
   if (account) {
-    console.dir(JSON.parse(JSON.stringify(MongoDB.Entity.normalize(AccountEntity, account))), { depth: null, compact: true });
+    const entity = MongoDB.Normalizer.create(AccountEntity, account, false, true);
+    console.dir(JSON.parse(JSON.stringify(entity)), { depth: null, compact: true });
   }
 
   // Disconnect

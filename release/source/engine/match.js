@@ -62,10 +62,10 @@ let Match = class Match extends Class.Null {
             const column = schema.alias || schema.name;
             const operation = match[name];
             switch (operation.operator) {
-                case Aliases.Operator.Less:
+                case Aliases.Operator.LessThan:
                     entity[column] = { $lt: this.castValue(operation.value, schema) };
                     break;
-                case Aliases.Operator.LessOrEqual:
+                case Aliases.Operator.LessThanOrEqual:
                     entity[column] = { $lte: this.castValue(operation.value, schema) };
                     break;
                 case Aliases.Operator.Equal:
@@ -74,10 +74,10 @@ let Match = class Match extends Class.Null {
                 case Aliases.Operator.NotEqual:
                     entity[column] = { $ne: this.castValue(operation.value, schema) };
                     break;
-                case Aliases.Operator.GreaterOrEqual:
+                case Aliases.Operator.GreaterThanOrEqual:
                     entity[column] = { $gte: this.castValue(operation.value, schema) };
                     break;
-                case Aliases.Operator.Greater:
+                case Aliases.Operator.GreaterThan:
                     entity[column] = { $gt: this.castValue(operation.value, schema) };
                     break;
                 case Aliases.Operator.Between:
@@ -89,7 +89,7 @@ let Match = class Match extends Class.Null {
                 case Aliases.Operator.NotContain:
                     entity[column] = { $nin: this.castArray(operation.value, schema) };
                     break;
-                case Aliases.Operator.RegEx:
+                case Aliases.Operator.RegExp:
                     entity[column] = { $regex: this.castValue(operation.value, schema) };
                     break;
             }

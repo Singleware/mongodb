@@ -23,12 +23,14 @@ export declare class Driver extends Class.Null implements Aliases.Driver {
      */
     private static getCollectionSchema;
     /**
-     * Connect to the URI.
+     * Connect to the specified URI.
      * @param uri Connection URI.
+     * @throws Throws an error when there's an active connection.
      */
     connect(uri: string): Promise<void>;
     /**
-     * Disconnect any active connection.
+     * Disconnect the active connection.
+     * @throws Throws an error when there's no active connection.
      */
     disconnect(): Promise<void>;
     /**

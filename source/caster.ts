@@ -19,11 +19,11 @@ export class Caster extends Class.Null {
    * @returns Returns the validated ObjectID.
    */
   @Class.Public()
-  public static ObjectId<T extends string | number | Engine.ObjectId>(value: T | (T | T[])[], type: Mapping.Types.Cast): T | (T | T[])[] {
+  public static ObjectId<T>(value: T | T[], type: Mapping.Types.Cast): (T | Engine.ObjectId) | (T | Engine.ObjectId)[] {
     if (value instanceof Array) {
-      return <T[] | T[][]>value.map(value => this.ObjectId(value, type));
-    } else if (Engine.ObjectId.isValid(value)) {
-      return <T>new Engine.ObjectId(value);
+      return value.map(value => <T | Engine.ObjectId>this.ObjectId(value, type));
+    } else if (Engine.ObjectId.isValid(<any>value)) {
+      return new Engine.ObjectId(<any>value);
     } else {
       return value;
     }
@@ -36,7 +36,7 @@ export class Caster extends Class.Null {
    * @returns Returns the valid Binary.
    */
   @Class.Public()
-  public static Binary<T extends number[] | Engine.Binary>(value: T, type: Mapping.Types.Cast): Engine.Binary | undefined {
+  public static Binary<T>(value: T, type: Mapping.Types.Cast): Engine.Binary | undefined {
     if (value instanceof Array) {
       return new Engine.Binary(Buffer.from(value));
     } else if (value instanceof Engine.Binary) {

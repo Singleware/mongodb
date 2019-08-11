@@ -16,7 +16,35 @@ const connection = 'mongodb://127.0.0.1:27017/mapper-test';
 const driver = new MongoDB.Driver();
 
 /**
- * Test class.
+ * User details, entity class.
+ */
+@MongoDB.Schema.Entity('UserDetailsEntity')
+@Class.Describe()
+class UserDetailsEntity extends Class.Null {
+  /**
+   * Birth date.
+   */
+  @MongoDB.Schema.Date()
+  @Class.Public()
+  public birthDate?: Date;
+
+  /**
+   * User phone.
+   */
+  @MongoDB.Schema.String()
+  @Class.Public()
+  public phone?: string;
+
+  /**
+   * User email.
+   */
+  @MongoDB.Schema.String()
+  @Class.Public()
+  public email?: string;
+}
+
+/**
+ * User entity class.
  */
 @MongoDB.Schema.Entity('UserEntity')
 @Class.Describe()
@@ -24,9 +52,8 @@ class UserEntity extends Class.Null {
   /**
    * User id.
    */
-  @MongoDB.Schema.Id()
   @MongoDB.Schema.Primary()
-  @MongoDB.Schema.Alias('_id')
+  @MongoDB.Schema.DocumentId()
   @Class.Public()
   public id?: string;
 
@@ -45,11 +72,12 @@ class UserEntity extends Class.Null {
   public lastName?: string;
 
   /**
-   * Birth date.
+   * User details.
    */
-  @MongoDB.Schema.Date()
+  @MongoDB.Schema.Required()
+  @MongoDB.Schema.Object(UserDetailsEntity)
   @Class.Public()
-  public birthDate?: Date;
+  public details!: UserDetailsEntity;
 }
 
 /**
@@ -70,7 +98,13 @@ class UserMapper extends MongoDB.Mapper<UserEntity> {
    */
   @Class.Public()
   public async create(): Promise<string> {
-    return await this.insert({ firstName: 'First 1', lastName: 'Last 1', birthDate: new Date() });
+    return await this.insert({
+      firstName: 'First 1',
+      lastName: 'Last 1',
+      details: {
+        birthDate: new Date()
+      }
+    });
   }
 
   /**
@@ -80,7 +114,17 @@ class UserMapper extends MongoDB.Mapper<UserEntity> {
    */
   @Class.Public()
   public async change(id: string): Promise<number> {
-    return await this.update({ id: { operator: MongoDB.Operator.Equal, value: id } }, { firstName: 'Changed!' });
+    return await this.update(
+      {
+        id: { operator: MongoDB.Operator.Equal, value: id }
+      },
+      {
+        firstName: 'Changed!',
+        details: {
+          phone: '+551199999999'
+        }
+      }
+    );
   }
 
   /**
@@ -90,7 +134,11 @@ class UserMapper extends MongoDB.Mapper<UserEntity> {
    */
   @Class.Public()
   public async replace(id: string): Promise<boolean> {
-    return await this.replaceById(id, { id: id, firstName: 'Replaced!' });
+    return await this.replaceById(id, {
+      id: id,
+      firstName: 'Replaced!',
+      details: {}
+    });
   }
 
   /**
@@ -121,7 +169,9 @@ class UserMapper extends MongoDB.Mapper<UserEntity> {
    */
   @Class.Public()
   public async remove(id: string): Promise<number> {
-    return await this.delete({ id: { operator: MongoDB.Operator.Equal, value: id } });
+    return await this.delete({
+      id: { operator: MongoDB.Operator.Equal, value: id }
+    });
   }
 }
 
@@ -148,17 +198,17 @@ async function crudTest(): Promise<void> {
   // Create user
   const id = await mapper.create();
   const before = (await mapper.read(id))[0];
-  console.log('Create:', id, before.firstName, before.lastName, before.birthDate);
+  console.log('Create:', id, before.firstName, before.lastName, before.details.birthDate, before.details.phone, before.details.email);
 
   // Update user
   const update = await mapper.change(id);
   const middle = (await mapper.read(id))[0];
-  console.log('Update:', update, middle.firstName, middle.lastName, middle.birthDate);
+  console.log('Update:', update, middle.firstName, middle.lastName, middle.details.birthDate, middle.details.phone, middle.details.email);
 
   // Replace user
   const replace = await mapper.replace(id);
   const after = (await mapper.read(id))[0];
-  console.log('Replace:', replace, after.firstName, after.lastName, after.birthDate);
+  console.log('Replace:', replace, after.firstName, after.lastName, after.details.birthDate, after.details.phone, after.details.email);
 
   // Delete user
   console.log('Delete:', await mapper.remove(id));

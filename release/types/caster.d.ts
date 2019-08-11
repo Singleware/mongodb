@@ -15,12 +15,12 @@ export declare class Caster extends Class.Null {
      * @param type Casting type.
      * @returns Returns the validated ObjectID.
      */
-    static ObjectId<T extends string | number | Engine.ObjectId>(value: T | (T | T[])[], type: Mapping.Types.Cast): T | (T | T[])[];
+    static ObjectId<T>(value: T | T[], type: Mapping.Types.Cast): (T | Engine.ObjectId) | (T | Engine.ObjectId)[];
     /**
      * Converts the specified value to a valid Binary.
      * @param value Casting value.
      * @param type Casting type.
      * @returns Returns the valid Binary.
      */
-    static Binary<T extends number[] | Engine.Binary>(value: T, type: Mapping.Types.Cast): Engine.Binary | undefined;
+    static Binary<T>(value: T, type: Mapping.Types.Cast): Engine.Binary | undefined;
 }

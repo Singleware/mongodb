@@ -19,6 +19,7 @@ export class Driver extends Class.Null implements Aliases.Driver {
   @Class.Private()
   private static options = {
     useNewUrlParser: true,
+    useUnifiedTopology: true,
     ignoreUndefined: true
   };
 
@@ -51,40 +52,31 @@ export class Driver extends Class.Null implements Aliases.Driver {
   }
 
   /**
-   * Connect to the URI.
+   * Connect to the specified URI.
    * @param uri Connection URI.
+   * @throws Throws an error when there's an active connection.
    */
   @Class.Public()
   public async connect(uri: string): Promise<void> {
-    await new Promise<Mongodb.Db>((resolve: Function, reject: Function): void => {
-      Mongodb.MongoClient.connect(uri, Driver.options, (error: Mongodb.MongoError, connection: Mongodb.MongoClient) => {
-        if (error) {
-          reject(error);
-        } else {
-          this.connection = connection;
-          this.database = connection.db();
-          resolve();
-        }
-      });
-    });
+    if (this.connection) {
+      throw new Error(`An active connection was found.`);
+    }
+    this.connection = await Mongodb.MongoClient.connect(uri, Driver.options);
+    this.database = this.connection.db();
   }
 
   /**
-   * Disconnect any active connection.
+   * Disconnect the active connection.
+   * @throws Throws an error when there's no active connection.
    */
   @Class.Public()
   public async disconnect(): Promise<void> {
-    return new Promise<void>((resolve: Function, reject: Function): void => {
-      (<Mongodb.MongoClient>this.connection).close((error: Mongodb.MongoError) => {
-        if (error) {
-          reject(error);
-        } else {
-          this.connection = void 0;
-          this.database = void 0;
-          resolve();
-        }
-      });
-    });
+    if (!this.connection) {
+      throw new Error(`No connection found.`);
+    }
+    await this.connection.close();
+    this.connection = void 0;
+    this.database = void 0;
   }
 
   /**
@@ -131,7 +123,8 @@ export class Driver extends Class.Null implements Aliases.Driver {
   @Class.Public()
   public async insert<T extends Aliases.Entity>(model: Aliases.Model<T>, entities: T[]): Promise<string[]> {
     const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
-    return Object.values((<any>await manager.insertMany(entities)).insertedIds);
+    const entries = entities.map(entity => Aliases.Normalizer.create(model, entity, true, true));
+    return Object.values((<any>await manager.insertMany(entries)).insertedIds);
   }
 
   /**
@@ -144,7 +137,8 @@ export class Driver extends Class.Null implements Aliases.Driver {
   @Class.Public()
   public async find<T extends Aliases.Entity>(model: Aliases.Model<T>, query: Aliases.Query, fields: string[]): Promise<T[]> {
     const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
-    return (await manager.aggregate(Engine.Pipeline.build(model, query, fields), { allowDiskUse: true })).toArray();
+    const pipeline = Engine.Pipeline.build(model, query, fields);
+    return (await manager.aggregate(pipeline, { allowDiskUse: true })).toArray();
   }
 
   /**
@@ -156,7 +150,8 @@ export class Driver extends Class.Null implements Aliases.Driver {
    */
   @Class.Public()
   public async findById<T extends Aliases.Entity>(model: Aliases.Model<T>, id: any, fields: string[]): Promise<T | undefined> {
-    return (await this.find(model, { pre: Engine.Filter.byPrimaryId(model, id) }, fields))[0];
+    const match = Engine.Filter.primaryId(model, id);
+    return (await this.find(model, { pre: match }, fields))[0];
   }
 
   /**
@@ -169,7 +164,9 @@ export class Driver extends Class.Null implements Aliases.Driver {
   @Class.Public()
   public async update(model: Aliases.Model, match: Aliases.Match, entity: Aliases.Entity): Promise<number> {
     const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
-    return (await manager.updateMany(Engine.Match.build(model, match), { $set: entity })).modifiedCount;
+    const entry = Aliases.Normalizer.create(model, entity, true, true, true);
+    const filter = Engine.Match.build(model, match);
+    return (await manager.updateMany(filter, { $set: entry })).modifiedCount;
   }
 
   /**
@@ -181,7 +178,8 @@ export class Driver extends Class.Null implements Aliases.Driver {
    */
   @Class.Public()
   public async updateById(model: Aliases.Model, id: any, entity: Aliases.Model): Promise<boolean> {
-    return (await this.update(model, Engine.Filter.byPrimaryId(model, id), entity)) === 1;
+    const match = Engine.Filter.primaryId(model, id);
+    return (await this.update(model, match, entity)) === 1;
   }
 
   /**
@@ -194,7 +192,10 @@ export class Driver extends Class.Null implements Aliases.Driver {
   @Class.Public()
   public async replaceById(model: Aliases.Model, id: any, entity: Aliases.Model): Promise<boolean> {
     const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
-    return (await manager.replaceOne(Engine.Match.build(model, Engine.Filter.byPrimaryId(model, id)), entity)).modifiedCount === 1;
+    const entry = Aliases.Normalizer.create(model, entity, true, true);
+    const match = Engine.Filter.primaryId(model, id);
+    const filter = Engine.Match.build(model, match);
+    return (await manager.replaceOne(filter, entry)).modifiedCount === 1;
   }
 
   /**
@@ -206,7 +207,8 @@ export class Driver extends Class.Null implements Aliases.Driver {
   @Class.Public()
   public async delete(model: Aliases.Model, match: Aliases.Match): Promise<number> {
     const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
-    return (await manager.deleteMany(Engine.Match.build(model, match))).deletedCount || 0;
+    const filter = Engine.Match.build(model, match);
+    return (await manager.deleteMany(filter)).deletedCount || 0;
   }
 
   /**
@@ -217,7 +219,8 @@ export class Driver extends Class.Null implements Aliases.Driver {
    */
   @Class.Public()
   public async deleteById(model: Aliases.Model, id: any): Promise<boolean> {
-    return (await this.delete(model, Engine.Filter.byPrimaryId(model, id))) === 1;
+    const match = Engine.Filter.primaryId(model, id);
+    return (await this.delete(model, match)) === 1;
   }
 
   /**

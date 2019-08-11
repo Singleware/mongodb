@@ -18,7 +18,7 @@ export class Filter extends Class.Null {
    * @returns Returns the primary filter.
    */
   @Class.Public()
-  public static byPrimaryId(model: Aliases.Model, value: any): Aliases.Match {
+  public static primaryId(model: Aliases.Model, value: any): Aliases.Match {
     const primary = Aliases.Schema.getPrimaryColumn(model);
     const filter = <Aliases.Match>{};
     filter[primary.name] = {

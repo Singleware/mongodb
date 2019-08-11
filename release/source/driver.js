@@ -35,39 +35,28 @@ let Driver = Driver_1 = class Driver extends Class.Null {
         };
     }
     /**
-     * Connect to the URI.
+     * Connect to the specified URI.
      * @param uri Connection URI.
+     * @throws Throws an error when there's an active connection.
      */
     async connect(uri) {
-        await new Promise((resolve, reject) => {
-            Mongodb.MongoClient.connect(uri, Driver_1.options, (error, connection) => {
-                if (error) {
-                    reject(error);
-                }
-                else {
-                    this.connection = connection;
-                    this.database = connection.db();
-                    resolve();
-                }
-            });
-        });
+        if (this.connection) {
+            throw new Error(`An active connection was found.`);
+        }
+        this.connection = await Mongodb.MongoClient.connect(uri, Driver_1.options);
+        this.database = this.connection.db();
     }
     /**
-     * Disconnect any active connection.
+     * Disconnect the active connection.
+     * @throws Throws an error when there's no active connection.
      */
     async disconnect() {
-        return new Promise((resolve, reject) => {
-            this.connection.close((error) => {
-                if (error) {
-                    reject(error);
-                }
-                else {
-                    this.connection = void 0;
-                    this.database = void 0;
-                    resolve();
-                }
-            });
-        });
+        if (!this.connection) {
+            throw new Error(`No connection found.`);
+        }
+        await this.connection.close();
+        this.connection = void 0;
+        this.database = void 0;
     }
     /**
      * Modify the collection by the specified model type.
@@ -106,7 +95,8 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      */
     async insert(model, entities) {
         const manager = this.database.collection(Aliases.Schema.getStorageName(model));
-        return Object.values((await manager.insertMany(entities)).insertedIds);
+        const entries = entities.map(entity => Aliases.Normalizer.create(model, entity, true, true));
+        return Object.values((await manager.insertMany(entries)).insertedIds);
     }
     /**
      * Find the corresponding entities from the database.
@@ -117,7 +107,8 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      */
     async find(model, query, fields) {
         const manager = this.database.collection(Aliases.Schema.getStorageName(model));
-        return (await manager.aggregate(Engine.Pipeline.build(model, query, fields), { allowDiskUse: true })).toArray();
+        const pipeline = Engine.Pipeline.build(model, query, fields);
+        return (await manager.aggregate(pipeline, { allowDiskUse: true })).toArray();
     }
     /**
      * Find the entity that corresponds to the specified entity id.
@@ -127,7 +118,8 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
     async findById(model, id, fields) {
-        return (await this.find(model, { pre: Engine.Filter.byPrimaryId(model, id) }, fields))[0];
+        const match = Engine.Filter.primaryId(model, id);
+        return (await this.find(model, { pre: match }, fields))[0];
     }
     /**
      * Update all entities that corresponds to the specified filter.
@@ -138,7 +130,9 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      */
     async update(model, match, entity) {
         const manager = this.database.collection(Aliases.Schema.getStorageName(model));
-        return (await manager.updateMany(Engine.Match.build(model, match), { $set: entity })).modifiedCount;
+        const entry = Aliases.Normalizer.create(model, entity, true, true, true);
+        const filter = Engine.Match.build(model, match);
+        return (await manager.updateMany(filter, { $set: entry })).modifiedCount;
     }
     /**
      * Updates the entity that corresponds to the specified entity id.
@@ -148,7 +142,8 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
      */
     async updateById(model, id, entity) {
-        return (await this.update(model, Engine.Filter.byPrimaryId(model, id), entity)) === 1;
+        const match = Engine.Filter.primaryId(model, id);
+        return (await this.update(model, match, entity)) === 1;
     }
     /**
      * Replace the entity that corresponds to the specified entity id.
@@ -159,7 +154,10 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      */
     async replaceById(model, id, entity) {
         const manager = this.database.collection(Aliases.Schema.getStorageName(model));
-        return (await manager.replaceOne(Engine.Match.build(model, Engine.Filter.byPrimaryId(model, id)), entity)).modifiedCount === 1;
+        const entry = Aliases.Normalizer.create(model, entity, true, true);
+        const match = Engine.Filter.primaryId(model, id);
+        const filter = Engine.Match.build(model, match);
+        return (await manager.replaceOne(filter, entry)).modifiedCount === 1;
     }
     /**
      * Delete all entities that corresponds to the specified filter.
@@ -169,7 +167,8 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      */
     async delete(model, match) {
         const manager = this.database.collection(Aliases.Schema.getStorageName(model));
-        return (await manager.deleteMany(Engine.Match.build(model, match))).deletedCount || 0;
+        const filter = Engine.Match.build(model, match);
+        return (await manager.deleteMany(filter)).deletedCount || 0;
     }
     /**
      * Deletes the entity that corresponds to the specified id.
@@ -178,7 +177,8 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
      */
     async deleteById(model, id) {
-        return (await this.delete(model, Engine.Filter.byPrimaryId(model, id))) === 1;
+        const match = Engine.Filter.primaryId(model, id);
+        return (await this.delete(model, match)) === 1;
     }
     /**
      * Count all corresponding entities from the storage.
@@ -198,6 +198,7 @@ let Driver = Driver_1 = class Driver extends Class.Null {
  */
 Driver.options = {
     useNewUrlParser: true,
+    useUnifiedTopology: true,
     ignoreUndefined: true
 };
 __decorate([

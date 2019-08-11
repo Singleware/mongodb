@@ -22,7 +22,7 @@ let Filter = class Filter extends Class.Null {
      * @param value Primary Id value.
      * @returns Returns the primary filter.
      */
-    static byPrimaryId(model, value) {
+    static primaryId(model, value) {
         const primary = Aliases.Schema.getPrimaryColumn(model);
         const filter = {};
         filter[primary.name] = {
@@ -34,7 +34,7 @@ let Filter = class Filter extends Class.Null {
 };
 __decorate([
     Class.Public()
-], Filter, "byPrimaryId", null);
+], Filter, "primaryId", null);
 Filter = __decorate([
     Class.Describe()
 ], Filter);

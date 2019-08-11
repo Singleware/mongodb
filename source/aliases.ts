@@ -10,9 +10,9 @@ import * as Mapping from '@singleware/mapping';
 export type Entity = Mapping.Types.Entity;
 
 /**
- * Mapping entity.
+ * Entity schema, property decorator.
  */
-export const Entity = Mapping.Entity;
+export type PropertyDecorator = Mapping.Types.PropertyDecorator;
 
 /**
  * Map type.
@@ -83,3 +83,23 @@ export import Order = Mapping.Filters.Order;
  * Sort filters.
  */
 export import Sort = Mapping.Filters.Sort;
+
+/**
+ * Entity inputer.
+ */
+export import Inputer = Mapping.Entities.Inputer;
+
+/**
+ * Entity outputer.
+ */
+export import Outputer = Mapping.Entities.Outputer;
+
+/**
+ * Entity normalizer.
+ */
+export import Normalizer = Mapping.Entities.Normalizer;
+
+/**
+ * Castings namespace.
+ */
+export import Castings = Mapping.Castings;

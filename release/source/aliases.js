@@ -6,10 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const Mapping = require("@singleware/mapping");
 /**
- * Mapping entity.
- */
-exports.Entity = Mapping.Entity;
-/**
  * Mapper class.
  */
 exports.Mapper = Mapping.Mapper;
@@ -33,4 +29,20 @@ exports.Operator = Mapping.Filters.Operator;
  * Order filters.
  */
 exports.Order = Mapping.Filters.Order;
+/**
+ * Entity inputer.
+ */
+exports.Inputer = Mapping.Entities.Inputer;
+/**
+ * Entity outputer.
+ */
+exports.Outputer = Mapping.Entities.Outputer;
+/**
+ * Entity normalizer.
+ */
+exports.Normalizer = Mapping.Entities.Normalizer;
+/**
+ * Castings namespace.
+ */
+exports.Castings = Mapping.Castings;
 //# sourceMappingURL=aliases.js.map
