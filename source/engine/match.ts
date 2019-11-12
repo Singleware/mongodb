@@ -60,34 +60,55 @@ export class Match extends Class.Null {
       const operation = match[name];
       switch (operation.operator) {
         case Aliases.Operator.LessThan:
-          entity[column] = { $lt: this.castValue(operation.value, schema) };
+          entity[column] = {
+            $lt: this.castValue(operation.value, schema)
+          };
           break;
         case Aliases.Operator.LessThanOrEqual:
-          entity[column] = { $lte: this.castValue(operation.value, schema) };
+          entity[column] = {
+            $lte: this.castValue(operation.value, schema)
+          };
           break;
         case Aliases.Operator.Equal:
-          entity[column] = { $eq: this.castValue(operation.value, schema) };
+          entity[column] = {
+            $eq: this.castValue(operation.value, schema)
+          };
           break;
         case Aliases.Operator.NotEqual:
-          entity[column] = { $ne: this.castValue(operation.value, schema) };
+          entity[column] = {
+            $ne: this.castValue(operation.value, schema)
+          };
           break;
         case Aliases.Operator.GreaterThanOrEqual:
-          entity[column] = { $gte: this.castValue(operation.value, schema) };
+          entity[column] = {
+            $gte: this.castValue(operation.value, schema)
+          };
           break;
         case Aliases.Operator.GreaterThan:
-          entity[column] = { $gt: this.castValue(operation.value, schema) };
+          entity[column] = {
+            $gt: this.castValue(operation.value, schema)
+          };
           break;
         case Aliases.Operator.Between:
-          entity[column] = { $gte: this.castValue(operation.value[0], schema), $lte: this.castValue(operation.value[1], schema) };
+          entity[column] = {
+            $gte: this.castValue(operation.value[0], schema),
+            $lte: this.castValue(operation.value[1], schema)
+          };
           break;
         case Aliases.Operator.Contain:
-          entity[column] = { $in: this.castArray(operation.value, schema) };
+          entity[column] = {
+            $in: this.castArray(operation.value, schema)
+          };
           break;
         case Aliases.Operator.NotContain:
-          entity[column] = { $nin: this.castArray(operation.value, schema) };
+          entity[column] = {
+            $nin: this.castArray(operation.value, schema)
+          };
           break;
         case Aliases.Operator.RegExp:
-          entity[column] = { $regex: this.castValue(operation.value, schema) };
+          entity[column] = {
+            $regex: this.castValue(operation.value, schema)
+          };
           break;
       }
     }

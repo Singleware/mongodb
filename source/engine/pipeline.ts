@@ -155,7 +155,13 @@ export class Pipeline extends Class.Null {
    * @param last Last level.
    */
   @Class.Private()
-  private static composeSubgroup(pipeline: Aliases.Entity[], group: Aliases.Entity, fields: string[], level: any, last: any): void {
+  private static composeSubgroup(
+    pipeline: Aliases.Entity[],
+    group: Aliases.Entity,
+    fields: string[],
+    level: any,
+    last: any
+  ): void {
     const name = level.previous ? `_${level.column.name}` : level.column.name;
     const internal = this.getGrouping(<Aliases.Model>level.column.model, fields, level.name);
     internal[last.column.name] = `$_${last.column.name}`;
@@ -208,7 +214,13 @@ export class Pipeline extends Class.Null {
    * @param multiples List of decomposed levels.
    */
   @Class.Private()
-  private static composeAll(pipeline: Aliases.Entity[], properties: Aliases.Entity, fields: string[], level: any, multiples: any[]): void {
+  private static composeAll(
+    pipeline: Aliases.Entity[],
+    properties: Aliases.Entity,
+    fields: string[],
+    level: any,
+    multiples: any[]
+  ): void {
     let multiple = multiples.pop();
     let currentId = '$_id';
     let last;

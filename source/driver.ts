@@ -135,7 +135,11 @@ export class Driver extends Class.Null implements Aliases.Driver {
    * @returns Returns a promise to get the list of entities found.
    */
   @Class.Public()
-  public async find<T extends Aliases.Entity>(model: Aliases.Model<T>, query: Aliases.Query, fields: string[]): Promise<T[]> {
+  public async find<T extends Aliases.Entity>(
+    model: Aliases.Model<T>,
+    query: Aliases.Query,
+    fields: string[]
+  ): Promise<T[]> {
     const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
     const pipeline = Engine.Pipeline.build(model, query, fields);
     return (await manager.aggregate(pipeline, { allowDiskUse: true })).toArray();
@@ -149,7 +153,11 @@ export class Driver extends Class.Null implements Aliases.Driver {
    * @returns Returns a promise to get the found entity or undefined when the entity was not found.
    */
   @Class.Public()
-  public async findById<T extends Aliases.Entity>(model: Aliases.Model<T>, id: any, fields: string[]): Promise<T | undefined> {
+  public async findById<T extends Aliases.Entity>(
+    model: Aliases.Model<T>,
+    id: any,
+    fields: string[]
+  ): Promise<T | undefined> {
     const match = Engine.Filter.primaryId(model, id);
     return (await this.find(model, { pre: match }, fields))[0];
   }
