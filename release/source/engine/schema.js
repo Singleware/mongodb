@@ -36,7 +36,7 @@ let Schema = class Schema extends Class.Null {
      */
     static buildDocumentSchema(column) {
         if (column.model && Aliases.Schema.isEntity(column.model)) {
-            return this.build(Aliases.Schema.getRealRow(column.model));
+            return this.build(Aliases.Schema.getRealRow(Aliases.Schema.getEntityModel(column.model)));
         }
         else {
             return this.build({});
@@ -52,54 +52,54 @@ let Schema = class Schema extends Class.Null {
         const entity = { bsonType: [] };
         for (const type of column.formats) {
             switch (type) {
-                case Aliases.Format.Id:
+                case 0 /* Id */:
                     entity.bsonType.push('objectId');
                     break;
-                case Aliases.Format.Null:
+                case 1 /* Null */:
                     entity.bsonType.push('null');
                     break;
-                case Aliases.Format.Binary:
+                case 2 /* Binary */:
                     entity.bsonType.push('binData');
                     break;
-                case Aliases.Format.Boolean:
+                case 3 /* Boolean */:
                     entity.bsonType.push('bool');
                     break;
-                case Aliases.Format.Integer:
+                case 4 /* Integer */:
                     entity.bsonType.push('int');
                     this.setProperty('minimum', entity, 'minimum', column);
                     this.setProperty('maximum', entity, 'maximum', column);
                     break;
-                case Aliases.Format.Decimal:
+                case 5 /* Decimal */:
                     entity.bsonType.push('double');
                     this.setProperty('minimum', entity, 'minimum', column);
                     this.setProperty('maximum', entity, 'maximum', column);
                     break;
-                case Aliases.Format.Number:
+                case 6 /* Number */:
                     entity.bsonType.push('number');
                     this.setProperty('minimum', entity, 'minimum', column);
                     this.setProperty('maximum', entity, 'maximum', column);
                     break;
-                case Aliases.Format.String:
+                case 7 /* String */:
                     entity.bsonType.push('string');
                     this.setProperty('minLength', entity, 'minimum', column);
                     this.setProperty('maxLength', entity, 'maximum', column);
                     break;
-                case Aliases.Format.Enumeration:
+                case 8 /* Enumeration */:
                     entity.bsonType.push('string');
                     entity.enum = column.values;
                     break;
-                case Aliases.Format.Pattern:
+                case 9 /* Pattern */:
                     const pattern = column.pattern.toString();
                     entity.bsonType.push('string');
                     entity.pattern = pattern.substring(1, pattern.lastIndexOf('/'));
                     break;
-                case Aliases.Format.Timestamp:
+                case 10 /* Timestamp */:
                     entity.bsonType.push('timestamp');
                     break;
-                case Aliases.Format.Date:
+                case 11 /* Date */:
                     entity.bsonType.push('date');
                     break;
-                case Aliases.Format.Array:
+                case 12 /* Array */:
                     entity.bsonType.push('array');
                     this.setProperty('minItems', entity, 'minimum', column);
                     this.setProperty('maxItems', entity, 'maximum', column);
@@ -127,7 +127,7 @@ let Schema = class Schema extends Class.Null {
                             entity.items = this.buildDocumentSchema(column);
                     }
                     break;
-                case Aliases.Format.Map:
+                case 13 /* Map */:
                     entity.bsonType.push('object');
                     switch (column.model) {
                         case Object:
@@ -152,7 +152,7 @@ let Schema = class Schema extends Class.Null {
                             entity.additionalProperties = this.buildDocumentSchema(column);
                     }
                     break;
-                case Aliases.Format.Object:
+                case 14 /* Object */:
                     entity.bsonType.push('object');
                     if (column.model === Object) {
                         entity.additionalProperties = true;

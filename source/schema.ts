@@ -19,10 +19,10 @@ export class Schema extends Aliases.Schema {
    * @returns Returns the decorator method.
    */
   @Class.Public()
-  public static ObjectId(): Aliases.PropertyDecorator {
-    return (scope: Object, property: PropertyKey, descriptor?: PropertyDescriptor): PropertyDescriptor => {
-      super.Id()(scope, <string>property, descriptor);
-      return super.Convert(Caster.ObjectId.bind(Caster))(scope, <string>property, descriptor);
+  public static ObjectId(): Aliases.ModelDecorator {
+    return (target: Object, property: PropertyKey, descriptor?: PropertyDescriptor): PropertyDescriptor => {
+      super.Id()(target, <string>property, descriptor);
+      return super.Convert(Caster.ObjectId.bind(Caster))(target, <string>property, descriptor);
     };
   }
 
@@ -31,10 +31,10 @@ export class Schema extends Aliases.Schema {
    * @returns Returns the decorator method.
    */
   @Class.Public()
-  public static DocumentId(): Aliases.PropertyDecorator {
-    return (scope: Object, property: PropertyKey, descriptor?: PropertyDescriptor): PropertyDescriptor => {
-      this.ObjectId()(scope, <string>property, descriptor);
-      return super.Alias('_id')(scope, <string>property, descriptor);
+  public static DocumentId(): Aliases.ModelDecorator {
+    return (target: Object, property: PropertyKey, descriptor?: PropertyDescriptor): PropertyDescriptor => {
+      this.ObjectId()(target, <string>property, descriptor);
+      return super.Alias('_id')(target, <string>property, descriptor);
     };
   }
 
@@ -46,10 +46,10 @@ export class Schema extends Aliases.Schema {
    * @returns Returns the decorator method.
    */
   @Class.Public()
-  public static ArrayIds(unique?: boolean, minimum?: number, maximum?: number): Aliases.PropertyDecorator {
-    return (scope: Object, property: PropertyKey, descriptor?: PropertyDescriptor): PropertyDescriptor => {
-      super.Array(Engine.ObjectId, unique, minimum, maximum)(scope, <string>property, descriptor);
-      return super.Convert(Caster.ObjectId.bind(Caster))(scope, <string>property, descriptor);
+  public static ArrayIds(unique?: boolean, minimum?: number, maximum?: number): Aliases.ModelDecorator {
+    return (target: Object, property: PropertyKey, descriptor?: PropertyDescriptor): PropertyDescriptor => {
+      super.Array(Engine.ObjectId, unique, minimum, maximum)(target, <string>property, descriptor);
+      return super.Convert(Caster.ObjectId.bind(Caster))(target, <string>property, descriptor);
     };
   }
 
@@ -58,10 +58,10 @@ export class Schema extends Aliases.Schema {
    * @returns Returns the decorator method.
    */
   @Class.Public()
-  public static Binary(): Aliases.PropertyDecorator {
-    return (scope: Object, property: PropertyKey, descriptor?: PropertyDescriptor): PropertyDescriptor => {
-      super.Binary()(scope, <string>property, descriptor);
-      return super.Convert(Caster.Binary.bind(Caster))(scope, <string>property, descriptor);
+  public static Binary(): Aliases.ModelDecorator {
+    return (target: Object, property: PropertyKey, descriptor?: PropertyDescriptor): PropertyDescriptor => {
+      super.Binary()(target, <string>property, descriptor);
+      return super.Convert(Caster.Binary.bind(Caster))(target, <string>property, descriptor);
     };
   }
 }

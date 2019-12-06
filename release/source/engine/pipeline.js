@@ -27,7 +27,7 @@ let Pipeline = class Pipeline extends Class.Null {
         const current = levels[levels.length - 1];
         return {
             name: current ? `${current.name}.${column.name}` : column.name,
-            multiple: column.formats.includes(Aliases.Format.Array),
+            multiple: column.formats.includes(12 /* Array */),
             column: column,
             previous: current
         };
@@ -146,7 +146,7 @@ let Pipeline = class Pipeline extends Class.Null {
      */
     static composeSubgroup(pipeline, group, fields, level, last) {
         const name = level.previous ? `_${level.column.name}` : level.column.name;
-        const internal = this.getGrouping(level.column.model, fields, level.name);
+        const internal = this.getGrouping(Aliases.Schema.getEntityModel(level.column.model), fields, level.name);
         internal[last.column.name] = `$_${last.column.name}`;
         if (last.column.type === 'virtual') {
             internal[last.column.local] = `$_${last.column.local}`;
@@ -242,15 +242,16 @@ let Pipeline = class Pipeline extends Class.Null {
             const level = this.getVirtualLevel(schema, levels);
             levels.push(level);
             const multiples = this.decomposeAll(pipeline, levels);
+            const resolved = Aliases.Schema.getEntityModel(schema.model);
             pipeline.push({
                 $lookup: {
-                    from: Aliases.Schema.getStorageName(schema.model),
+                    from: Aliases.Schema.getStorageName(resolved),
                     let: { id: `$${level.name}` },
                     pipeline: [
                         {
                             $match: { $expr: { $eq: [`$${schema.foreign}`, `$$id`] } }
                         },
-                        ...this.build(schema.model, schema.query || {}, fields)
+                        ...this.build(resolved, schema.query || {}, fields)
                     ],
                     as: level.virtual
                 }
@@ -292,8 +293,8 @@ let Pipeline = class Pipeline extends Class.Null {
             const column = schema.alias || schema.name;
             if (schema.model && Aliases.Schema.isEntity(schema.model)) {
                 levels.push(this.getRealLevel(schema, levels));
-                const projection = this.applyRelationship(pipeline, base, schema.model, fields, levels);
-                if (schema.formats.includes(Aliases.Format.Map)) {
+                const projection = this.applyRelationship(pipeline, base, Aliases.Schema.getEntityModel(schema.model), fields, levels);
+                if (schema.formats.includes(13 /* Map */)) {
                     project[column] = true;
                 }
                 else {

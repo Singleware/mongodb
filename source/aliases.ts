@@ -10,9 +10,9 @@ import * as Mapping from '@singleware/mapping';
 export type Entity = Mapping.Types.Entity;
 
 /**
- * Entity schema, property decorator.
+ * Entity schema, model decorator.
  */
-export type PropertyDecorator = Mapping.Types.PropertyDecorator;
+export type ModelDecorator = Mapping.Types.ModelDecorator;
 
 /**
  * Map type.
@@ -52,7 +52,7 @@ export import Format = Mapping.Types.Format;
 /**
  * Entity model.
  */
-export import Model = Mapping.Types.Model;
+export import Model = Mapping.Types.ModelClass;
 
 /**
  * Mapping query.

@@ -163,7 +163,7 @@ export class Pipeline extends Class.Null {
     last: any
   ): void {
     const name = level.previous ? `_${level.column.name}` : level.column.name;
-    const internal = this.getGrouping(<Aliases.Model>level.column.model, fields, level.name);
+    const internal = this.getGrouping(Aliases.Schema.getEntityModel(level.column.model), fields, level.name);
     internal[last.column.name] = `$_${last.column.name}`;
     if (last.column.type === 'virtual') {
       internal[last.column.local] = `$_${last.column.local}`;
@@ -273,15 +273,16 @@ export class Pipeline extends Class.Null {
       const level = this.getVirtualLevel(schema, levels);
       levels.push(level);
       const multiples = this.decomposeAll(pipeline, levels);
+      const resolved = Aliases.Schema.getEntityModel(schema.model);
       pipeline.push({
         $lookup: {
-          from: Aliases.Schema.getStorageName(schema.model),
+          from: Aliases.Schema.getStorageName(resolved),
           let: { id: `$${level.name}` },
           pipeline: [
             {
               $match: { $expr: { $eq: [`$${schema.foreign}`, `$$id`] } }
             },
-            ...this.build(schema.model, schema.query || {}, fields)
+            ...this.build(resolved, schema.query || {}, fields)
           ],
           as: level.virtual
         }
@@ -332,7 +333,13 @@ export class Pipeline extends Class.Null {
       const column = schema.alias || schema.name;
       if (schema.model && Aliases.Schema.isEntity(schema.model)) {
         levels.push(this.getRealLevel(schema, levels));
-        const projection = this.applyRelationship(pipeline, base, schema.model, fields, levels);
+        const projection = this.applyRelationship(
+          pipeline,
+          base,
+          Aliases.Schema.getEntityModel(schema.model),
+          fields,
+          levels
+        );
         if (schema.formats.includes(Aliases.Format.Map)) {
           project[column] = true;
         } else {

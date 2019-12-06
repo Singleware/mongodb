@@ -34,7 +34,7 @@ export class Schema extends Class.Null {
   @Class.Private()
   private static buildDocumentSchema(column: Aliases.Columns.Real): Aliases.Columns.RealRow {
     if (column.model && Aliases.Schema.isEntity(column.model)) {
-      return this.build(Aliases.Schema.getRealRow(column.model));
+      return this.build(Aliases.Schema.getRealRow(Aliases.Schema.getEntityModel(column.model)));
     } else {
       return this.build({});
     }

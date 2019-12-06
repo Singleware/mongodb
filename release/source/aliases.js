@@ -18,10 +18,6 @@ exports.Schema = Mapping.Schema;
  */
 exports.Columns = Mapping.Columns;
 /**
- * Mapping formats.
- */
-exports.Format = Mapping.Types.Format;
-/**
  * Operator filters.
  */
 exports.Operator = Mapping.Filters.Operator;

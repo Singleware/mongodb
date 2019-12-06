@@ -23,9 +23,9 @@ let Schema = class Schema extends Aliases.Schema {
      * @returns Returns the decorator method.
      */
     static ObjectId() {
-        return (scope, property, descriptor) => {
-            super.Id()(scope, property, descriptor);
-            return super.Convert(caster_1.Caster.ObjectId.bind(caster_1.Caster))(scope, property, descriptor);
+        return (target, property, descriptor) => {
+            super.Id()(target, property, descriptor);
+            return super.Convert(caster_1.Caster.ObjectId.bind(caster_1.Caster))(target, property, descriptor);
         };
     }
     /**
@@ -33,9 +33,9 @@ let Schema = class Schema extends Aliases.Schema {
      * @returns Returns the decorator method.
      */
     static DocumentId() {
-        return (scope, property, descriptor) => {
-            this.ObjectId()(scope, property, descriptor);
-            return super.Alias('_id')(scope, property, descriptor);
+        return (target, property, descriptor) => {
+            this.ObjectId()(target, property, descriptor);
+            return super.Alias('_id')(target, property, descriptor);
         };
     }
     /**
@@ -46,9 +46,9 @@ let Schema = class Schema extends Aliases.Schema {
      * @returns Returns the decorator method.
      */
     static ArrayIds(unique, minimum, maximum) {
-        return (scope, property, descriptor) => {
-            super.Array(Engine.ObjectId, unique, minimum, maximum)(scope, property, descriptor);
-            return super.Convert(caster_1.Caster.ObjectId.bind(caster_1.Caster))(scope, property, descriptor);
+        return (target, property, descriptor) => {
+            super.Array(Engine.ObjectId, unique, minimum, maximum)(target, property, descriptor);
+            return super.Convert(caster_1.Caster.ObjectId.bind(caster_1.Caster))(target, property, descriptor);
         };
     }
     /**
@@ -56,9 +56,9 @@ let Schema = class Schema extends Aliases.Schema {
      * @returns Returns the decorator method.
      */
     static Binary() {
-        return (scope, property, descriptor) => {
-            super.Binary()(scope, property, descriptor);
-            return super.Convert(caster_1.Caster.Binary.bind(caster_1.Caster))(scope, property, descriptor);
+        return (target, property, descriptor) => {
+            super.Binary()(target, property, descriptor);
+            return super.Convert(caster_1.Caster.Binary.bind(caster_1.Caster))(target, property, descriptor);
         };
     }
 };

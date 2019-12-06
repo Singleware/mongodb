@@ -142,7 +142,7 @@ export class Driver extends Class.Null implements Aliases.Driver {
   ): Promise<T[]> {
     const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
     const pipeline = Engine.Pipeline.build(model, query, fields);
-    return (await manager.aggregate(pipeline, { allowDiskUse: true })).toArray();
+    return await manager.aggregate(pipeline, { allowDiskUse: true }).toArray();
   }
 
   /**

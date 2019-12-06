@@ -42,7 +42,7 @@ let Match = class Match extends Class.Null {
      * @returns Returns the converted value when the operation was successful, otherwise returns the input value.
      */
     static castValue(value, schema) {
-        if (schema.formats.includes(Aliases.Format.Id) && BSON.ObjectId.isValid(value)) {
+        if (schema.formats.includes(0 /* Id */) && BSON.ObjectId.isValid(value)) {
             return new BSON.ObjectId(value);
         }
         else {

@@ -107,7 +107,7 @@ let Driver = Driver_1 = class Driver extends Class.Null {
     async find(model, query, fields) {
         const manager = this.database.collection(Aliases.Schema.getStorageName(model));
         const pipeline = Engine.Pipeline.build(model, query, fields);
-        return (await manager.aggregate(pipeline, { allowDiskUse: true })).toArray();
+        return await manager.aggregate(pipeline, { allowDiskUse: true }).toArray();
     }
     /**
      * Find the entity that corresponds to the specified entity id.
