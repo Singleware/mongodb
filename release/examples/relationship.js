@@ -137,7 +137,7 @@ __decorate([
     Class.Public()
 ], TargetEntity.prototype, "userId", void 0);
 __decorate([
-    MongoDB.Schema.Join('id', UserEntity, 'userId'),
+    MongoDB.Schema.Join('id', UserEntity, 'userId', void 0, ['name']),
     Class.Public()
 ], TargetEntity.prototype, "user", void 0);
 TargetEntity = __decorate([
@@ -418,11 +418,12 @@ let AccountMapper = class AccountMapper extends MongoDB.Mapper {
     }
     /**
      * Reads an account entity that corresponds to the specified account id.
-     * @param id Account id.
+     * @param id Account id. Fields to be selected.
+     * @param select
      * @returns Returns a promise to get the account entity or undefined when the account was not found.
      */
-    async read(id) {
-        return await super.findById(id);
+    async read(id, select) {
+        return await super.findById(id, select);
     }
 };
 __decorate([
@@ -461,7 +462,21 @@ async function crudTest() {
     // Creates the account.
     const accountId = await accounts.create(owner, 'generic', ['generic', 'basic'], userA, userB, userC);
     // Reads the account.
-    const account = await accounts.read(accountId);
+    const account = await accounts.read(accountId, [
+        'id',
+        'owner.name',
+        'typeList.description',
+        'roleList.description',
+        'allowedUsersList.name',
+        'settings.contact.name',
+        'settings.sharedUsersList.name',
+        'settings.messages.admin.name',
+        'settings.messages.usersList.name',
+        'settings.groups.admin.name',
+        'settings.groups.usersList.name',
+        'settings.groups.notifications.user.name',
+        'settings.groups.notifications.description.targets.user.name'
+    ]);
     if (account) {
         const entity = MongoDB.Normalizer.create(AccountEntity, account, false, true);
         console.dir(JSON.parse(JSON.stringify(entity)), { depth: null, compact: true });

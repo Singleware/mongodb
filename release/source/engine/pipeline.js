@@ -18,74 +18,92 @@ const match_1 = require("./match");
  */
 let Pipeline = class Pipeline extends Class.Null {
     /**
-     * Gets a new real level entity based on the specified column.
-     * @param column Level column schema.
-     * @param levels Level list.
-     * @returns Returns the generated level entity.
-     */
-    static getRealLevel(column, levels) {
-        const current = levels[levels.length - 1];
-        return {
-            name: current ? `${current.name}.${column.name}` : column.name,
-            multiple: column.formats.includes(12 /* Array */),
-            column: column,
-            previous: current
-        };
-    }
-    /**
-     * Gets a new virtual level entity based on the specified column.
-     * @param column Level column schema.
-     * @param levels Level list.
-     * @returns Returns the level entity.
-     */
-    static getVirtualLevel(column, levels) {
-        const current = levels[levels.length - 1];
-        return {
-            name: current ? `${current.name}.${column.local}` : column.local,
-            virtual: current ? `${current.name}.${column.name}` : column.name,
-            multiple: column.multiple,
-            column: column,
-            previous: current
-        };
-    }
-    /**
-     * Builds and get a new grouping entity based on the specified model type and viewed fields.
+     * Get all viewed fields based on the specified model type and the given fields to select.
      * @param model Model type.
-     * @param fields Viewed fields.
-     * @param path Path to determine whether is a subgroup.
-     * @returns Returns the generated group.
+     * @param fields Fields to select.
+     * @returns Returns the view list.
      */
-    static getGrouping(model, fields, path) {
-        const group = {};
-        const columns = {
+    static getView(model, fields) {
+        const view = [];
+        const schemas = {
             ...Aliases.Schema.getRealRow(model, ...fields),
             ...Aliases.Schema.getVirtualRow(model, ...fields)
         };
-        for (const name in columns) {
-            const schema = columns[name];
-            const column = schema.alias || schema.name;
-            group[column] = path ? `$${path}.${column}` : { $first: `$${column}` };
+        for (const name in schemas) {
+            const schema = schemas[name];
+            if (schema.type === "virtual" /* Virtual */) {
+                view.push(schema.local);
+            }
+            view.push(Aliases.Schema.getColumnName(schemas[name]));
         }
-        return group;
+        return view;
     }
     /**
-     * Builds and get a new projection entity based on the specified model type and viewed fields.
-     * @param group Current group.
-     * @returns Returns the generated group.
+     * Gets a new real level based on the specified column schema and the given fields to select.
+     * @param schema Level column schema.
+     * @param levels Level list.
+     * @param fields Fields to select.
+     * @returns Returns the generated level entity.
      */
-    static getProjection(group) {
-        const project = {};
-        for (const name in group) {
-            project[name] = { $ifNull: [`$${name}`, '$$REMOVE'] };
-        }
-        return project;
+    static getRealLevel(schema, levels, fields) {
+        const current = levels[levels.length - 1];
+        return {
+            name: current ? `${current.name}.${schema.name}` : schema.name,
+            fields: Aliases.Schema.getNestedFields(schema, fields),
+            multiple: schema.formats.includes(12 /* Array */),
+            column: schema,
+            previous: current
+        };
     }
     /**
-     * Builds and get a new sorting entity based on the specified sorting map.
-     * @param sort Sorting map.
-     * @returns Returns the generated sorting.
+     * Gets a new virtual level based on the specified column schema and the given fields to select.
+     * @param schema Level column schema.
+     * @param levels Level list.
+     * @param fields Fields to select.
+     * @returns Returns the generated level entity.
      */
-    static getSorting(sort) {
+    static getVirtualLevel(schema, levels, fields) {
+        const current = levels[levels.length - 1];
+        return {
+            name: current ? `${current.name}.${schema.local}` : schema.local,
+            virtual: current ? `${current.name}.${schema.name}` : schema.name,
+            fields: fields.length > 0 ? Aliases.Schema.getNestedFields(schema, fields) : schema.fields || [],
+            multiple: schema.multiple,
+            column: schema,
+            previous: current
+        };
+    }
+    /**
+     * Get a new group rule based on the specified model type and viewed fields.
+     * @param view Viewed fields.
+     * @param path Path to determine whether it's a subgroup.
+     * @returns Returns the generated group rule entity.
+     */
+    static getGroupRule(view, path) {
+        const rule = {};
+        for (const field of view) {
+            rule[field] = path ? `$${path}.${field}` : { $first: `$${field}` };
+        }
+        return rule;
+    }
+    /**
+     * Get a new project rule based on the specified model type and viewed fields.
+     * @param view Viewed fields.
+     * @returns Returns the generated project rule entity.
+     */
+    static getProjectRule(view) {
+        const rule = {};
+        for (const field of view) {
+            rule[field] = { $ifNull: [`$${field}`, '$$REMOVE'] };
+        }
+        return rule;
+    }
+    /**
+     * Get a new sort rule based on the specified sort map.
+     * @param sort Sort map.
+     * @returns Returns the generated sort rule entity.
+     */
+    static getSortRule(sort) {
         const sorting = {};
         for (const column in sort) {
             switch (sort[column]) {
@@ -100,10 +118,10 @@ let Pipeline = class Pipeline extends Class.Null {
         return sorting;
     }
     /**
-     * Gets a new compound Id based on the specified id and the list of levels.
-     * @param id Main id field.
+     * Gets a new compound Id based on the specified main field Id and the list of levels.
+     * @param id Main field Id.
      * @param levels List of levels.
-     * @returns Returns the composed id object.
+     * @returns Returns the composed Id entity.
      */
     static getComposedId(id, ...levels) {
         const compound = {
@@ -137,23 +155,24 @@ let Pipeline = class Pipeline extends Class.Null {
         return multiples;
     }
     /**
-     * Compose a subgroup to the given pipeline.
+     * Compose a subgroup into the given pipeline.
      * @param pipeline Current pipeline.
      * @param group Parent group.
-     * @param fields Viewed fields.
+     * @param fields Fields to select.
      * @param level Current level.
      * @param last Last level.
      */
-    static composeSubgroup(pipeline, group, fields, level, last) {
+    static composeSubgroup(pipeline, group, level, last) {
         const name = level.previous ? `_${level.column.name}` : level.column.name;
-        const internal = this.getGrouping(Aliases.Schema.getEntityModel(level.column.model), fields, level.name);
+        const model = Aliases.Schema.getEntityModel(level.column.model);
+        const internal = this.getGroupRule(this.getView(model, level.fields), level.name);
         internal[last.column.name] = `$_${last.column.name}`;
         if (last.column.type === 'virtual') {
             internal[last.column.local] = `$_${last.column.local}`;
         }
         group[name] = { $push: internal };
         pipeline.push({ $group: group });
-        pipeline.push({ $project: this.getProjection(group) });
+        pipeline.push({ $project: this.getProjectRule(Object.keys(group)) });
         if (!level.multiple && !level.all) {
             pipeline.push({ $unwind: { path: `$${name}` } });
         }
@@ -186,17 +205,17 @@ let Pipeline = class Pipeline extends Class.Null {
             group[name] = { $first: `$${level.name}` };
         }
         pipeline.push({ $group: group });
-        pipeline.push({ $project: this.getProjection(group) });
+        pipeline.push({ $project: this.getProjectRule(Object.keys(group)) });
     }
     /**
      * Compose all decomposed levels to the given pipeline.
      * @param pipeline Current pipeline.
      * @param properties List of fields.
-     * @param fields Viewed fields.
+     * @param fields Fields to select.
      * @param level First decomposed level.
      * @param multiples List of decomposed levels.
      */
-    static composeAll(pipeline, properties, fields, level, multiples) {
+    static composeAll(pipeline, properties, level, multiples) {
         let multiple = multiples.pop();
         let currentId = '$_id';
         let last;
@@ -216,7 +235,7 @@ let Pipeline = class Pipeline extends Class.Null {
                 group['_id'] = currentId;
             }
             if (last) {
-                this.composeSubgroup(pipeline, group, fields, level, last);
+                this.composeSubgroup(pipeline, group, level, last);
             }
             else {
                 this.composeGroup(pipeline, group, level);
@@ -229,20 +248,20 @@ let Pipeline = class Pipeline extends Class.Null {
      * Resolve any foreign relationship in the given model type to the specified pipeline.
      * @param pipeline Current pipeline.
      * @param project Current projection.
-     * @param base Base model type.
-     * @param model Current model type.
-     * @param fields Viewed fields.
+     * @param model Model type.
+     * @param view Viewed fields.
+     * @param fields Fields to select.
      * @param levels List of current levels.
      */
-    static resolveForeignRelation(pipeline, project, base, model, fields, levels) {
+    static resolveForeignRelation(pipeline, project, model, view, fields, levels) {
         const row = Aliases.Schema.getVirtualRow(model, ...fields);
-        const group = this.getGrouping(base, fields);
+        const group = this.getGroupRule(view);
         for (const name in row) {
             const schema = row[name];
-            const level = this.getVirtualLevel(schema, levels);
+            const resolved = Aliases.Schema.getEntityModel(schema.model);
+            const level = this.getVirtualLevel(schema, levels, fields);
             levels.push(level);
             const multiples = this.decomposeAll(pipeline, levels);
-            const resolved = Aliases.Schema.getEntityModel(schema.model);
             pipeline.push({
                 $lookup: {
                     from: Aliases.Schema.getStorageName(resolved),
@@ -251,7 +270,7 @@ let Pipeline = class Pipeline extends Class.Null {
                         {
                             $match: { $expr: { $eq: [`$${schema.foreign}`, `$$id`] } }
                         },
-                        ...this.build(resolved, schema.query || {}, fields)
+                        ...this.build(resolved, schema.query || {}, level.fields)
                     ],
                     as: level.virtual
                 }
@@ -271,7 +290,7 @@ let Pipeline = class Pipeline extends Class.Null {
                     const column = `_${level.column.name}Index`;
                     newer[column] = { $first: `$${column}` };
                 }
-                this.composeAll(pipeline, newer, fields, current, multiples);
+                this.composeAll(pipeline, newer, current, multiples);
             }
             levels.pop();
             project[schema.name] = true;
@@ -281,24 +300,26 @@ let Pipeline = class Pipeline extends Class.Null {
      * Resolve any nested relationship in the given model type to the specified pipeline.
      * @param pipeline Current pipeline.
      * @param project Current projection.
-     * @param base Base model type.
-     * @param model Current model type.
-     * @param fields Fields to be selected
+     * @param model Model type.
+     * @param view Viewed fields.
+     * @param fields Fields to selected.
      * @param levels List of current levels.
      */
-    static resolveNestedRelations(pipeline, project, base, model, fields, levels) {
+    static resolveNestedRelations(pipeline, project, model, view, fields, levels) {
         const real = Aliases.Schema.getRealRow(model, ...fields);
         for (const name in real) {
             const schema = real[name];
-            const column = schema.alias || schema.name;
+            const column = Aliases.Schema.getColumnName(schema);
             if (schema.model && Aliases.Schema.isEntity(schema.model)) {
-                levels.push(this.getRealLevel(schema, levels));
-                const projection = this.applyRelationship(pipeline, base, Aliases.Schema.getEntityModel(schema.model), fields, levels);
+                const resolved = Aliases.Schema.getEntityModel(schema.model);
+                const level = this.getRealLevel(schema, levels, fields);
+                levels.push(level);
+                const nested = this.applyRelationship(pipeline, resolved, view, level.fields, levels);
                 if (schema.formats.includes(13 /* Map */)) {
                     project[column] = true;
                 }
                 else {
-                    project[column] = projection;
+                    project[column] = nested;
                 }
                 levels.pop();
             }
@@ -312,20 +333,20 @@ let Pipeline = class Pipeline extends Class.Null {
      * @param pipeline Current pipeline.
      * @param base Base model type.
      * @param model Current model type.
-     * @param fields Viewed fields.
+     * @param fields Fields to select.
      * @param levels List of current levels.
      * @returns Returns the pipeline projection.
      */
-    static applyRelationship(pipeline, base, model, fields, levels) {
+    static applyRelationship(pipeline, model, view, fields, levels) {
         const project = {};
-        this.resolveForeignRelation(pipeline, project, base, model, fields, levels);
-        this.resolveNestedRelations(pipeline, project, base, model, fields, levels);
+        this.resolveForeignRelation(pipeline, project, model, view, fields, levels);
+        this.resolveNestedRelations(pipeline, project, model, view, fields, levels);
         return project;
     }
     /**
      * Build a new pipeline entity based on the specified model type, fields and query filter.
      * @param model Model type.
-     * @param fields Viewed fields.
+     * @param fields Fields to select.
      * @param query Query filter.
      * @returns Returns the new pipeline entity.
      */
@@ -334,12 +355,13 @@ let Pipeline = class Pipeline extends Class.Null {
         if (query.pre) {
             pipeline.push({ $match: match_1.Match.build(model, query.pre) });
         }
-        const project = this.applyRelationship(pipeline, model, model, fields, []);
+        const view = this.getView(model, fields);
+        const project = this.applyRelationship(pipeline, model, view, fields, []);
         if (query.post) {
             pipeline.push({ $match: match_1.Match.build(model, query.post) });
         }
         if (query.sort) {
-            pipeline.push({ $sort: this.getSorting(query.sort) });
+            pipeline.push({ $sort: this.getSortRule(query.sort) });
         }
         if (query.limit) {
             if (query.limit.start > 0) {
@@ -347,12 +369,15 @@ let Pipeline = class Pipeline extends Class.Null {
             }
             pipeline.push({ $limit: query.limit.count });
         }
-        if (fields.length > 0) {
+        if (view.length > 0) {
             pipeline.push({ $project: project });
         }
         return pipeline;
     }
 };
+__decorate([
+    Class.Private()
+], Pipeline, "getView", null);
 __decorate([
     Class.Private()
 ], Pipeline, "getRealLevel", null);
@@ -361,13 +386,13 @@ __decorate([
 ], Pipeline, "getVirtualLevel", null);
 __decorate([
     Class.Private()
-], Pipeline, "getGrouping", null);
+], Pipeline, "getGroupRule", null);
 __decorate([
     Class.Private()
-], Pipeline, "getProjection", null);
+], Pipeline, "getProjectRule", null);
 __decorate([
     Class.Private()
-], Pipeline, "getSorting", null);
+], Pipeline, "getSortRule", null);
 __decorate([
     Class.Private()
 ], Pipeline, "getComposedId", null);

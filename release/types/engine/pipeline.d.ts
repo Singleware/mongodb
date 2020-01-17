@@ -9,44 +9,52 @@ import * as Aliases from '../aliases';
  */
 export declare class Pipeline extends Class.Null {
     /**
-     * Gets a new real level entity based on the specified column.
-     * @param column Level column schema.
+     * Get all viewed fields based on the specified model type and the given fields to select.
+     * @param model Model type.
+     * @param fields Fields to select.
+     * @returns Returns the view list.
+     */
+    private static getView;
+    /**
+     * Gets a new real level based on the specified column schema and the given fields to select.
+     * @param schema Level column schema.
      * @param levels Level list.
+     * @param fields Fields to select.
      * @returns Returns the generated level entity.
      */
     private static getRealLevel;
     /**
-     * Gets a new virtual level entity based on the specified column.
-     * @param column Level column schema.
+     * Gets a new virtual level based on the specified column schema and the given fields to select.
+     * @param schema Level column schema.
      * @param levels Level list.
-     * @returns Returns the level entity.
+     * @param fields Fields to select.
+     * @returns Returns the generated level entity.
      */
     private static getVirtualLevel;
     /**
-     * Builds and get a new grouping entity based on the specified model type and viewed fields.
-     * @param model Model type.
-     * @param fields Viewed fields.
-     * @param path Path to determine whether is a subgroup.
-     * @returns Returns the generated group.
+     * Get a new group rule based on the specified model type and viewed fields.
+     * @param view Viewed fields.
+     * @param path Path to determine whether it's a subgroup.
+     * @returns Returns the generated group rule entity.
      */
-    private static getGrouping;
+    private static getGroupRule;
     /**
-     * Builds and get a new projection entity based on the specified model type and viewed fields.
-     * @param group Current group.
-     * @returns Returns the generated group.
+     * Get a new project rule based on the specified model type and viewed fields.
+     * @param view Viewed fields.
+     * @returns Returns the generated project rule entity.
      */
-    private static getProjection;
+    private static getProjectRule;
     /**
-     * Builds and get a new sorting entity based on the specified sorting map.
-     * @param sort Sorting map.
-     * @returns Returns the generated sorting.
+     * Get a new sort rule based on the specified sort map.
+     * @param sort Sort map.
+     * @returns Returns the generated sort rule entity.
      */
-    private static getSorting;
+    private static getSortRule;
     /**
-     * Gets a new compound Id based on the specified id and the list of levels.
-     * @param id Main id field.
+     * Gets a new compound Id based on the specified main field Id and the list of levels.
+     * @param id Main field Id.
      * @param levels List of levels.
-     * @returns Returns the composed id object.
+     * @returns Returns the composed Id entity.
      */
     private static getComposedId;
     /**
@@ -57,10 +65,10 @@ export declare class Pipeline extends Class.Null {
      */
     private static decomposeAll;
     /**
-     * Compose a subgroup to the given pipeline.
+     * Compose a subgroup into the given pipeline.
      * @param pipeline Current pipeline.
      * @param group Parent group.
-     * @param fields Viewed fields.
+     * @param fields Fields to select.
      * @param level Current level.
      * @param last Last level.
      */
@@ -76,7 +84,7 @@ export declare class Pipeline extends Class.Null {
      * Compose all decomposed levels to the given pipeline.
      * @param pipeline Current pipeline.
      * @param properties List of fields.
-     * @param fields Viewed fields.
+     * @param fields Fields to select.
      * @param level First decomposed level.
      * @param multiples List of decomposed levels.
      */
@@ -85,9 +93,9 @@ export declare class Pipeline extends Class.Null {
      * Resolve any foreign relationship in the given model type to the specified pipeline.
      * @param pipeline Current pipeline.
      * @param project Current projection.
-     * @param base Base model type.
-     * @param model Current model type.
-     * @param fields Viewed fields.
+     * @param model Model type.
+     * @param view Viewed fields.
+     * @param fields Fields to select.
      * @param levels List of current levels.
      */
     private static resolveForeignRelation;
@@ -95,9 +103,9 @@ export declare class Pipeline extends Class.Null {
      * Resolve any nested relationship in the given model type to the specified pipeline.
      * @param pipeline Current pipeline.
      * @param project Current projection.
-     * @param base Base model type.
-     * @param model Current model type.
-     * @param fields Fields to be selected
+     * @param model Model type.
+     * @param view Viewed fields.
+     * @param fields Fields to selected.
      * @param levels List of current levels.
      */
     private static resolveNestedRelations;
@@ -106,7 +114,7 @@ export declare class Pipeline extends Class.Null {
      * @param pipeline Current pipeline.
      * @param base Base model type.
      * @param model Current model type.
-     * @param fields Viewed fields.
+     * @param fields Fields to select.
      * @param levels List of current levels.
      * @returns Returns the pipeline projection.
      */
@@ -114,7 +122,7 @@ export declare class Pipeline extends Class.Null {
     /**
      * Build a new pipeline entity based on the specified model type, fields and query filter.
      * @param model Model type.
-     * @param fields Viewed fields.
+     * @param fields Fields to select.
      * @param query Query filter.
      * @returns Returns the new pipeline entity.
      */

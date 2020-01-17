@@ -182,7 +182,7 @@ class TargetEntity extends Class.Null implements TargetEntityBase {
   /**
    * Target user entity.
    */
-  @MongoDB.Schema.Join('id', UserEntity, 'userId')
+  @MongoDB.Schema.Join('id', UserEntity, 'userId', void 0, ['name'])
   @Class.Public()
   public readonly user: any;
 }
@@ -589,7 +589,14 @@ class AccountMapper extends MongoDB.Mapper<AccountEntityBase> {
    * @returns Returns the new account id.
    */
   @Class.Public()
-  public async create(ownerId: any, type: string, roles: string[], userAId: any, userBId: any, userCId: any): Promise<string> {
+  public async create(
+    ownerId: any,
+    type: string,
+    roles: string[],
+    userAId: any,
+    userBId: any,
+    userCId: any
+  ): Promise<string> {
     return await this.insert({
       ownerId: ownerId,
       typeName: type,
@@ -645,12 +652,13 @@ class AccountMapper extends MongoDB.Mapper<AccountEntityBase> {
 
   /**
    * Reads an account entity that corresponds to the specified account id.
-   * @param id Account id.
+   * @param id Account id. Fields to be selected.
+   * @param select
    * @returns Returns a promise to get the account entity or undefined when the account was not found.
    */
   @Class.Public()
-  public async read(id: any): Promise<AccountEntity | undefined> {
-    return <AccountEntity | undefined>await super.findById(id);
+  public async read(id: any, select?: string[]): Promise<AccountEntity | undefined> {
+    return <AccountEntity | undefined>await super.findById(id, select);
   }
 }
 
@@ -687,7 +695,21 @@ async function crudTest(): Promise<void> {
   const accountId = await accounts.create(owner, 'generic', ['generic', 'basic'], userA, userB, userC);
 
   // Reads the account.
-  const account = await accounts.read(accountId);
+  const account = await accounts.read(accountId, [
+    'id',
+    'owner.name',
+    'typeList.description',
+    'roleList.description',
+    'allowedUsersList.name',
+    'settings.contact.name',
+    'settings.sharedUsersList.name',
+    'settings.messages.admin.name',
+    'settings.messages.usersList.name',
+    'settings.groups.admin.name',
+    'settings.groups.usersList.name',
+    'settings.groups.notifications.user.name',
+    'settings.groups.notifications.description.targets.user.name'
+  ]);
   if (account) {
     const entity = MongoDB.Normalizer.create(AccountEntity, account, false, true);
     console.dir(JSON.parse(JSON.stringify(entity)), { depth: null, compact: true });
