@@ -28,10 +28,18 @@ let Match = class Match extends Class.Null {
         if (!(input instanceof Array)) {
             throw new TypeError(`The filter input must be an array.`);
         }
-        else if (schema.model === BSON.ObjectId) {
-            return input.map(value => (BSON.ObjectId.isValid(value) ? new BSON.ObjectId(value) : value));
-        }
         else {
+            if (schema.model === BSON.ObjectId) {
+                return input.map(value => {
+                    return BSON.ObjectId.isValid(value) ? new BSON.ObjectId(value) : value;
+                });
+            }
+            else if (schema.model === Date) {
+                return input.map(value => {
+                    const timestamp = Date.parse(value);
+                    return !isNaN(timestamp) ? new Date(timestamp) : value;
+                });
+            }
             return input;
         }
     }
@@ -42,12 +50,18 @@ let Match = class Match extends Class.Null {
      * @returns Returns the converted value when the operation was successful, otherwise returns the input value.
      */
     static castValue(value, schema) {
-        if (schema.formats.includes(0 /* Id */) && BSON.ObjectId.isValid(value)) {
-            return new BSON.ObjectId(value);
+        if (schema.formats.includes(0 /* Id */)) {
+            if (BSON.ObjectId.isValid(value)) {
+                return new BSON.ObjectId(value);
+            }
         }
-        else {
-            return value;
+        else if (schema.formats.includes(11 /* Date */)) {
+            const timestamp = Date.parse(value);
+            if (!isNaN(timestamp)) {
+                return new Date(timestamp);
+            }
         }
+        return value;
     }
     /**
      * Build a new match entity from the specified match expression.

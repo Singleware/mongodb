@@ -20,12 +20,23 @@ export class Match extends Class.Null {
    * @throws Throws an type error when the specified value isn't an array.
    */
   @Class.Private()
-  private static castArray<T extends string | number>(input: T[], schema: Aliases.Columns.Real): (T | BSON.ObjectId)[] {
+  private static castArray<T extends string | number>(
+    input: T[],
+    schema: Aliases.Columns.Real
+  ): (T | BSON.ObjectId | Date)[] {
     if (!(input instanceof Array)) {
       throw new TypeError(`The filter input must be an array.`);
-    } else if (schema.model === BSON.ObjectId) {
-      return input.map(value => (BSON.ObjectId.isValid(value) ? new BSON.ObjectId(value) : value));
     } else {
+      if (schema.model === BSON.ObjectId) {
+        return input.map(value => {
+          return BSON.ObjectId.isValid(value) ? new BSON.ObjectId(value) : value;
+        });
+      } else if (schema.model === Date) {
+        return input.map(value => {
+          const timestamp = Date.parse(<string>value);
+          return !isNaN(timestamp) ? new Date(timestamp) : value;
+        });
+      }
       return input;
     }
   }
@@ -37,12 +48,18 @@ export class Match extends Class.Null {
    * @returns Returns the converted value when the operation was successful, otherwise returns the input value.
    */
   @Class.Private()
-  private static castValue<T extends string | number>(value: T, schema: Aliases.Columns.Real): T | BSON.ObjectId {
-    if (schema.formats.includes(Aliases.Format.Id) && BSON.ObjectId.isValid(<any>value)) {
-      return new BSON.ObjectId(<any>value);
-    } else {
-      return value;
+  private static castValue<T extends string | number>(value: T, schema: Aliases.Columns.Real): T | BSON.ObjectId | Date {
+    if (schema.formats.includes(Aliases.Format.Id)) {
+      if (BSON.ObjectId.isValid(value)) {
+        return new BSON.ObjectId(<string>value);
+      }
+    } else if (schema.formats.includes(Aliases.Format.Date)) {
+      const timestamp = Date.parse(<string>value);
+      if (!isNaN(timestamp)) {
+        return new Date(timestamp);
+      }
     }
+    return value;
   }
 
   /**
