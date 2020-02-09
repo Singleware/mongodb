@@ -24,7 +24,7 @@ let Pipeline = class Pipeline extends Class.Null {
      * @returns Returns the view list.
      */
     static getView(model, fields) {
-        const view = [];
+        const view = new Set([Aliases.Schema.getColumnName(Aliases.Schema.getPrimaryColumn(model))]);
         const schemas = {
             ...Aliases.Schema.getRealRow(model, ...fields),
             ...Aliases.Schema.getVirtualRow(model, ...fields)
@@ -32,11 +32,11 @@ let Pipeline = class Pipeline extends Class.Null {
         for (const name in schemas) {
             const schema = schemas[name];
             if (schema.type === "virtual" /* Virtual */) {
-                view.push(schema.local);
+                view.add(schema.local);
             }
-            view.push(Aliases.Schema.getColumnName(schemas[name]));
+            view.add(Aliases.Schema.getColumnName(schemas[name]));
         }
-        return view;
+        return [...view.values()];
     }
     /**
      * Gets a new real level based on the specified column schema and the given fields to select.

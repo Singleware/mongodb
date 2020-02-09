@@ -20,8 +20,8 @@ export class Pipeline extends Class.Null {
    * @returns Returns the view list.
    */
   @Class.Private()
-  private static getView(model: Aliases.Model, fields: string[]) {
-    const view = [];
+  private static getView(model: Aliases.Model, fields: string[]): string[] {
+    const view = new Set([Aliases.Schema.getColumnName(Aliases.Schema.getPrimaryColumn(model))]);
     const schemas = <Aliases.Columns.RealRow | Aliases.Columns.VirtualRow>{
       ...Aliases.Schema.getRealRow(model, ...fields),
       ...Aliases.Schema.getVirtualRow(model, ...fields)
@@ -29,11 +29,11 @@ export class Pipeline extends Class.Null {
     for (const name in schemas) {
       const schema = schemas[name];
       if (schema.type === Aliases.Types.Column.Virtual) {
-        view.push((<Aliases.Columns.Virtual>schema).local);
+        view.add((<Aliases.Columns.Virtual>schema).local);
       }
-      view.push(Aliases.Schema.getColumnName(schemas[name]));
+      view.add(Aliases.Schema.getColumnName(schemas[name]));
     }
-    return view;
+    return [...view.values()];
   }
 
   /**
