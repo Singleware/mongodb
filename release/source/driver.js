@@ -20,11 +20,21 @@ const Engine = require("./engine");
  */
 let Driver = Driver_1 = class Driver extends Class.Null {
     /**
+     * Check if there's an active connection.
+     * @throws Throws an error when there's no active connection.
+     */
+    isActiveConnection(client) {
+        if (client === void 0) {
+            throw new Error(`No connection found.`);
+        }
+        return true;
+    }
+    /**
      * Build and get the collection schema.
      * @param model Model type.
      * @returns Returns the collection validation object.
      */
-    static getCollectionSchema(model) {
+    getCollectionSchema(model) {
         return {
             validator: {
                 $jsonSchema: Engine.Schema.build(Aliases.Schema.getRealRow(model))
@@ -36,66 +46,117 @@ let Driver = Driver_1 = class Driver extends Class.Null {
     /**
      * Connect to the specified URI.
      * @param uri Connection URI.
+     * @param options Connection options.
      * @throws Throws an error when there's an active connection.
      */
-    async connect(uri) {
-        if (this.connection) {
+    async connect(uri, options) {
+        if (this.client) {
             throw new Error(`An active connection was found.`);
         }
-        this.connection = await Mongodb.MongoClient.connect(uri, Driver_1.options);
-        this.database = this.connection.db();
+        this.client = await Mongodb.MongoClient.connect(uri, {
+            ...Driver_1.options,
+            ...options
+        });
+        this.client.on('close', () => {
+            this.client = void 0;
+        });
     }
     /**
      * Disconnect the active connection.
      * @throws Throws an error when there's no active connection.
      */
     async disconnect() {
-        if (!this.connection) {
-            throw new Error(`No connection found.`);
+        if (this.isActiveConnection(this.client)) {
+            await this.client.close();
         }
-        await this.connection.close();
-        this.connection = void 0;
-        this.database = void 0;
     }
     /**
      * Modify the collection by the specified model type.
      * @param model Model type.
      */
     async modifyCollection(model) {
-        await this.database.command({
-            collMod: Aliases.Schema.getStorageName(model),
-            ...Driver_1.getCollectionSchema(model)
-        });
+        if (this.isActiveConnection(this.client)) {
+            await this.client.db().command({
+                collMod: Aliases.Schema.getStorageName(model),
+                ...this.getCollectionSchema(model)
+            });
+        }
     }
     /**
      * Creates a new collection by the specified model type.
      * @param model Model type.
      */
     async createCollection(model) {
-        await this.database.command({
-            create: Aliases.Schema.getStorageName(model),
-            ...Driver_1.getCollectionSchema(model)
-        });
+        if (this.isActiveConnection(this.client)) {
+            await this.client.db().command({
+                create: Aliases.Schema.getStorageName(model),
+                ...this.getCollectionSchema(model)
+            });
+        }
     }
     /**
-     * Determines whether the collection from the specified model exists or not.
+     * Determines whether or not the collection for the given model type exists.
      * @param model Model type.
      * @returns Returns a promise to get true when the collection exists, false otherwise.
      */
     async hasCollection(model) {
-        const filter = { name: Aliases.Schema.getStorageName(model) };
-        return (await this.database.listCollections(filter, { nameOnly: true }).toArray()).length === 1;
+        if (this.isActiveConnection(this.client)) {
+            const filter = { name: Aliases.Schema.getStorageName(model) };
+            const manager = this.client.db();
+            const options = { nameOnly: true };
+            const result = await manager.listCollections(filter, options).toArray();
+            return result.length === 1;
+        }
+        return false;
     }
     /**
-     * Inserts all specified entities into the database.
+     * Run the specified callback in the transactional mode.
+     * @param callback Transaction callback.
+     * @param options Transaction options.
+     * @throws Throws an exception when there's any error in the transaction.
+     * @returns Returns the same value returned by the given callback.
+     */
+    async runTransaction(callback, options) {
+        let result;
+        if (this.isActiveConnection(this.client)) {
+            if (!this.session) {
+                let caught;
+                this.session = this.client.startSession();
+                try {
+                    await this.session.withTransaction(async () => (result = await callback()), options);
+                }
+                catch (exception) {
+                    caught = exception;
+                }
+                finally {
+                    await this.session.endSession();
+                    this.session = void 0;
+                    if (caught) {
+                        throw caught;
+                    }
+                }
+            }
+            else {
+                result = await callback();
+            }
+        }
+        return result;
+    }
+    /**
+     * Insert all specified entities into the database.
      * @param model Model type.
      * @param entities Entity list.
      * @returns Returns a promise to get the list of inserted entities.
      */
     async insert(model, entities) {
-        const manager = this.database.collection(Aliases.Schema.getStorageName(model));
-        const entries = entities.map(entity => Aliases.Normalizer.create(model, entity, true, true));
-        return Object.values((await manager.insertMany(entries)).insertedIds);
+        if (this.isActiveConnection(this.client)) {
+            const entries = entities.map(entity => Aliases.Normalizer.create(model, entity, true, true));
+            const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+            const options = { session: this.session };
+            const result = await manager.insertMany(entries, options);
+            return Object.values(result.insertedIds);
+        }
+        return [];
     }
     /**
      * Find the corresponding entities from the database.
@@ -105,9 +166,14 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @returns Returns a promise to get the list of entities found.
      */
     async find(model, query, fields) {
-        const manager = this.database.collection(Aliases.Schema.getStorageName(model));
-        const pipeline = Engine.Pipeline.build(model, query, fields);
-        return await manager.aggregate(pipeline, { allowDiskUse: true }).toArray();
+        if (this.isActiveConnection(this.client)) {
+            const pipeline = Engine.Pipeline.build(model, query, fields);
+            const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+            const options = { session: this.session, allowDiskUse: true };
+            const result = await manager.aggregate(pipeline, options).toArray();
+            return result;
+        }
+        return [];
     }
     /**
      * Find the entity that corresponds to the specified entity id.
@@ -118,7 +184,8 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      */
     async findById(model, id, fields) {
         const match = Engine.Filter.primaryId(model, id);
-        return (await this.find(model, { pre: match }, fields))[0];
+        const result = await this.find(model, { pre: match }, fields);
+        return result[0];
     }
     /**
      * Update all entities that corresponds to the specified filter.
@@ -128,35 +195,46 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @returns Returns a promise to get the number of updated entities.
      */
     async update(model, match, entity) {
-        const manager = this.database.collection(Aliases.Schema.getStorageName(model));
-        const entry = Aliases.Normalizer.create(model, entity, true, true, true);
-        const filter = Engine.Match.build(model, match);
-        return (await manager.updateMany(filter, { $set: entry })).modifiedCount;
+        if (this.isActiveConnection(this.client)) {
+            const entry = Aliases.Normalizer.create(model, entity, true, true, true);
+            const filter = Engine.Match.build(model, match);
+            const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+            const options = { session: this.session };
+            const result = await manager.updateMany(filter, { $set: entry }, options);
+            return result.modifiedCount;
+        }
+        return 0;
     }
     /**
-     * Updates the entity that corresponds to the specified entity id.
+     * Updates the entity that corresponds to the specified entity Id.
      * @param model Model type.
-     * @param id Entity id.
+     * @param id Entity Id.
      * @param entity Entity data.
      * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
      */
     async updateById(model, id, entity) {
         const match = Engine.Filter.primaryId(model, id);
-        return (await this.update(model, match, entity)) === 1;
+        const result = await this.update(model, match, entity);
+        return result === 1;
     }
     /**
-     * Replace the entity that corresponds to the specified entity id.
+     * Replace the entity that corresponds to the specified entity Id.
      * @param model Model type.
-     * @param id Entity id.
+     * @param id Entity Id.
      * @param entity Entity data.
      * @returns Returns a promise to get the true when the entity has been replaced or false otherwise.
      */
     async replaceById(model, id, entity) {
-        const manager = this.database.collection(Aliases.Schema.getStorageName(model));
-        const entry = Aliases.Normalizer.create(model, entity, true, true);
-        const match = Engine.Filter.primaryId(model, id);
-        const filter = Engine.Match.build(model, match);
-        return (await manager.replaceOne(filter, entry)).modifiedCount === 1;
+        if (this.isActiveConnection(this.client)) {
+            const entry = Aliases.Normalizer.create(model, entity, true, true);
+            const match = Engine.Filter.primaryId(model, id);
+            const filter = Engine.Match.build(model, match);
+            const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+            const options = { session: this.session };
+            const result = await manager.replaceOne(filter, entry, options);
+            return result.modifiedCount === 1;
+        }
+        return false;
     }
     /**
      * Delete all entities that corresponds to the specified filter.
@@ -165,31 +243,43 @@ let Driver = Driver_1 = class Driver extends Class.Null {
      * @return Returns a promise to get the number of deleted entities.
      */
     async delete(model, match) {
-        const manager = this.database.collection(Aliases.Schema.getStorageName(model));
-        const filter = Engine.Match.build(model, match);
-        return (await manager.deleteMany(filter)).deletedCount || 0;
+        var _a;
+        if (this.isActiveConnection(this.client)) {
+            const filter = Engine.Match.build(model, match);
+            const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+            const option = { session: this.session };
+            const result = await manager.deleteMany(filter, option);
+            return _a = result.deletedCount, (_a !== null && _a !== void 0 ? _a : 0);
+        }
+        return 0;
     }
     /**
-     * Deletes the entity that corresponds to the specified id.
+     * Delete the entity that corresponds to the specified Id.
      * @param model Model type.
-     * @param id Entity id.
+     * @param id Entity Id.
      * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
      */
     async deleteById(model, id) {
         const match = Engine.Filter.primaryId(model, id);
-        return (await this.delete(model, match)) === 1;
+        const result = await this.delete(model, match);
+        return result === 1;
     }
     /**
-     * Count all corresponding entities from the storage.
+     * Count all corresponding entities from the database.
      * @param model Model type.
      * @param query Query filter.
      * @returns Returns a promise to get the total amount of found entities.
      */
     async count(model, query) {
-        const manager = this.database.collection(Aliases.Schema.getStorageName(model));
-        const pipeline = [...Engine.Pipeline.build(model, query, []), { $count: 'records' }];
-        const result = await manager.aggregate(pipeline, { allowDiskUse: true }).toArray();
-        return result.length ? result[0].records || 0 : 0;
+        var _a, _b;
+        if (this.isActiveConnection(this.client)) {
+            const pipeline = [...Engine.Pipeline.build(model, query, []), { $count: 'records' }];
+            const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+            const option = { session: this.session, allowDiskUse: true };
+            const result = await manager.aggregate(pipeline, option).toArray();
+            return _b = (_a = result[0]) === null || _a === void 0 ? void 0 : _a.records, (_b !== null && _b !== void 0 ? _b : 0);
+        }
+        return 0;
     }
 };
 /**
@@ -202,10 +292,16 @@ Driver.options = {
 };
 __decorate([
     Class.Private()
-], Driver.prototype, "connection", void 0);
+], Driver.prototype, "client", void 0);
 __decorate([
     Class.Private()
-], Driver.prototype, "database", void 0);
+], Driver.prototype, "session", void 0);
+__decorate([
+    Class.Private()
+], Driver.prototype, "isActiveConnection", null);
+__decorate([
+    Class.Private()
+], Driver.prototype, "getCollectionSchema", null);
 __decorate([
     Class.Public()
 ], Driver.prototype, "connect", null);
@@ -221,6 +317,9 @@ __decorate([
 __decorate([
     Class.Public()
 ], Driver.prototype, "hasCollection", null);
+__decorate([
+    Class.Public()
+], Driver.prototype, "runTransaction", null);
 __decorate([
     Class.Public()
 ], Driver.prototype, "insert", null);
@@ -251,9 +350,6 @@ __decorate([
 __decorate([
     Class.Private()
 ], Driver, "options", void 0);
-__decorate([
-    Class.Private()
-], Driver, "getCollectionSchema", null);
 Driver = Driver_1 = __decorate([
     Class.Describe()
 ], Driver);

@@ -24,16 +24,28 @@ export class Driver extends Class.Null implements Aliases.Driver {
   };
 
   /**
-   * Connection instance.
+   * Client instance.
    */
   @Class.Private()
-  private connection?: Mongodb.MongoClient;
+  private client?: Mongodb.MongoClient;
 
   /**
-   * Current database.
+   * Client session.
    */
   @Class.Private()
-  private database?: Mongodb.Db;
+  private session?: Mongodb.ClientSession;
+
+  /**
+   * Check if there's an active connection.
+   * @throws Throws an error when there's no active connection.
+   */
+  @Class.Private()
+  private isActiveConnection(client: any): client is Mongodb.MongoClient {
+    if (client === void 0) {
+      throw new Error(`No connection found.`);
+    }
+    return true;
+  }
 
   /**
    * Build and get the collection schema.
@@ -41,7 +53,7 @@ export class Driver extends Class.Null implements Aliases.Driver {
    * @returns Returns the collection validation object.
    */
   @Class.Private()
-  private static getCollectionSchema(model: Aliases.Model): Object {
+  private getCollectionSchema(model: Aliases.Model): Object {
     return {
       validator: {
         $jsonSchema: Engine.Schema.build(Aliases.Schema.getRealRow(model))
@@ -54,15 +66,21 @@ export class Driver extends Class.Null implements Aliases.Driver {
   /**
    * Connect to the specified URI.
    * @param uri Connection URI.
+   * @param options Connection options.
    * @throws Throws an error when there's an active connection.
    */
   @Class.Public()
-  public async connect(uri: string): Promise<void> {
-    if (this.connection) {
+  public async connect(uri: string, options?: Mongodb.MongoClientOptions): Promise<void> {
+    if (this.client) {
       throw new Error(`An active connection was found.`);
     }
-    this.connection = await Mongodb.MongoClient.connect(uri, Driver.options);
-    this.database = this.connection.db();
+    this.client = await Mongodb.MongoClient.connect(uri, <Mongodb.MongoClientOptions>{
+      ...Driver.options,
+      ...options
+    });
+    this.client.on('close', () => {
+      this.client = void 0;
+    });
   }
 
   /**
@@ -71,12 +89,9 @@ export class Driver extends Class.Null implements Aliases.Driver {
    */
   @Class.Public()
   public async disconnect(): Promise<void> {
-    if (!this.connection) {
-      throw new Error(`No connection found.`);
+    if (this.isActiveConnection(this.client)) {
+      await this.client.close();
     }
-    await this.connection.close();
-    this.connection = void 0;
-    this.database = void 0;
   }
 
   /**
@@ -85,10 +100,12 @@ export class Driver extends Class.Null implements Aliases.Driver {
    */
   @Class.Public()
   public async modifyCollection(model: Class.Constructor<Aliases.Entity>): Promise<void> {
-    await (<Mongodb.Db>this.database).command({
-      collMod: Aliases.Schema.getStorageName(model),
-      ...Driver.getCollectionSchema(model)
-    });
+    if (this.isActiveConnection(this.client)) {
+      await this.client.db().command({
+        collMod: Aliases.Schema.getStorageName(model),
+        ...this.getCollectionSchema(model)
+      });
+    }
   }
 
   /**
@@ -97,34 +114,79 @@ export class Driver extends Class.Null implements Aliases.Driver {
    */
   @Class.Public()
   public async createCollection(model: Aliases.Model): Promise<void> {
-    await (<Mongodb.Db>this.database).command({
-      create: Aliases.Schema.getStorageName(model),
-      ...Driver.getCollectionSchema(model)
-    });
+    if (this.isActiveConnection(this.client)) {
+      await this.client.db().command({
+        create: Aliases.Schema.getStorageName(model),
+        ...this.getCollectionSchema(model)
+      });
+    }
   }
 
   /**
-   * Determines whether the collection from the specified model exists or not.
+   * Determines whether or not the collection for the given model type exists.
    * @param model Model type.
    * @returns Returns a promise to get true when the collection exists, false otherwise.
    */
   @Class.Public()
   public async hasCollection(model: Aliases.Model): Promise<boolean> {
-    const filter = { name: Aliases.Schema.getStorageName(model) };
-    return (await (<Mongodb.Db>this.database).listCollections(filter, { nameOnly: true }).toArray()).length === 1;
+    if (this.isActiveConnection(this.client)) {
+      const filter = { name: Aliases.Schema.getStorageName(model) };
+      const manager = this.client.db();
+      const options = { nameOnly: true };
+      const result = await manager.listCollections(filter, options).toArray();
+      return result.length === 1;
+    }
+    return false;
   }
 
   /**
-   * Inserts all specified entities into the database.
+   * Run the specified callback in the transactional mode.
+   * @param callback Transaction callback.
+   * @param options Transaction options.
+   * @throws Throws an exception when there's any error in the transaction.
+   * @returns Returns the same value returned by the given callback.
+   */
+  @Class.Public()
+  public async runTransaction<T>(callback: () => Promise<T>, options?: Mongodb.TransactionOptions): Promise<T> {
+    let result: T;
+    if (this.isActiveConnection(this.client)) {
+      if (!this.session) {
+        let caught;
+        this.session = this.client.startSession();
+        try {
+          await this.session.withTransaction(async () => (result = await callback()), options);
+        } catch (exception) {
+          caught = exception;
+        } finally {
+          await this.session.endSession();
+          this.session = void 0;
+          if (caught) {
+            throw caught;
+          }
+        }
+      } else {
+        result = await callback();
+      }
+    }
+    return result!;
+  }
+
+  /**
+   * Insert all specified entities into the database.
    * @param model Model type.
    * @param entities Entity list.
    * @returns Returns a promise to get the list of inserted entities.
    */
   @Class.Public()
   public async insert<T extends Aliases.Entity>(model: Aliases.Model<T>, entities: T[]): Promise<string[]> {
-    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
-    const entries = entities.map(entity => Aliases.Normalizer.create(model, entity, true, true));
-    return Object.values((<any>await manager.insertMany(entries)).insertedIds);
+    if (this.isActiveConnection(this.client)) {
+      const entries = entities.map(entity => Aliases.Normalizer.create(model, entity, true, true));
+      const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+      const options = { session: this.session };
+      const result = await manager.insertMany(entries, options);
+      return Object.values(result.insertedIds);
+    }
+    return [];
   }
 
   /**
@@ -140,9 +202,14 @@ export class Driver extends Class.Null implements Aliases.Driver {
     query: Aliases.Query,
     fields: string[]
   ): Promise<T[]> {
-    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
-    const pipeline = Engine.Pipeline.build(model, query, fields);
-    return await manager.aggregate(pipeline, { allowDiskUse: true }).toArray();
+    if (this.isActiveConnection(this.client)) {
+      const pipeline = Engine.Pipeline.build(model, query, fields);
+      const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+      const options = { session: this.session, allowDiskUse: true };
+      const result = await manager.aggregate(pipeline, options).toArray();
+      return result;
+    }
+    return [];
   }
 
   /**
@@ -159,7 +226,8 @@ export class Driver extends Class.Null implements Aliases.Driver {
     fields: string[]
   ): Promise<T | undefined> {
     const match = Engine.Filter.primaryId(model, id);
-    return (await this.find(model, { pre: match }, fields))[0];
+    const result = await this.find(model, { pre: match }, fields);
+    return result[0];
   }
 
   /**
@@ -171,39 +239,50 @@ export class Driver extends Class.Null implements Aliases.Driver {
    */
   @Class.Public()
   public async update(model: Aliases.Model, match: Aliases.Match, entity: Aliases.Entity): Promise<number> {
-    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
-    const entry = Aliases.Normalizer.create(model, entity, true, true, true);
-    const filter = Engine.Match.build(model, match);
-    return (await manager.updateMany(filter, { $set: entry })).modifiedCount;
+    if (this.isActiveConnection(this.client)) {
+      const entry = Aliases.Normalizer.create(model, entity, true, true, true);
+      const filter = Engine.Match.build(model, match);
+      const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+      const options = { session: this.session };
+      const result = await manager.updateMany(filter, { $set: entry }, options);
+      return result.modifiedCount;
+    }
+    return 0;
   }
 
   /**
-   * Updates the entity that corresponds to the specified entity id.
+   * Updates the entity that corresponds to the specified entity Id.
    * @param model Model type.
-   * @param id Entity id.
+   * @param id Entity Id.
    * @param entity Entity data.
    * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
    */
   @Class.Public()
   public async updateById(model: Aliases.Model, id: any, entity: Aliases.Model): Promise<boolean> {
     const match = Engine.Filter.primaryId(model, id);
-    return (await this.update(model, match, entity)) === 1;
+    const result = await this.update(model, match, entity);
+    return result === 1;
   }
 
   /**
-   * Replace the entity that corresponds to the specified entity id.
+   * Replace the entity that corresponds to the specified entity Id.
    * @param model Model type.
-   * @param id Entity id.
+   * @param id Entity Id.
    * @param entity Entity data.
    * @returns Returns a promise to get the true when the entity has been replaced or false otherwise.
    */
   @Class.Public()
   public async replaceById(model: Aliases.Model, id: any, entity: Aliases.Model): Promise<boolean> {
-    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
-    const entry = Aliases.Normalizer.create(model, entity, true, true);
-    const match = Engine.Filter.primaryId(model, id);
-    const filter = Engine.Match.build(model, match);
-    return (await manager.replaceOne(filter, entry)).modifiedCount === 1;
+    if (this.isActiveConnection(this.client)) {
+      const entry = Aliases.Normalizer.create(model, entity, true, true);
+      const match = Engine.Filter.primaryId(model, id);
+      const filter = Engine.Match.build(model, match);
+      const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+      const options = { session: this.session };
+      const result = await manager.replaceOne(filter, entry, options);
+      return result.modifiedCount === 1;
+    }
+    return false;
   }
 
   /**
@@ -214,34 +293,44 @@ export class Driver extends Class.Null implements Aliases.Driver {
    */
   @Class.Public()
   public async delete(model: Aliases.Model, match: Aliases.Match): Promise<number> {
-    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
-    const filter = Engine.Match.build(model, match);
-    return (await manager.deleteMany(filter)).deletedCount || 0;
+    if (this.isActiveConnection(this.client)) {
+      const filter = Engine.Match.build(model, match);
+      const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+      const option = { session: this.session };
+      const result = await manager.deleteMany(filter, option);
+      return result.deletedCount ?? 0;
+    }
+    return 0;
   }
 
   /**
-   * Deletes the entity that corresponds to the specified id.
+   * Delete the entity that corresponds to the specified Id.
    * @param model Model type.
-   * @param id Entity id.
+   * @param id Entity Id.
    * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
    */
   @Class.Public()
   public async deleteById(model: Aliases.Model, id: any): Promise<boolean> {
     const match = Engine.Filter.primaryId(model, id);
-    return (await this.delete(model, match)) === 1;
+    const result = await this.delete(model, match);
+    return result === 1;
   }
 
   /**
-   * Count all corresponding entities from the storage.
+   * Count all corresponding entities from the database.
    * @param model Model type.
    * @param query Query filter.
    * @returns Returns a promise to get the total amount of found entities.
    */
   @Class.Public()
   public async count(model: Aliases.Model, query: Aliases.Query): Promise<number> {
-    const manager = (<Mongodb.Db>this.database).collection(Aliases.Schema.getStorageName(model));
-    const pipeline = [...Engine.Pipeline.build(model, query, []), { $count: 'records' }];
-    const result = await manager.aggregate(pipeline, { allowDiskUse: true }).toArray();
-    return result.length ? result[0].records || 0 : 0;
+    if (this.isActiveConnection(this.client)) {
+      const pipeline = [...Engine.Pipeline.build(model, query, []), { $count: 'records' }];
+      const manager = this.client.db().collection(Aliases.Schema.getStorageName(model));
+      const option = { session: this.session, allowDiskUse: true };
+      const result = await manager.aggregate(pipeline, option).toArray();
+      return result[0]?.records ?? 0;
+    }
+    return 0;
   }
 }
