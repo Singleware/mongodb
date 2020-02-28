@@ -12,13 +12,13 @@ export declare type Entity = Mapping.Types.Entity;
  */
 export declare type ModelDecorator = Mapping.Types.ModelDecorator;
 /**
- * Types namespace.
- */
-export import Types = Mapping.Types;
-/**
  * Map type.
  */
 export import Map = Mapping.Types.Map;
+/**
+ * Column types.
+ */
+export import Column = Mapping.Types.Column;
 /**
  * Mapper class.
  */

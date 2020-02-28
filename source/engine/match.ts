@@ -1,10 +1,10 @@
 /*!
- * Copyright (C) 2018-2019 Silas B. Domingos
+ * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
 
-import * as Aliases from '../aliases';
+import * as Types from '../types';
 import * as BSON from './bson';
 
 /**
@@ -20,10 +20,7 @@ export class Match extends Class.Null {
    * @throws Throws an type error when the specified value isn't an array.
    */
   @Class.Private()
-  private static castArray<T extends string | number>(
-    input: T[],
-    schema: Aliases.Columns.Real
-  ): (T | BSON.ObjectId | Date)[] {
+  private static castArray<T extends string | number>(input: T[], schema: Types.Columns.Real): (T | BSON.ObjectId | Date)[] {
     if (!(input instanceof Array)) {
       throw new TypeError(`The filter input must be an array.`);
     } else {
@@ -48,12 +45,12 @@ export class Match extends Class.Null {
    * @returns Returns the converted value when the operation was successful, otherwise returns the input value.
    */
   @Class.Private()
-  private static castValue<T extends string | number>(value: T, schema: Aliases.Columns.Real): T | BSON.ObjectId | Date {
-    if (schema.formats.includes(Aliases.Format.Id)) {
+  private static castValue<T extends string | number>(value: T, schema: Types.Columns.Real): T | BSON.ObjectId | Date {
+    if (schema.formats.includes(Types.Format.Id)) {
       if (BSON.ObjectId.isValid(value)) {
         return new BSON.ObjectId(<string>value);
       }
-    } else if (schema.formats.includes(Aliases.Format.Date)) {
+    } else if (schema.formats.includes(Types.Format.Date)) {
       const timestamp = Date.parse(<string>value);
       if (!isNaN(timestamp)) {
         return new Date(timestamp);
@@ -69,60 +66,60 @@ export class Match extends Class.Null {
    * @returns Returns the new match entity.
    */
   @Class.Private()
-  private static buildMatch(model: Aliases.Model, match: Aliases.Match): Aliases.Entity {
-    const entity = <Aliases.Entity>{};
+  private static buildMatch(model: Types.Model, match: Types.Match): Types.Entity {
+    const entity = <Types.Entity>{};
     for (const name in match) {
-      const schema = Aliases.Schema.getRealColumn(model, name);
+      const schema = Types.Schema.getRealColumn(model, name);
       const column = schema.alias || schema.name;
       const operation = match[name];
       switch (operation.operator) {
-        case Aliases.Operator.LessThan:
+        case Types.Operator.LessThan:
           entity[column] = {
             $lt: this.castValue(operation.value, schema)
           };
           break;
-        case Aliases.Operator.LessThanOrEqual:
+        case Types.Operator.LessThanOrEqual:
           entity[column] = {
             $lte: this.castValue(operation.value, schema)
           };
           break;
-        case Aliases.Operator.Equal:
+        case Types.Operator.Equal:
           entity[column] = {
             $eq: this.castValue(operation.value, schema)
           };
           break;
-        case Aliases.Operator.NotEqual:
+        case Types.Operator.NotEqual:
           entity[column] = {
             $ne: this.castValue(operation.value, schema)
           };
           break;
-        case Aliases.Operator.GreaterThanOrEqual:
+        case Types.Operator.GreaterThanOrEqual:
           entity[column] = {
             $gte: this.castValue(operation.value, schema)
           };
           break;
-        case Aliases.Operator.GreaterThan:
+        case Types.Operator.GreaterThan:
           entity[column] = {
             $gt: this.castValue(operation.value, schema)
           };
           break;
-        case Aliases.Operator.Between:
+        case Types.Operator.Between:
           entity[column] = {
             $gte: this.castValue(operation.value[0], schema),
             $lte: this.castValue(operation.value[1], schema)
           };
           break;
-        case Aliases.Operator.Contain:
+        case Types.Operator.Contain:
           entity[column] = {
             $in: this.castArray(operation.value, schema)
           };
           break;
-        case Aliases.Operator.NotContain:
+        case Types.Operator.NotContain:
           entity[column] = {
             $nin: this.castArray(operation.value, schema)
           };
           break;
-        case Aliases.Operator.RegExp:
+        case Types.Operator.RegExp:
           entity[column] = {
             $regex: this.castValue(operation.value, schema)
           };
@@ -139,7 +136,7 @@ export class Match extends Class.Null {
    * @returns Returns a new match entity.
    */
   @Class.Public()
-  public static build(model: Aliases.Model, match: Aliases.Match | Aliases.Match[]): Aliases.Entity {
+  public static build(model: Types.Model, match: Types.Match | Types.Match[]): Types.Entity {
     if (match instanceof Array) {
       return { $or: match.map(match => this.buildMatch(model, match)) };
     } else {

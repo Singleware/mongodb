@@ -7,19 +7,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /*!
- * Copyright (C) 2018-2019 Silas B. Domingos
+ * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
 const MongoDB = require("../source");
-/**
- * Connection string.
- */
-const connection = 'mongodb://127.0.0.1:27017/mapper-test';
-/**
- * Database driver.
- */
-const driver = new MongoDB.Driver();
 /**
  * Test sub entity.
  */
@@ -234,22 +226,27 @@ TestEntity = __decorate([
 /**
  * Test schema.
  */
-async function test() {
-    // Connect
-    await driver.connect(connection);
-    console.log('Connect');
-    // Apply schema
-    if (!(await driver.hasCollection(TestEntity))) {
-        await driver.createCollection(TestEntity);
-        console.log('Created');
+async function example() {
+    const client = new MongoDB.Client();
+    console.log('Connecting...');
+    if (await client.connect('mongodb://127.0.0.1/mapper-test')) {
+        // Apply schema
+        if (!(await client.hasCollection(TestEntity))) {
+            await client.createCollection(TestEntity);
+            console.log('Collection created');
+        }
+        else {
+            await client.modifyCollection(TestEntity);
+            console.log('Collection modified');
+        }
+        // Disconnect
+        await client.disconnect();
+        console.log('Disconnected');
     }
     else {
-        await driver.modifyCollection(TestEntity);
-        console.log('Modified');
+        console.error('Failed to connect to the database.');
     }
-    // Disconnect
-    await driver.disconnect();
-    console.log('Disconnect');
 }
-test();
+// Run example.
+example();
 //# sourceMappingURL=schema.js.map

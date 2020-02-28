@@ -1,9 +1,9 @@
 /*!
- * Copyright (C) 2018-2019 Silas B. Domingos
+ * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
-import * as Aliases from '../aliases';
+import * as Types from '../types';
 /**
  * Match helper class.
  */
@@ -36,5 +36,5 @@ export declare class Match extends Class.Null {
      * @param match Match expression.
      * @returns Returns a new match entity.
      */
-    static build(model: Aliases.Model, match: Aliases.Match | Aliases.Match[]): Aliases.Entity;
+    static build(model: Types.Model, match: Types.Match | Types.Match[]): Types.Entity;
 }

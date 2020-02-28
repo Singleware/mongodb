@@ -7,17 +7,17 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /*!
- * Copyright (C) 2018-2019 Silas B. Domingos
+ * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
-const Aliases = require("./aliases");
+const Types = require("./types");
 const Engine = require("./engine");
 const caster_1 = require("./caster");
 /**
  * Schema helper class.
  */
-let Schema = class Schema extends Aliases.Schema {
+let Schema = class Schema extends Types.Schema {
     /**
      * Decorates the specified property to be an object Id column.
      * @returns Returns the decorator method.

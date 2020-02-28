@@ -1,19 +1,9 @@
 /*!
- * Copyright (C) 2018-2019 Silas B. Domingos
+ * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
 import * as MongoDB from '../source';
-
-/**
- * Connection string.
- */
-const connection = 'mongodb://127.0.0.1:27017/mapper-test';
-
-/**
- * Database driver.
- */
-const driver = new MongoDB.Driver();
 
 /**
  * User entity, base interface.
@@ -63,9 +53,10 @@ class UserEntity extends Class.Null implements UserEntityBase {
 class UserMapper extends MongoDB.Mapper<UserEntityBase> {
   /**
    * Default constructor.
+   * @param session Mapper session.
    */
-  constructor() {
-    super(driver, UserEntity);
+  constructor(session: MongoDB.Session) {
+    super(session, UserEntity);
   }
 
   /**
@@ -135,9 +126,10 @@ class TypeEntity extends Class.Null implements TypeEntityBase {
 class TypeMapper extends MongoDB.Mapper<TypeEntityBase> {
   /**
    * Default constructor.
+   * @param session Mapper session.
    */
-  constructor() {
-    super(driver, TypeEntity);
+  constructor(session: MongoDB.Session) {
+    super(session, TypeEntity);
   }
 
   /**
@@ -572,9 +564,10 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
 class AccountMapper extends MongoDB.Mapper<AccountEntityBase> {
   /**
    * Default constructor.
+   * @param session Mapper session.
    */
-  constructor() {
-    super(driver, AccountEntity);
+  constructor(session: MongoDB.Session) {
+    super(session, AccountEntity);
   }
 
   /**
@@ -665,59 +658,64 @@ class AccountMapper extends MongoDB.Mapper<AccountEntityBase> {
 /**
  * Test operations.
  */
-async function crudTest(): Promise<void> {
-  // Mappers
-  const users = new UserMapper();
-  const types = new TypeMapper();
-  const accounts = new AccountMapper();
-
-  // Connect
-  await driver.connect(connection);
-  console.log('Connect');
-
-  // Creates the account owner.
-  const owner = await users.create('User X', 'enabled');
-
-  // Creates type account types.
-  await types.create('generic', 'Type A');
-  await types.create('generic', 'Type B');
-  await types.create('generic', 'Type C');
-  await types.create('basic', 'Type D');
-  await types.create('basic', 'Type E');
-  await types.create('basic', 'Type F');
-
-  // Creates the account users.
-  const userA = await users.create('User A', 'enabled');
-  const userB = await users.create('User B', 'disabled');
-  const userC = await users.create('User C', 'enabled');
-
-  // Creates the account.
-  const accountId = await accounts.create(owner, 'generic', ['generic', 'basic'], userA, userB, userC);
-
-  // Reads the account.
-  const account = await accounts.read(accountId, [
-    'id',
-    'owner.name',
-    'typeList.description',
-    'roleList.description',
-    'allowedUsersList.name',
-    'settings.contact.name',
-    'settings.sharedUsersList.name',
-    'settings.messages.admin.name',
-    'settings.messages.usersList.name',
-    'settings.groups.admin.name',
-    'settings.groups.usersList.name',
-    'settings.groups.notifications.user.name',
-    'settings.groups.notifications.description.targets.user.name'
-  ]);
-  if (account) {
-    const entity = MongoDB.Normalizer.create(AccountEntity, account, false, true);
-    console.dir(JSON.parse(JSON.stringify(entity)), { depth: null, compact: true });
+async function example(): Promise<void> {
+  const client = new MongoDB.Client();
+  console.log('Connecting...');
+  if (await client.connect('mongodb://127.0.0.1/mapper-test')) {
+    const session = client.getSession();
+    const accounts = new AccountMapper(session);
+    const users = new UserMapper(session);
+    const types = new TypeMapper(session);
+    if (!(await client.hasCollection(TypeEntity))) {
+      // Create collection.
+      await client.createCollection(TypeEntity);
+      console.log('Collection created');
+      // Create account types.
+      await types.create('generic', 'Type A');
+      await types.create('generic', 'Type B');
+      await types.create('generic', 'Type C');
+      await types.create('basic', 'Type D');
+      await types.create('basic', 'Type E');
+      await types.create('basic', 'Type F');
+      console.log('Types created');
+    }
+    // Create the account.
+    const id = await session.transaction(async () => {
+      // Create account users.
+      const userA = await users.create('User A', 'enabled');
+      const userB = await users.create('User B', 'disabled');
+      const userC = await users.create('User C', 'enabled');
+      // Create account owner.
+      const owner = await users.create('User X', 'enabled');
+      // Create the account.
+      return accounts.create(owner, 'generic', ['generic', 'basic'], userA, userB, userC);
+    });
+    // Read the account.
+    const account = await accounts.read(id, [
+      'owner.name',
+      'typeList.description',
+      'roleList.description',
+      'allowedUsersList.name',
+      'settings.contact.name',
+      'settings.sharedUsersList.name',
+      'settings.messages.admin.name',
+      'settings.messages.usersList.name',
+      'settings.groups.admin.name',
+      'settings.groups.usersList.name',
+      'settings.groups.notifications.user.name',
+      'settings.groups.notifications.description.targets.user.name'
+    ]);
+    if (account) {
+      const entity = MongoDB.Normalizer.create(AccountEntity, account, false, true);
+      console.dir(JSON.parse(JSON.stringify(entity)), { depth: null, compact: true });
+    }
+    // Disconnect
+    await client.disconnect();
+    console.log('Disconnected');
+  } else {
+    console.error('Failed to connect to the database.');
   }
-
-  // Disconnect
-  await driver.disconnect();
-  console.log('Disconnect');
 }
 
-crudTest();
+// Run example
+example();

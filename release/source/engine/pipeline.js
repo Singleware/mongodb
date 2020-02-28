@@ -7,11 +7,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /*!
- * Copyright (C) 2018-2019 Silas B. Domingos
+ * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
-const Aliases = require("../aliases");
+const Types = require("../types");
 const match_1 = require("./match");
 /**
  * Pipeline helper class.
@@ -24,19 +24,20 @@ let Pipeline = class Pipeline extends Class.Null {
      * @returns Returns the view list.
      */
     static getView(model, fields) {
-        const view = new Set([Aliases.Schema.getColumnName(Aliases.Schema.getPrimaryColumn(model))]);
+        const column = Types.Schema.tryPrimaryColumn(model);
+        const fieldset = new Set(column !== void 0 ? [Types.Schema.getColumnName(column)] : void 0);
         const schemas = {
-            ...Aliases.Schema.getRealRow(model, ...fields),
-            ...Aliases.Schema.getVirtualRow(model, ...fields)
+            ...Types.Schema.getRealRow(model, ...fields),
+            ...Types.Schema.getVirtualRow(model, ...fields)
         };
         for (const name in schemas) {
             const schema = schemas[name];
             if (schema.type === "virtual" /* Virtual */) {
-                view.add(schema.local);
+                fieldset.add(schema.local);
             }
-            view.add(Aliases.Schema.getColumnName(schemas[name]));
+            fieldset.add(Types.Schema.getColumnName(schemas[name]));
         }
-        return [...view.values()];
+        return [...fieldset.values()];
     }
     /**
      * Gets a new real level based on the specified column schema and the given fields to select.
@@ -49,7 +50,7 @@ let Pipeline = class Pipeline extends Class.Null {
         const current = levels[levels.length - 1];
         return {
             name: current ? `${current.name}.${schema.name}` : schema.name,
-            fields: Aliases.Schema.getNestedFields(schema, fields),
+            fields: Types.Schema.getNestedFields(schema, fields),
             multiple: schema.formats.includes(12 /* Array */),
             column: schema,
             previous: current
@@ -67,7 +68,7 @@ let Pipeline = class Pipeline extends Class.Null {
         return {
             name: current ? `${current.name}.${schema.local}` : schema.local,
             virtual: current ? `${current.name}.${schema.name}` : schema.name,
-            fields: fields.length > 0 ? Aliases.Schema.getNestedFields(schema, fields) : schema.fields || [],
+            fields: fields.length > 0 ? Types.Schema.getNestedFields(schema, fields) : schema.fields || [],
             multiple: schema.multiple,
             column: schema,
             previous: current
@@ -107,10 +108,10 @@ let Pipeline = class Pipeline extends Class.Null {
         const sorting = {};
         for (const column in sort) {
             switch (sort[column]) {
-                case Aliases.Order.Ascending:
+                case Types.Order.Ascending:
                     sorting[column] = 1;
                     break;
-                case Aliases.Order.Descending:
+                case Types.Order.Descending:
                     sorting[column] = -1;
                     break;
             }
@@ -164,7 +165,7 @@ let Pipeline = class Pipeline extends Class.Null {
      */
     static composeSubgroup(pipeline, group, level, last) {
         const name = level.previous ? `_${level.column.name}` : level.column.name;
-        const model = Aliases.Schema.getEntityModel(level.column.model);
+        const model = Types.Schema.getEntityModel(level.column.model);
         const internal = this.getGroupRule(this.getView(model, level.fields), level.name);
         internal[last.column.name] = `$_${last.column.name}`;
         if (last.column.type === 'virtual') {
@@ -254,17 +255,17 @@ let Pipeline = class Pipeline extends Class.Null {
      * @param levels List of current levels.
      */
     static resolveForeignRelation(pipeline, project, model, view, fields, levels) {
-        const row = Aliases.Schema.getVirtualRow(model, ...fields);
+        const row = Types.Schema.getVirtualRow(model, ...fields);
         const group = this.getGroupRule(view);
         for (const name in row) {
             const schema = row[name];
-            const resolved = Aliases.Schema.getEntityModel(schema.model);
+            const resolved = Types.Schema.getEntityModel(schema.model);
             const level = this.getVirtualLevel(schema, levels, fields);
             levels.push(level);
             const multiples = this.decomposeAll(pipeline, levels);
             pipeline.push({
                 $lookup: {
-                    from: Aliases.Schema.getStorageName(resolved),
+                    from: Types.Schema.getStorageName(resolved),
                     let: { id: `$${level.name}` },
                     pipeline: [
                         {
@@ -306,12 +307,12 @@ let Pipeline = class Pipeline extends Class.Null {
      * @param levels List of current levels.
      */
     static resolveNestedRelations(pipeline, project, model, view, fields, levels) {
-        const real = Aliases.Schema.getRealRow(model, ...fields);
+        const real = Types.Schema.getRealRow(model, ...fields);
         for (const name in real) {
             const schema = real[name];
-            const column = Aliases.Schema.getColumnName(schema);
-            if (schema.model && Aliases.Schema.isEntity(schema.model)) {
-                const resolved = Aliases.Schema.getEntityModel(schema.model);
+            const column = Types.Schema.getColumnName(schema);
+            if (schema.model && Types.Schema.isEntity(schema.model)) {
+                const resolved = Types.Schema.getEntityModel(schema.model);
                 const level = this.getRealLevel(schema, levels, fields);
                 levels.push(level);
                 const nested = this.applyRelationship(pipeline, resolved, view, level.fields, levels);

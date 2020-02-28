@@ -7,11 +7,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /*!
- * Copyright (C) 2018-2019 Silas B. Domingos
+ * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
-const Aliases = require("../aliases");
+const Types = require("../types");
 /**
  * Filter helper class.
  */
@@ -23,10 +23,10 @@ let Filter = class Filter extends Class.Null {
      * @returns Returns the primary filter.
      */
     static primaryId(model, value) {
-        const primary = Aliases.Schema.getPrimaryColumn(model);
+        const primary = Types.Schema.getPrimaryColumn(model);
         const filter = {};
         filter[primary.name] = {
-            operator: Aliases.Operator.Equal,
+            operator: Types.Operator.Equal,
             value: value
         };
         return filter;

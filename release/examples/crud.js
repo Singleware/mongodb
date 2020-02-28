@@ -7,19 +7,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /*!
- * Copyright (C) 2018-2019 Silas B. Domingos
+ * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
 const MongoDB = require("../source");
-/**
- * Connection string.
- */
-const connection = 'mongodb://127.0.0.1:27017/mapper-test';
-/**
- * Database driver.
- */
-const driver = new MongoDB.Driver();
 /**
  * User details, entity class.
  */
@@ -74,9 +66,10 @@ UserEntity = __decorate([
 let UserMapper = class UserMapper extends MongoDB.Mapper {
     /**
      * Default constructor.
+     * @param session Mapper session.
      */
-    constructor() {
-        super(driver, UserEntity);
+    constructor(session) {
+        super(session, UserEntity);
     }
     /**
      * Create a test user.
@@ -94,12 +87,10 @@ let UserMapper = class UserMapper extends MongoDB.Mapper {
     /**
      * Change the test user.
      * @param id User id.
-     * @returns Returns a promise to get the number of updated users.
+     * @returns Returns a promise to get true when the is updated.
      */
     async change(id) {
-        return await this.update({
-            id: { operator: MongoDB.Operator.Equal, value: id }
-        }, {
+        return await this.updateById(id, {
             firstName: 'Changed!',
             details: {
                 phone: '+551199999999'
@@ -121,31 +112,18 @@ let UserMapper = class UserMapper extends MongoDB.Mapper {
     /**
      * Read the test user.
      * @param id User id.
-     * @returns Returns a promise to get the list of found users.
+     * @returns Returns a promise to get user entity.
      */
     async read(id) {
-        return await this.find({
-            pre: {
-                id: { operator: MongoDB.Operator.Equal, value: id }
-            },
-            sort: {
-                id: MongoDB.Order.Ascending
-            },
-            limit: {
-                start: 0,
-                count: 1
-            }
-        });
+        return await this.findById(id);
     }
     /**
      * Remove the test user.
      * @param id User id.
-     * @returns Returns a promise to get the number of removed users.
+     * @returns Returns a promise to get true when the user is removed.
      */
     async remove(id) {
-        return await this.delete({
-            id: { operator: MongoDB.Operator.Equal, value: id }
-        });
+        return await this.deleteById(id);
     }
 };
 __decorate([
@@ -169,38 +147,43 @@ UserMapper = __decorate([
 /**
  * Test operations.
  */
-async function crudTest() {
-    // User mapper class.
-    const mapper = new UserMapper();
-    // Connect
-    await driver.connect(connection);
-    console.log('Connect');
-    // Setup collection
-    if (!(await driver.hasCollection(UserEntity))) {
-        await driver.createCollection(UserEntity);
-        console.log('Created');
+async function example() {
+    const client = new MongoDB.Client();
+    console.log('Connecting...');
+    if (await client.connect('mongodb://127.0.0.1/mapper-test')) {
+        const session = client.getSession();
+        const mapper = new UserMapper(session);
+        // Setup collection
+        if (!(await client.hasCollection(UserEntity))) {
+            await client.createCollection(UserEntity);
+            console.log('Collection created');
+        }
+        else {
+            await client.modifyCollection(UserEntity);
+            console.log('Collection modified');
+        }
+        // Create user
+        const id = await mapper.create();
+        const before = (await mapper.read(id));
+        console.log('Create:', id, before.firstName, before.lastName, before.details.birthDate, before.details.phone, before.details.email);
+        // Update user
+        const update = await mapper.change(id);
+        const middle = (await mapper.read(id));
+        console.log('Update:', update, middle.firstName, middle.lastName, middle.details.birthDate, middle.details.phone, middle.details.email);
+        // Replace user
+        const replace = await mapper.replace(id);
+        const after = (await mapper.read(id));
+        console.log('Replace:', replace, after.firstName, after.lastName, after.details.birthDate, after.details.phone, after.details.email);
+        // Delete user
+        console.log('Delete:', await mapper.remove(id));
+        // Disconnect
+        await client.disconnect();
+        console.log('Disconnect');
     }
     else {
-        await driver.modifyCollection(UserEntity);
-        console.log('Modified');
+        console.error('Failed to connect to the database.');
     }
-    // Create user
-    const id = await mapper.create();
-    const before = (await mapper.read(id))[0];
-    console.log('Create:', id, before.firstName, before.lastName, before.details.birthDate, before.details.phone, before.details.email);
-    // Update user
-    const update = await mapper.change(id);
-    const middle = (await mapper.read(id))[0];
-    console.log('Update:', update, middle.firstName, middle.lastName, middle.details.birthDate, middle.details.phone, middle.details.email);
-    // Replace user
-    const replace = await mapper.replace(id);
-    const after = (await mapper.read(id))[0];
-    console.log('Replace:', replace, after.firstName, after.lastName, after.details.birthDate, after.details.phone, after.details.email);
-    // Delete user
-    console.log('Delete:', await mapper.remove(id));
-    // Disconnect
-    await driver.disconnect();
-    console.log('Disconnect');
 }
-crudTest();
+// Run example.
+example();
 //# sourceMappingURL=crud.js.map

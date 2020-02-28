@@ -7,11 +7,11 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /*!
- * Copyright (C) 2018-2019 Silas B. Domingos
+ * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
-const Aliases = require("../aliases");
+const Types = require("../types");
 const BSON = require("./bson");
 /**
  * Match helper class.
@@ -72,57 +72,57 @@ let Match = class Match extends Class.Null {
     static buildMatch(model, match) {
         const entity = {};
         for (const name in match) {
-            const schema = Aliases.Schema.getRealColumn(model, name);
+            const schema = Types.Schema.getRealColumn(model, name);
             const column = schema.alias || schema.name;
             const operation = match[name];
             switch (operation.operator) {
-                case Aliases.Operator.LessThan:
+                case Types.Operator.LessThan:
                     entity[column] = {
                         $lt: this.castValue(operation.value, schema)
                     };
                     break;
-                case Aliases.Operator.LessThanOrEqual:
+                case Types.Operator.LessThanOrEqual:
                     entity[column] = {
                         $lte: this.castValue(operation.value, schema)
                     };
                     break;
-                case Aliases.Operator.Equal:
+                case Types.Operator.Equal:
                     entity[column] = {
                         $eq: this.castValue(operation.value, schema)
                     };
                     break;
-                case Aliases.Operator.NotEqual:
+                case Types.Operator.NotEqual:
                     entity[column] = {
                         $ne: this.castValue(operation.value, schema)
                     };
                     break;
-                case Aliases.Operator.GreaterThanOrEqual:
+                case Types.Operator.GreaterThanOrEqual:
                     entity[column] = {
                         $gte: this.castValue(operation.value, schema)
                     };
                     break;
-                case Aliases.Operator.GreaterThan:
+                case Types.Operator.GreaterThan:
                     entity[column] = {
                         $gt: this.castValue(operation.value, schema)
                     };
                     break;
-                case Aliases.Operator.Between:
+                case Types.Operator.Between:
                     entity[column] = {
                         $gte: this.castValue(operation.value[0], schema),
                         $lte: this.castValue(operation.value[1], schema)
                     };
                     break;
-                case Aliases.Operator.Contain:
+                case Types.Operator.Contain:
                     entity[column] = {
                         $in: this.castArray(operation.value, schema)
                     };
                     break;
-                case Aliases.Operator.NotContain:
+                case Types.Operator.NotContain:
                     entity[column] = {
                         $nin: this.castArray(operation.value, schema)
                     };
                     break;
-                case Aliases.Operator.RegExp:
+                case Types.Operator.RegExp:
                     entity[column] = {
                         $regex: this.castValue(operation.value, schema)
                     };

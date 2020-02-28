@@ -6,10 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
  */
 const Mapping = require("@singleware/mapping");
 /**
- * Types namespace.
- */
-exports.Types = Mapping.Types;
-/**
  * Mapper class.
  */
 exports.Mapper = Mapping.Mapper;
@@ -45,4 +41,4 @@ exports.Normalizer = Mapping.Entities.Normalizer;
  * Castings namespace.
  */
 exports.Castings = Mapping.Castings;
-//# sourceMappingURL=aliases.js.map
+//# sourceMappingURL=types.js.map

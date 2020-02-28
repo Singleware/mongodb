@@ -1,10 +1,10 @@
 /*!
- * Copyright (C) 2018-2019 Silas B. Domingos
+ * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
 
-import * as Aliases from '../aliases';
+import * as Types from '../types';
 
 /**
  * Filter helper class.
@@ -18,11 +18,11 @@ export class Filter extends Class.Null {
    * @returns Returns the primary filter.
    */
   @Class.Public()
-  public static primaryId(model: Aliases.Model, value: any): Aliases.Match {
-    const primary = Aliases.Schema.getPrimaryColumn(model);
-    const filter = <Aliases.Match>{};
+  public static primaryId(model: Types.Model, value: any): Types.Match {
+    const primary = Types.Schema.getPrimaryColumn(model);
+    const filter = <Types.Match>{};
     filter[primary.name] = {
-      operator: Aliases.Operator.Equal,
+      operator: Types.Operator.Equal,
       value: value
     };
     return filter;
