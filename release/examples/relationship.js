@@ -29,7 +29,7 @@ __decorate([
 ], UserEntity.prototype, "name", void 0);
 __decorate([
     MongoDB.Schema.Required(),
-    MongoDB.Schema.Enumeration('enabled', 'disabled'),
+    MongoDB.Schema.Enumeration(['enabled', 'disabled']),
     Class.Public()
 ], UserEntity.prototype, "status", void 0);
 UserEntity = __decorate([
@@ -288,9 +288,9 @@ __decorate([
     Class.Public()
 ], AccountEntity.prototype, "typeName", void 0);
 __decorate([
-    MongoDB.Schema.JoinAll('name', TypeEntity, 'typeName', {
+    MongoDB.Schema.JoinAll('name', () => TypeEntity, 'typeName', {
         sort: {
-            description: MongoDB.Order.Descending
+            description: "desc" /* Descending */
         },
         limit: {
             start: 0,
@@ -305,7 +305,7 @@ __decorate([
     Class.Public()
 ], AccountEntity.prototype, "roleNames", void 0);
 __decorate([
-    MongoDB.Schema.JoinAll('name', TypeEntity, 'roleNames', {
+    MongoDB.Schema.JoinAll('name', () => TypeEntity, 'roleNames', {
         limit: {
             start: 0,
             count: 6
@@ -314,7 +314,7 @@ __decorate([
     Class.Public()
 ], AccountEntity.prototype, "roleList", void 0);
 __decorate([
-    MongoDB.Schema.Join('id', UserEntity, 'ownerId'),
+    MongoDB.Schema.Join('id', () => UserEntity, 'ownerId'),
     Class.Public()
 ], AccountEntity.prototype, "owner", void 0);
 __decorate([
@@ -322,14 +322,14 @@ __decorate([
     Class.Public()
 ], AccountEntity.prototype, "allowedUsersIdList", void 0);
 __decorate([
-    MongoDB.Schema.Join('id', UserEntity, 'allowedUsersIdList', {
-        status: { operator: MongoDB.Operator.Equal, value: 'enabled' }
+    MongoDB.Schema.Join('id', () => UserEntity, 'allowedUsersIdList', {
+        status: { eq: 'enabled' }
     }),
     Class.Public()
 ], AccountEntity.prototype, "allowedUsersList", void 0);
 __decorate([
     MongoDB.Schema.Required(),
-    MongoDB.Schema.Object(SettingsEntity),
+    MongoDB.Schema.Object(() => SettingsEntity),
     Class.Public()
 ], AccountEntity.prototype, "settings", void 0);
 AccountEntity = __decorate([
@@ -454,19 +454,16 @@ async function example() {
             await types.create('basic', 'Type F');
             console.log('Types created');
         }
+        // Create account users.
+        const userA = await users.create('User A', 'enabled');
+        const userB = await users.create('User B', 'disabled');
+        const userC = await users.create('User C', 'enabled');
+        // Create account owner.
+        const owner = await users.create('User X', 'enabled');
         // Create the account.
-        const id = await session.transaction(async () => {
-            // Create account users.
-            const userA = await users.create('User A', 'enabled');
-            const userB = await users.create('User B', 'disabled');
-            const userC = await users.create('User C', 'enabled');
-            // Create account owner.
-            const owner = await users.create('User X', 'enabled');
-            // Create the account.
-            return accounts.create(owner, 'generic', ['generic', 'basic'], userA, userB, userC);
-        });
+        const accountId = await accounts.create(owner, 'generic', ['generic', 'basic'], userA, userB, userC);
         // Read the account.
-        const account = await accounts.read(id, [
+        const account = await accounts.read(accountId, [
             'owner.name',
             'typeList.description',
             'roleList.description',
@@ -480,7 +477,7 @@ async function example() {
             'settings.groups.notifications.user.name',
             'settings.groups.notifications.description.targets.user.name'
         ]);
-        if (account) {
+        if (account !== void 0) {
             const entity = MongoDB.Normalizer.create(AccountEntity, account, false, true);
             console.dir(JSON.parse(JSON.stringify(entity)), { depth: null, compact: true });
         }

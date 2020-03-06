@@ -11,7 +11,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
-const Aliases = require("../types");
+const Mapping = require("@singleware/mapping");
+const Types = require("../types");
 const BSON = require("./bson");
 /**
  * Schema helper class.
@@ -35,8 +36,8 @@ let Schema = class Schema extends Class.Null {
      * @returns Returns the new document schema.
      */
     static buildDocumentSchema(column) {
-        if (column.model && Aliases.Schema.isEntity(column.model)) {
-            return this.build(Aliases.Schema.getRealRow(Aliases.Schema.getEntityModel(column.model)));
+        if (column.model && Types.Schema.isEntity(column.model)) {
+            return this.build(Types.Schema.getRealRow(Mapping.Helper.getEntityModel(column.model)));
         }
         else {
             return this.build({});

@@ -11,32 +11,40 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 const Class = require("@singleware/class");
+const Mapping = require("@singleware/mapping");
 const Types = require("../types");
 /**
- * Filter helper class.
+ * Sort helper class.
  */
-let Filter = class Filter extends Class.Null {
+let Sort = class Sort extends Class.Null {
     /**
-     * Build a new primary Id filter based on the specified model type and the primary Id value.
+     * Build a new sorting entity based on the specified sort map.
      * @param model Model type.
-     * @param value Primary Id value.
-     * @returns Returns the primary filter.
+     * @param sort Sort map.
+     * @returns Returns the new sorting entity.
      */
-    static primaryId(model, value) {
-        const primary = Types.Schema.getPrimaryColumn(model);
-        const filter = {};
-        filter[primary.name] = {
-            operator: "eq" /* Equal */,
-            value: value
-        };
-        return filter;
+    static build(model, sort) {
+        const entity = {};
+        for (const column in sort) {
+            const schemas = Mapping.Helper.getPathColumns(model, column);
+            const path = Types.Columns.Helper.getPath(schemas);
+            switch (sort[column]) {
+                case "asc" /* Ascending */:
+                    entity[path] = 1;
+                    break;
+                case "desc" /* Descending */:
+                    entity[path] = -1;
+                    break;
+            }
+        }
+        return entity;
     }
 };
 __decorate([
     Class.Public()
-], Filter, "primaryId", null);
-Filter = __decorate([
+], Sort, "build", null);
+Sort = __decorate([
     Class.Describe()
-], Filter);
-exports.Filter = Filter;
-//# sourceMappingURL=filter.js.map
+], Sort);
+exports.Sort = Sort;
+//# sourceMappingURL=sort.js.map

@@ -116,7 +116,7 @@ __decorate([
     Class.Public()
 ], TestEntity.prototype, "rangeString", void 0);
 __decorate([
-    MongoDB.Schema.Enumeration('a', 'b', 'c'),
+    MongoDB.Schema.Enumeration(['a', 'b', 'c']),
     Class.Public()
 ], TestEntity.prototype, "enumeration", void 0);
 __decorate([
@@ -160,19 +160,19 @@ __decorate([
     Class.Public()
 ], TestEntity.prototype, "stringArray", void 0);
 __decorate([
-    MongoDB.Schema.Array(String, true),
+    MongoDB.Schema.Array(String, [], true),
     Class.Public()
 ], TestEntity.prototype, "stringUniqueArray", void 0);
 __decorate([
-    MongoDB.Schema.Array(String, void 0, 1),
+    MongoDB.Schema.Array(String, [], void 0, 1),
     Class.Public()
 ], TestEntity.prototype, "stringMinArray", void 0);
 __decorate([
-    MongoDB.Schema.Array(String, void 0, void 0, 2),
+    MongoDB.Schema.Array(String, [], void 0, void 0, 2),
     Class.Public()
 ], TestEntity.prototype, "stringMaxArray", void 0);
 __decorate([
-    MongoDB.Schema.Array(String, void 0, 1, 2),
+    MongoDB.Schema.Array(String, [], void 0, 1, 2),
     Class.Public()
 ], TestEntity.prototype, "stringRangeArray", void 0);
 __decorate([

@@ -30,14 +30,14 @@ export import Column = Mapping.Types.Column;
 export import Mapper = Mapping.Mapper;
 
 /**
- * Mapping driver.
- */
-export import Driver = Mapping.Driver;
-
-/**
  * Mapping schema.
  */
 export import Schema = Mapping.Schema;
+
+/**
+ * Mapping driver.
+ */
+export import Driver = Mapping.Driver;
 
 /**
  * Entity columns.

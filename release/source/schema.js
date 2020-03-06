@@ -39,16 +39,26 @@ let Schema = class Schema extends Types.Schema {
         };
     }
     /**
-     *  Decorates the specified property to be an array column that accepts only Object Ids.
-     * @param unique Determines whether the array items must be unique or not.
+     * Decorates the specified property to be a map column that accepts only Object Ids.
+     * @returns Returns the decorator method.
+     */
+    static MapIds() {
+        return (target, property, descriptor) => {
+            super.Map(Engine.ObjectId)(target, property, descriptor);
+            return super.Convert(caster_1.Caster.ObjectIdMap.bind(caster_1.Caster))(target, property, descriptor);
+        };
+    }
+    /**
+     * Decorates the specified property to be an array column that accepts only Object Ids.
+     * @param unique Determines whether or not the array of items must be unique.
      * @param minimum Minimum items.
      * @param maximum Maximum items.
      * @returns Returns the decorator method.
      */
     static ArrayIds(unique, minimum, maximum) {
         return (target, property, descriptor) => {
-            super.Array(Engine.ObjectId, unique, minimum, maximum)(target, property, descriptor);
-            return super.Convert(caster_1.Caster.ObjectId.bind(caster_1.Caster))(target, property, descriptor);
+            super.Array(Engine.ObjectId, void 0, unique, minimum, maximum)(target, property, descriptor);
+            return super.Convert(caster_1.Caster.ObjectIdArray.bind(caster_1.Caster))(target, property, descriptor);
         };
     }
     /**
@@ -68,6 +78,9 @@ __decorate([
 __decorate([
     Class.Public()
 ], Schema, "DocumentId", null);
+__decorate([
+    Class.Public()
+], Schema, "MapIds", null);
 __decorate([
     Class.Public()
 ], Schema, "ArrayIds", null);

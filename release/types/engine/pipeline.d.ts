@@ -45,12 +45,6 @@ export declare class Pipeline extends Class.Null {
      */
     private static getProjectRule;
     /**
-     * Get a new sort rule based on the specified sort map.
-     * @param sort Sort map.
-     * @returns Returns the generated sort rule entity.
-     */
-    private static getSortRule;
-    /**
      * Gets a new compound Id based on the specified main field Id and the list of levels.
      * @param id Main field Id.
      * @param levels List of levels.

@@ -121,7 +121,7 @@ class TestEntity extends Class.Null {
   public rangeString?: string;
 
   // Enumeration type.
-  @MongoDB.Schema.Enumeration('a', 'b', 'c')
+  @MongoDB.Schema.Enumeration(['a', 'b', 'c'])
   @Class.Public()
   public enumeration?: 'a' | 'b' | 'c';
 
@@ -169,19 +169,19 @@ class TestEntity extends Class.Null {
   @Class.Public()
   public stringArray?: string[];
 
-  @MongoDB.Schema.Array(String, true)
+  @MongoDB.Schema.Array(String, [], true)
   @Class.Public()
   public stringUniqueArray?: string[];
 
-  @MongoDB.Schema.Array(String, void 0, 1)
+  @MongoDB.Schema.Array(String, [], void 0, 1)
   @Class.Public()
   public stringMinArray?: string[];
 
-  @MongoDB.Schema.Array(String, void 0, void 0, 2)
+  @MongoDB.Schema.Array(String, [], void 0, void 0, 2)
   @Class.Public()
   public stringMaxArray?: string[];
 
-  @MongoDB.Schema.Array(String, void 0, 1, 2)
+  @MongoDB.Schema.Array(String, [], void 0, 1, 2)
   @Class.Public()
   public stringRangeArray?: string[];
 

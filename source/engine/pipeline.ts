@@ -3,10 +3,12 @@
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
+import * as Mapping from '@singleware/mapping';
 
 import * as Types from '../types';
 
 import { Match } from './match';
+import { Sort } from './sort';
 
 /**
  * Pipeline helper class.
@@ -22,7 +24,7 @@ export class Pipeline extends Class.Null {
   @Class.Private()
   private static getView(model: Types.Model, fields: string[]): string[] {
     const column = Types.Schema.tryPrimaryColumn(model);
-    const fieldset = new Set(column !== void 0 ? [Types.Schema.getColumnName(column)] : void 0);
+    const fieldset = new Set(column !== void 0 ? [Mapping.Columns.Helper.getName(column)] : void 0);
     const schemas = <Types.Columns.RealRow | Types.Columns.VirtualRow>{
       ...Types.Schema.getRealRow(model, ...fields),
       ...Types.Schema.getVirtualRow(model, ...fields)
@@ -32,7 +34,7 @@ export class Pipeline extends Class.Null {
       if (schema.type === Types.Column.Virtual) {
         fieldset.add((<Types.Columns.Virtual>schema).local);
       }
-      fieldset.add(Types.Schema.getColumnName(schemas[name]));
+      fieldset.add(Mapping.Columns.Helper.getName(schemas[name]));
     }
     return [...fieldset.values()];
   }
@@ -49,7 +51,7 @@ export class Pipeline extends Class.Null {
     const current = levels[levels.length - 1];
     return {
       name: current ? `${current.name}.${schema.name}` : schema.name,
-      fields: Types.Schema.getNestedFields(schema, fields),
+      fields: Mapping.Columns.Helper.getNestedFields(schema, fields),
       multiple: schema.formats.includes(Types.Format.Array),
       column: schema,
       previous: current
@@ -69,7 +71,7 @@ export class Pipeline extends Class.Null {
     return {
       name: current ? `${current.name}.${schema.local}` : schema.local,
       virtual: current ? `${current.name}.${schema.name}` : schema.name,
-      fields: fields.length > 0 ? Types.Schema.getNestedFields(schema, fields) : schema.fields || [],
+      fields: fields.length > 0 ? Mapping.Columns.Helper.getNestedFields(schema, fields) : schema.fields || [],
       multiple: schema.multiple,
       column: schema,
       previous: current
@@ -103,27 +105,6 @@ export class Pipeline extends Class.Null {
       rule[field] = { $ifNull: [`$${field}`, '$$REMOVE'] };
     }
     return rule;
-  }
-
-  /**
-   * Get a new sort rule based on the specified sort map.
-   * @param sort Sort map.
-   * @returns Returns the generated sort rule entity.
-   */
-  @Class.Private()
-  private static getSortRule(sort: Types.Sort): Types.Entity {
-    const sorting = <Types.Entity>{};
-    for (const column in sort) {
-      switch (sort[column]) {
-        case Types.Order.Ascending:
-          sorting[column] = 1;
-          break;
-        case Types.Order.Descending:
-          sorting[column] = -1;
-          break;
-      }
-    }
-    return sorting;
   }
 
   /**
@@ -178,7 +159,7 @@ export class Pipeline extends Class.Null {
   @Class.Private()
   private static composeSubgroup(pipeline: Types.Entity[], group: Types.Entity, level: any, last: any): void {
     const name = level.previous ? `_${level.column.name}` : level.column.name;
-    const model = Types.Schema.getEntityModel(level.column.model);
+    const model = Mapping.Helper.getEntityModel(level.column.model);
     const internal = this.getGroupRule(this.getView(model, level.fields), level.name);
     internal[last.column.name] = `$_${last.column.name}`;
     if (last.column.type === 'virtual') {
@@ -280,7 +261,8 @@ export class Pipeline extends Class.Null {
     const group = this.getGroupRule(view);
     for (const name in row) {
       const schema = row[name];
-      const resolved = Types.Schema.getEntityModel(schema.model);
+      const resolved = Mapping.Helper.getEntityModel(schema.model);
+      const foreign = Types.Schema.getRealColumn(resolved, schema.foreign);
       const level = this.getVirtualLevel(schema, levels, fields);
       levels.push(level);
       const multiples = this.decomposeAll(pipeline, levels);
@@ -290,7 +272,9 @@ export class Pipeline extends Class.Null {
           let: { id: `$${level.name}` },
           pipeline: [
             {
-              $match: { $expr: { $eq: [`$${schema.foreign}`, `$$id`] } }
+              $match: {
+                $expr: { $eq: [`$${Mapping.Columns.Helper.getName(foreign)}`, `$$id`] }
+              }
             },
             ...this.build(resolved, schema.query || {}, level.fields)
           ],
@@ -340,9 +324,9 @@ export class Pipeline extends Class.Null {
     const real = Types.Schema.getRealRow(model, ...fields);
     for (const name in real) {
       const schema = real[name];
-      const column = Types.Schema.getColumnName(schema);
+      const column = Mapping.Columns.Helper.getName(schema);
       if (schema.model && Types.Schema.isEntity(schema.model)) {
-        const resolved = Types.Schema.getEntityModel(schema.model);
+        const resolved = Mapping.Helper.getEntityModel(schema.model);
         const level = this.getRealLevel(schema, levels, fields);
         levels.push(level);
         const nested = this.applyRelationship(pipeline, resolved, view, level.fields, levels);
@@ -400,7 +384,7 @@ export class Pipeline extends Class.Null {
       pipeline.push({ $match: Match.build(model, query.post) });
     }
     if (query.sort) {
-      pipeline.push({ $sort: this.getSortRule(query.sort) });
+      pipeline.push({ $sort: Sort.build(model, query.sort) });
     }
     if (query.limit) {
       if (query.limit.start > 0) {

@@ -14,8 +14,13 @@ export declare class Schema extends Types.Schema {
      */
     static DocumentId(): Types.ModelDecorator;
     /**
-     *  Decorates the specified property to be an array column that accepts only Object Ids.
-     * @param unique Determines whether the array items must be unique or not.
+     * Decorates the specified property to be a map column that accepts only Object Ids.
+     * @returns Returns the decorator method.
+     */
+    static MapIds(): Types.ModelDecorator;
+    /**
+     * Decorates the specified property to be an array column that accepts only Object Ids.
+     * @param unique Determines whether or not the array of items must be unique.
      * @param minimum Minimum items.
      * @param maximum Maximum items.
      * @returns Returns the decorator method.

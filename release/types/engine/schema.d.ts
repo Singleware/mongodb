@@ -3,7 +3,7 @@
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 import * as Class from '@singleware/class';
-import * as Aliases from '../types';
+import * as Types from '../types';
 /**
  * Schema helper class.
  */
@@ -34,5 +34,5 @@ export declare class Schema extends Class.Null {
      * @param row Row schema.
      * @returns Returns the generated schema entity.
      */
-    static build(row: Aliases.Columns.RealRow): Aliases.Entity;
+    static build(row: Types.Columns.RealRow): Types.Entity;
 }

@@ -4,6 +4,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
+var sort_1 = require("./sort");
+exports.Sort = sort_1.Sort;
 var match_1 = require("./match");
 exports.Match = match_1.Match;
 var filter_1 = require("./filter");

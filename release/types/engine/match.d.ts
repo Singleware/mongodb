@@ -24,17 +24,25 @@ export declare class Match extends Class.Null {
      */
     private static castValue;
     /**
-     * Build a new match entity from the specified match expression.
-     * @param model Model type.
-     * @param match Match expression.
-     * @returns Returns the new match entity.
+     * Attach a new operation in the given operations map.
+     * @param schemas Column schemas.
+     * @param operations Operations map.
+     * @param operator Operator type.
+     * @param value Operation value.
      */
-    private static buildMatch;
+    private static attachOperation;
     /**
-     * Build a new match entity from the specified match expression.
+     * Build a new matching operation based the specified match expression.
      * @param model Model type.
      * @param match Match expression.
-     * @returns Returns a new match entity.
+     * @returns Returns the new matching operation.
+     */
+    private static buildExpression;
+    /**
+     * Build a new matching entity based on the specified matching expressions.
+     * @param model Model type.
+     * @param match Matching expressions.
+     * @returns Returns the new matching entity.
      */
     static build(model: Types.Model, match: Types.Match | Types.Match[]): Types.Entity;
 }

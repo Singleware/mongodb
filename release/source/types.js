@@ -18,14 +18,6 @@ exports.Schema = Mapping.Schema;
  */
 exports.Columns = Mapping.Columns;
 /**
- * Operator filters.
- */
-exports.Operator = Mapping.Filters.Operator;
-/**
- * Order filters.
- */
-exports.Order = Mapping.Filters.Order;
-/**
  * Entity inputer.
  */
 exports.Inputer = Mapping.Entities.Inputer;

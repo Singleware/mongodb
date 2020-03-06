@@ -15,13 +15,10 @@ exports.Schema = schema_1.Schema;
 var types_1 = require("./types");
 exports.Mapper = types_1.Mapper;
 var types_2 = require("./types");
-exports.Operator = types_2.Operator;
-exports.Order = types_2.Order;
-var types_3 = require("./types");
-exports.Inputer = types_3.Inputer;
-exports.Outputer = types_3.Outputer;
-exports.Normalizer = types_3.Normalizer;
-exports.Castings = types_3.Castings;
+exports.Inputer = types_2.Inputer;
+exports.Outputer = types_2.Outputer;
+exports.Normalizer = types_2.Normalizer;
+exports.Castings = types_2.Castings;
 // Imported aliases.
 const Engine = require("./engine");
 /**

@@ -39,8 +39,20 @@ export class Schema extends Types.Schema {
   }
 
   /**
-   *  Decorates the specified property to be an array column that accepts only Object Ids.
-   * @param unique Determines whether the array items must be unique or not.
+   * Decorates the specified property to be a map column that accepts only Object Ids.
+   * @returns Returns the decorator method.
+   */
+  @Class.Public()
+  public static MapIds(): Types.ModelDecorator {
+    return (target: Object, property: PropertyKey, descriptor?: PropertyDescriptor): PropertyDescriptor => {
+      super.Map(Engine.ObjectId)(target, <string>property, descriptor);
+      return super.Convert(Caster.ObjectIdMap.bind(Caster))(target, <string>property, descriptor);
+    };
+  }
+
+  /**
+   * Decorates the specified property to be an array column that accepts only Object Ids.
+   * @param unique Determines whether or not the array of items must be unique.
    * @param minimum Minimum items.
    * @param maximum Maximum items.
    * @returns Returns the decorator method.
@@ -48,8 +60,8 @@ export class Schema extends Types.Schema {
   @Class.Public()
   public static ArrayIds(unique?: boolean, minimum?: number, maximum?: number): Types.ModelDecorator {
     return (target: Object, property: PropertyKey, descriptor?: PropertyDescriptor): PropertyDescriptor => {
-      super.Array(Engine.ObjectId, unique, minimum, maximum)(target, <string>property, descriptor);
-      return super.Convert(Caster.ObjectId.bind(Caster))(target, <string>property, descriptor);
+      super.Array(Engine.ObjectId, void 0, unique, minimum, maximum)(target, <string>property, descriptor);
+      return super.Convert(Caster.ObjectIdArray.bind(Caster))(target, <string>property, descriptor);
     };
   }
 
