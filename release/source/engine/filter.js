@@ -6,6 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Filter = void 0;
 /*!
  * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
@@ -15,28 +16,31 @@ const Types = require("../types");
 /**
  * Filter helper class.
  */
-let Filter = class Filter extends Class.Null {
-    /**
-     * Build a new primary Id filter based on the specified model type and the primary Id value.
-     * @param model Model type.
-     * @param value Primary Id value.
-     * @returns Returns the primary filter.
-     */
-    static primaryId(model, value) {
-        const primary = Types.Schema.getPrimaryColumn(model);
-        const filter = {};
-        filter[primary.name] = {
-            operator: "eq" /* Equal */,
-            value: value
-        };
-        return filter;
-    }
-};
-__decorate([
-    Class.Public()
-], Filter, "primaryId", null);
-Filter = __decorate([
-    Class.Describe()
-], Filter);
+let Filter = /** @class */ (() => {
+    let Filter = class Filter extends Class.Null {
+        /**
+         * Build a new primary Id filter based on the specified model type and the primary Id value.
+         * @param model Model type.
+         * @param value Primary Id value.
+         * @returns Returns the primary filter.
+         */
+        static primaryId(model, value) {
+            const primary = Types.Schema.getPrimaryColumn(model);
+            const filter = {};
+            filter[primary.name] = {
+                operator: "eq" /* Equal */,
+                value: value
+            };
+            return filter;
+        }
+    };
+    __decorate([
+        Class.Public()
+    ], Filter, "primaryId", null);
+    Filter = __decorate([
+        Class.Describe()
+    ], Filter);
+    return Filter;
+})();
 exports.Filter = Filter;
 //# sourceMappingURL=filter.js.map

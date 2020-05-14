@@ -9,20 +9,20 @@ import * as Types from '../types';
  */
 export declare class Match extends Class.Null {
     /**
-     * Try to convert the specified input array to an ObjectID array.
+     * Try to convert the specified input value to a filterable.
+     * @param value Input value.
+     * @param schema Column schema.
+     * @returns Returns the converted value or the specified input value.
+     */
+    private static castValue;
+    /**
+     * Try to convert the specified input array to a filterable array.
      * @param input Input array.
      * @param schema Column schema.
-     * @returns Returns the array containing all converted and not converted values
+     * @returns Returns the array containing all converted and not converted values.
      * @throws Throws an type error when the specified value isn't an array.
      */
     private static castArray;
-    /**
-     * Try to convert the specified input value to an ObjectID.
-     * @param value Input value.
-     * @param schema Column schema.
-     * @returns Returns the converted value when the operation was successful, otherwise returns the input value.
-     */
-    private static castValue;
     /**
      * Attach a new operation in the given operations map.
      * @param schemas Column schemas.

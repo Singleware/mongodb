@@ -15,421 +15,457 @@ const MongoDB = require("../source");
 /**
  * User entity.
  */
-let UserEntity = class UserEntity extends Class.Null {
-};
-__decorate([
-    MongoDB.Schema.Primary(),
-    MongoDB.Schema.DocumentId(),
-    Class.Public()
-], UserEntity.prototype, "id", void 0);
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.String(),
-    Class.Public()
-], UserEntity.prototype, "name", void 0);
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.Enumeration(['enabled', 'disabled']),
-    Class.Public()
-], UserEntity.prototype, "status", void 0);
-UserEntity = __decorate([
-    MongoDB.Schema.Entity('Users'),
-    Class.Describe()
-], UserEntity);
+let UserEntity = /** @class */ (() => {
+    let UserEntity = class UserEntity extends Class.Null {
+    };
+    __decorate([
+        MongoDB.Schema.Primary(),
+        MongoDB.Schema.DocumentId(),
+        Class.Public()
+    ], UserEntity.prototype, "id", void 0);
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.String(),
+        Class.Public()
+    ], UserEntity.prototype, "name", void 0);
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.Enumeration(['enabled', 'disabled']),
+        Class.Public()
+    ], UserEntity.prototype, "status", void 0);
+    UserEntity = __decorate([
+        MongoDB.Schema.Entity('Users'),
+        Class.Describe()
+    ], UserEntity);
+    return UserEntity;
+})();
 /**
  * User mapper.
  */
-let UserMapper = class UserMapper extends MongoDB.Mapper {
-    /**
-     * Default constructor.
-     * @param session Mapper session.
-     */
-    constructor(session) {
-        super(session, UserEntity);
-    }
-    /**
-     * Creates a new user.
-     * @param name User name.
-     * @param status User status.
-     * @returns Returns the new user id.
-     */
-    async create(name, status) {
-        return await this.insert({
-            name: name,
-            status: status
-        });
-    }
-};
-__decorate([
-    Class.Public()
-], UserMapper.prototype, "create", null);
-UserMapper = __decorate([
-    Class.Describe()
-], UserMapper);
+let UserMapper = /** @class */ (() => {
+    let UserMapper = class UserMapper extends MongoDB.Mapper {
+        /**
+         * Default constructor.
+         * @param session Mapper session.
+         */
+        constructor(session) {
+            super(session, UserEntity);
+        }
+        /**
+         * Creates a new user.
+         * @param name User name.
+         * @param status User status.
+         * @returns Returns the new user id.
+         */
+        async create(name, status) {
+            return await this.insert({
+                name: name,
+                status: status
+            });
+        }
+    };
+    __decorate([
+        Class.Public()
+    ], UserMapper.prototype, "create", null);
+    UserMapper = __decorate([
+        Class.Describe()
+    ], UserMapper);
+    return UserMapper;
+})();
 /**
  * Type entity.
  */
-let TypeEntity = class TypeEntity extends Class.Null {
-};
-__decorate([
-    MongoDB.Schema.Primary(),
-    MongoDB.Schema.DocumentId(),
-    Class.Public()
-], TypeEntity.prototype, "id", void 0);
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.String(),
-    Class.Public()
-], TypeEntity.prototype, "name", void 0);
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.String(),
-    Class.Public()
-], TypeEntity.prototype, "description", void 0);
-TypeEntity = __decorate([
-    MongoDB.Schema.Entity('Types'),
-    Class.Describe()
-], TypeEntity);
+let TypeEntity = /** @class */ (() => {
+    let TypeEntity = class TypeEntity extends Class.Null {
+    };
+    __decorate([
+        MongoDB.Schema.Primary(),
+        MongoDB.Schema.DocumentId(),
+        Class.Public()
+    ], TypeEntity.prototype, "id", void 0);
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.String(),
+        Class.Public()
+    ], TypeEntity.prototype, "name", void 0);
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.String(),
+        Class.Public()
+    ], TypeEntity.prototype, "description", void 0);
+    TypeEntity = __decorate([
+        MongoDB.Schema.Entity('Types'),
+        Class.Describe()
+    ], TypeEntity);
+    return TypeEntity;
+})();
 /**
  * Type mapper.
  */
-let TypeMapper = class TypeMapper extends MongoDB.Mapper {
-    /**
-     * Default constructor.
-     * @param session Mapper session.
-     */
-    constructor(session) {
-        super(session, TypeEntity);
-    }
-    /**
-     * Creates a new type.
-     * @param name Type name.
-     * @param description Type description.
-     * @returns Returns the new type id.
-     */
-    async create(name, description) {
-        return await this.insert({
-            name: name,
-            description: description
-        });
-    }
-};
-__decorate([
-    Class.Public()
-], TypeMapper.prototype, "create", null);
-TypeMapper = __decorate([
-    Class.Describe()
-], TypeMapper);
+let TypeMapper = /** @class */ (() => {
+    let TypeMapper = class TypeMapper extends MongoDB.Mapper {
+        /**
+         * Default constructor.
+         * @param session Mapper session.
+         */
+        constructor(session) {
+            super(session, TypeEntity);
+        }
+        /**
+         * Creates a new type.
+         * @param name Type name.
+         * @param description Type description.
+         * @returns Returns the new type id.
+         */
+        async create(name, description) {
+            return await this.insert({
+                name: name,
+                description: description
+            });
+        }
+    };
+    __decorate([
+        Class.Public()
+    ], TypeMapper.prototype, "create", null);
+    TypeMapper = __decorate([
+        Class.Describe()
+    ], TypeMapper);
+    return TypeMapper;
+})();
 /**
  * Target entity.
  */
-let TargetEntity = class TargetEntity extends Class.Null {
-};
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.ObjectId(),
-    Class.Public()
-], TargetEntity.prototype, "userId", void 0);
-__decorate([
-    MongoDB.Schema.Join('id', UserEntity, 'userId', void 0, ['name']),
-    Class.Public()
-], TargetEntity.prototype, "user", void 0);
-TargetEntity = __decorate([
-    MongoDB.Schema.Entity('Targets'),
-    Class.Describe()
-], TargetEntity);
+let TargetEntity = /** @class */ (() => {
+    let TargetEntity = class TargetEntity extends Class.Null {
+    };
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.ObjectId(),
+        Class.Public()
+    ], TargetEntity.prototype, "userId", void 0);
+    __decorate([
+        MongoDB.Schema.Join('id', UserEntity, 'userId', void 0, ['name']),
+        Class.Public()
+    ], TargetEntity.prototype, "user", void 0);
+    TargetEntity = __decorate([
+        MongoDB.Schema.Entity('Targets'),
+        Class.Describe()
+    ], TargetEntity);
+    return TargetEntity;
+})();
 /**
  * Description entity.
  */
-let DescriptionEntity = class DescriptionEntity extends Class.Null {
-};
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.Array(TargetEntity),
-    Class.Public()
-], DescriptionEntity.prototype, "targets", void 0);
-DescriptionEntity = __decorate([
-    MongoDB.Schema.Entity('Targets'),
-    Class.Describe()
-], DescriptionEntity);
+let DescriptionEntity = /** @class */ (() => {
+    let DescriptionEntity = class DescriptionEntity extends Class.Null {
+    };
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.Array(TargetEntity),
+        Class.Public()
+    ], DescriptionEntity.prototype, "targets", void 0);
+    DescriptionEntity = __decorate([
+        MongoDB.Schema.Entity('Targets'),
+        Class.Describe()
+    ], DescriptionEntity);
+    return DescriptionEntity;
+})();
 /**
  * Notification entity.
  */
-let NotificationEntity = class NotificationEntity extends Class.Null {
-};
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.ObjectId(),
-    Class.Public()
-], NotificationEntity.prototype, "userId", void 0);
-__decorate([
-    MongoDB.Schema.Join('id', UserEntity, 'userId'),
-    Class.Public()
-], NotificationEntity.prototype, "user", void 0);
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.Object(DescriptionEntity),
-    Class.Public()
-], NotificationEntity.prototype, "description", void 0);
-NotificationEntity = __decorate([
-    MongoDB.Schema.Entity('Notifications'),
-    Class.Describe()
-], NotificationEntity);
+let NotificationEntity = /** @class */ (() => {
+    let NotificationEntity = class NotificationEntity extends Class.Null {
+    };
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.ObjectId(),
+        Class.Public()
+    ], NotificationEntity.prototype, "userId", void 0);
+    __decorate([
+        MongoDB.Schema.Join('id', UserEntity, 'userId'),
+        Class.Public()
+    ], NotificationEntity.prototype, "user", void 0);
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.Object(DescriptionEntity),
+        Class.Public()
+    ], NotificationEntity.prototype, "description", void 0);
+    NotificationEntity = __decorate([
+        MongoDB.Schema.Entity('Notifications'),
+        Class.Describe()
+    ], NotificationEntity);
+    return NotificationEntity;
+})();
 /**
  * Group entity.
  */
-let GroupEntity = class GroupEntity extends Class.Null {
-};
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.ObjectId(),
-    Class.Public()
-], GroupEntity.prototype, "adminId", void 0);
-__decorate([
-    MongoDB.Schema.Join('id', UserEntity, 'adminId'),
-    Class.Public()
-], GroupEntity.prototype, "admin", void 0);
-__decorate([
-    MongoDB.Schema.ArrayIds(),
-    Class.Public()
-], GroupEntity.prototype, "usersIdList", void 0);
-__decorate([
-    MongoDB.Schema.Join('id', UserEntity, 'usersIdList'),
-    Class.Public()
-], GroupEntity.prototype, "usersList", void 0);
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.Array(NotificationEntity),
-    Class.Public()
-], GroupEntity.prototype, "notifications", void 0);
-GroupEntity = __decorate([
-    MongoDB.Schema.Entity('Groups'),
-    Class.Describe()
-], GroupEntity);
+let GroupEntity = /** @class */ (() => {
+    let GroupEntity = class GroupEntity extends Class.Null {
+    };
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.ObjectId(),
+        Class.Public()
+    ], GroupEntity.prototype, "adminId", void 0);
+    __decorate([
+        MongoDB.Schema.Join('id', UserEntity, 'adminId'),
+        Class.Public()
+    ], GroupEntity.prototype, "admin", void 0);
+    __decorate([
+        MongoDB.Schema.ArrayIds(),
+        Class.Public()
+    ], GroupEntity.prototype, "usersIdList", void 0);
+    __decorate([
+        MongoDB.Schema.Join('id', UserEntity, 'usersIdList'),
+        Class.Public()
+    ], GroupEntity.prototype, "usersList", void 0);
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.Array(NotificationEntity),
+        Class.Public()
+    ], GroupEntity.prototype, "notifications", void 0);
+    GroupEntity = __decorate([
+        MongoDB.Schema.Entity('Groups'),
+        Class.Describe()
+    ], GroupEntity);
+    return GroupEntity;
+})();
 /**
  * Messages entity.
  */
-let MessagesEntity = class MessagesEntity extends Class.Null {
-};
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.ObjectId(),
-    Class.Public()
-], MessagesEntity.prototype, "adminId", void 0);
-__decorate([
-    MongoDB.Schema.Join('id', UserEntity, 'adminId'),
-    Class.Public()
-], MessagesEntity.prototype, "admin", void 0);
-__decorate([
-    MongoDB.Schema.ArrayIds(),
-    Class.Public()
-], MessagesEntity.prototype, "usersIdList", void 0);
-__decorate([
-    MongoDB.Schema.Join('id', UserEntity, 'usersIdList'),
-    Class.Public()
-], MessagesEntity.prototype, "usersList", void 0);
-MessagesEntity = __decorate([
-    MongoDB.Schema.Entity('Messages'),
-    Class.Describe()
-], MessagesEntity);
+let MessagesEntity = /** @class */ (() => {
+    let MessagesEntity = class MessagesEntity extends Class.Null {
+    };
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.ObjectId(),
+        Class.Public()
+    ], MessagesEntity.prototype, "adminId", void 0);
+    __decorate([
+        MongoDB.Schema.Join('id', UserEntity, 'adminId'),
+        Class.Public()
+    ], MessagesEntity.prototype, "admin", void 0);
+    __decorate([
+        MongoDB.Schema.ArrayIds(),
+        Class.Public()
+    ], MessagesEntity.prototype, "usersIdList", void 0);
+    __decorate([
+        MongoDB.Schema.Join('id', UserEntity, 'usersIdList'),
+        Class.Public()
+    ], MessagesEntity.prototype, "usersList", void 0);
+    MessagesEntity = __decorate([
+        MongoDB.Schema.Entity('Messages'),
+        Class.Describe()
+    ], MessagesEntity);
+    return MessagesEntity;
+})();
 /**
  * Settings entity.
  */
-let SettingsEntity = class SettingsEntity extends Class.Null {
-};
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.ObjectId(),
-    Class.Public()
-], SettingsEntity.prototype, "contactId", void 0);
-__decorate([
-    MongoDB.Schema.Join('id', UserEntity, 'contactId'),
-    Class.Public()
-], SettingsEntity.prototype, "contact", void 0);
-__decorate([
-    MongoDB.Schema.ArrayIds(),
-    Class.Public()
-], SettingsEntity.prototype, "sharedUsersIdList", void 0);
-__decorate([
-    MongoDB.Schema.Join('id', UserEntity, 'sharedUsersIdList'),
-    Class.Public()
-], SettingsEntity.prototype, "sharedUsersList", void 0);
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.Object(MessagesEntity),
-    Class.Public()
-], SettingsEntity.prototype, "messages", void 0);
-__decorate([
-    MongoDB.Schema.Array(GroupEntity),
-    Class.Public()
-], SettingsEntity.prototype, "groups", void 0);
-SettingsEntity = __decorate([
-    MongoDB.Schema.Entity('Settings'),
-    Class.Describe()
-], SettingsEntity);
+let SettingsEntity = /** @class */ (() => {
+    let SettingsEntity = class SettingsEntity extends Class.Null {
+    };
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.ObjectId(),
+        Class.Public()
+    ], SettingsEntity.prototype, "contactId", void 0);
+    __decorate([
+        MongoDB.Schema.Join('id', UserEntity, 'contactId'),
+        Class.Public()
+    ], SettingsEntity.prototype, "contact", void 0);
+    __decorate([
+        MongoDB.Schema.ArrayIds(),
+        Class.Public()
+    ], SettingsEntity.prototype, "sharedUsersIdList", void 0);
+    __decorate([
+        MongoDB.Schema.Join('id', UserEntity, 'sharedUsersIdList'),
+        Class.Public()
+    ], SettingsEntity.prototype, "sharedUsersList", void 0);
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.Object(MessagesEntity),
+        Class.Public()
+    ], SettingsEntity.prototype, "messages", void 0);
+    __decorate([
+        MongoDB.Schema.Array(GroupEntity),
+        Class.Public()
+    ], SettingsEntity.prototype, "groups", void 0);
+    SettingsEntity = __decorate([
+        MongoDB.Schema.Entity('Settings'),
+        Class.Describe()
+    ], SettingsEntity);
+    return SettingsEntity;
+})();
 /**
  * Account entity.
  */
-let AccountEntity = class AccountEntity extends Class.Null {
-};
-__decorate([
-    MongoDB.Schema.Primary(),
-    MongoDB.Schema.DocumentId(),
-    Class.Public()
-], AccountEntity.prototype, "id", void 0);
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.ObjectId(),
-    Class.Public()
-], AccountEntity.prototype, "ownerId", void 0);
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.String(),
-    Class.Public()
-], AccountEntity.prototype, "typeName", void 0);
-__decorate([
-    MongoDB.Schema.JoinAll('name', () => TypeEntity, 'typeName', {
-        sort: {
-            description: "desc" /* Descending */
-        },
-        limit: {
-            start: 0,
-            count: 3
-        }
-    }),
-    Class.Public()
-], AccountEntity.prototype, "typeList", void 0);
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.Array(String),
-    Class.Public()
-], AccountEntity.prototype, "roleNames", void 0);
-__decorate([
-    MongoDB.Schema.JoinAll('name', () => TypeEntity, 'roleNames', {
-        limit: {
-            start: 0,
-            count: 6
-        }
-    }),
-    Class.Public()
-], AccountEntity.prototype, "roleList", void 0);
-__decorate([
-    MongoDB.Schema.Join('id', () => UserEntity, 'ownerId'),
-    Class.Public()
-], AccountEntity.prototype, "owner", void 0);
-__decorate([
-    MongoDB.Schema.ArrayIds(),
-    Class.Public()
-], AccountEntity.prototype, "allowedUsersIdList", void 0);
-__decorate([
-    MongoDB.Schema.Join('id', () => UserEntity, 'allowedUsersIdList', {
-        status: { eq: 'enabled' }
-    }),
-    Class.Public()
-], AccountEntity.prototype, "allowedUsersList", void 0);
-__decorate([
-    MongoDB.Schema.Required(),
-    MongoDB.Schema.Object(() => SettingsEntity),
-    Class.Public()
-], AccountEntity.prototype, "settings", void 0);
-AccountEntity = __decorate([
-    MongoDB.Schema.Entity('Accounts'),
-    Class.Describe()
-], AccountEntity);
+let AccountEntity = /** @class */ (() => {
+    let AccountEntity = class AccountEntity extends Class.Null {
+    };
+    __decorate([
+        MongoDB.Schema.Primary(),
+        MongoDB.Schema.DocumentId(),
+        Class.Public()
+    ], AccountEntity.prototype, "id", void 0);
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.ObjectId(),
+        Class.Public()
+    ], AccountEntity.prototype, "ownerId", void 0);
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.String(),
+        Class.Public()
+    ], AccountEntity.prototype, "typeName", void 0);
+    __decorate([
+        MongoDB.Schema.JoinAll('name', () => TypeEntity, 'typeName', {
+            sort: {
+                description: "desc" /* Descending */
+            },
+            limit: {
+                start: 0,
+                count: 3
+            }
+        }),
+        Class.Public()
+    ], AccountEntity.prototype, "typeList", void 0);
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.Array(String),
+        Class.Public()
+    ], AccountEntity.prototype, "roleNames", void 0);
+    __decorate([
+        MongoDB.Schema.JoinAll('name', () => TypeEntity, 'roleNames', {
+            limit: {
+                start: 0,
+                count: 6
+            }
+        }),
+        Class.Public()
+    ], AccountEntity.prototype, "roleList", void 0);
+    __decorate([
+        MongoDB.Schema.Join('id', () => UserEntity, 'ownerId'),
+        Class.Public()
+    ], AccountEntity.prototype, "owner", void 0);
+    __decorate([
+        MongoDB.Schema.ArrayIds(),
+        Class.Public()
+    ], AccountEntity.prototype, "allowedUsersIdList", void 0);
+    __decorate([
+        MongoDB.Schema.Join('id', () => UserEntity, 'allowedUsersIdList', {
+            status: { eq: 'enabled' }
+        }),
+        Class.Public()
+    ], AccountEntity.prototype, "allowedUsersList", void 0);
+    __decorate([
+        MongoDB.Schema.Required(),
+        MongoDB.Schema.Object(() => SettingsEntity),
+        Class.Public()
+    ], AccountEntity.prototype, "settings", void 0);
+    AccountEntity = __decorate([
+        MongoDB.Schema.Entity('Accounts'),
+        Class.Describe()
+    ], AccountEntity);
+    return AccountEntity;
+})();
 /**
  * Account mapper.
  */
-let AccountMapper = class AccountMapper extends MongoDB.Mapper {
-    /**
-     * Default constructor.
-     * @param session Mapper session.
-     */
-    constructor(session) {
-        super(session, AccountEntity);
-    }
-    /**
-     * Creates a new account.
-     * @param ownerId Account owner id.
-     * @param type Account type.
-     * @param role Account role types.
-     * @param allowedUsersIdList Id list of allows users in this account.
-     * @param sharedUsersIdList Id list of shared users in this account.
-     * @param usersIdGroupA Id list of users in the first account group.
-     * @param usersIdGroupB Id list of users in the second account group.
-     * @returns Returns the new account id.
-     */
-    async create(ownerId, type, roles, userAId, userBId, userCId) {
-        return await this.insert({
-            ownerId: ownerId,
-            typeName: type,
-            roleNames: roles,
-            allowedUsersIdList: [userAId, userBId, userCId],
-            settings: {
-                contactId: ownerId,
-                sharedUsersIdList: [userCId, userBId, userAId],
-                messages: {
-                    adminId: ownerId,
-                    usersIdList: [userAId, userBId, userCId]
-                },
-                groups: [
-                    {
-                        adminId: userAId,
-                        usersIdList: [userBId, userCId],
-                        notifications: [
-                            {
-                                userId: userAId,
-                                description: {
-                                    targets: [{ userId: userBId }, { userId: userCId }]
-                                }
-                            },
-                            {
-                                userId: userBId,
-                                description: {
-                                    targets: [{ userId: userCId }]
-                                }
-                            }
-                        ]
+let AccountMapper = /** @class */ (() => {
+    let AccountMapper = class AccountMapper extends MongoDB.Mapper {
+        /**
+         * Default constructor.
+         * @param session Mapper session.
+         */
+        constructor(session) {
+            super(session, AccountEntity);
+        }
+        /**
+         * Creates a new account.
+         * @param ownerId Account owner id.
+         * @param type Account type.
+         * @param role Account role types.
+         * @param allowedUsersIdList Id list of allows users in this account.
+         * @param sharedUsersIdList Id list of shared users in this account.
+         * @param usersIdGroupA Id list of users in the first account group.
+         * @param usersIdGroupB Id list of users in the second account group.
+         * @returns Returns the new account id.
+         */
+        async create(ownerId, type, roles, userAId, userBId, userCId) {
+            return await this.insert({
+                ownerId: ownerId,
+                typeName: type,
+                roleNames: roles,
+                allowedUsersIdList: [userAId, userBId, userCId],
+                settings: {
+                    contactId: ownerId,
+                    sharedUsersIdList: [userCId, userBId, userAId],
+                    messages: {
+                        adminId: ownerId,
+                        usersIdList: [userAId, userBId, userCId]
                     },
-                    {
-                        adminId: userBId,
-                        usersIdList: [userAId, userCId],
-                        notifications: [
-                            {
-                                userId: userBId,
-                                description: {
-                                    targets: [{ userId: userAId }]
+                    groups: [
+                        {
+                            adminId: userAId,
+                            usersIdList: [userBId, userCId],
+                            notifications: [
+                                {
+                                    userId: userAId,
+                                    description: {
+                                        targets: [{ userId: userBId }, { userId: userCId }]
+                                    }
+                                },
+                                {
+                                    userId: userBId,
+                                    description: {
+                                        targets: [{ userId: userCId }]
+                                    }
                                 }
-                            }
-                        ]
-                    },
-                    {
-                        adminId: userCId,
-                        usersIdList: [userAId, userBId],
-                        notifications: []
-                    }
-                ]
-            }
-        });
-    }
-    /**
-     * Reads an account entity that corresponds to the specified account id.
-     * @param id Account id. Fields to be selected.
-     * @param select
-     * @returns Returns a promise to get the account entity or undefined when the account was not found.
-     */
-    async read(id, select) {
-        return await super.findById(id, select);
-    }
-};
-__decorate([
-    Class.Public()
-], AccountMapper.prototype, "create", null);
-__decorate([
-    Class.Public()
-], AccountMapper.prototype, "read", null);
-AccountMapper = __decorate([
-    Class.Describe()
-], AccountMapper);
+                            ]
+                        },
+                        {
+                            adminId: userBId,
+                            usersIdList: [userAId, userCId],
+                            notifications: [
+                                {
+                                    userId: userBId,
+                                    description: {
+                                        targets: [{ userId: userAId }]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            adminId: userCId,
+                            usersIdList: [userAId, userBId],
+                            notifications: []
+                        }
+                    ]
+                }
+            });
+        }
+        /**
+         * Reads an account entity that corresponds to the specified account id.
+         * @param id Account id. Fields to be selected.
+         * @param select
+         * @returns Returns a promise to get the account entity or undefined when the account was not found.
+         */
+        async read(id, select) {
+            return await super.findById(id, select);
+        }
+    };
+    __decorate([
+        Class.Public()
+    ], AccountMapper.prototype, "create", null);
+    __decorate([
+        Class.Public()
+    ], AccountMapper.prototype, "read", null);
+    AccountMapper = __decorate([
+        Class.Describe()
+    ], AccountMapper);
+    return AccountMapper;
+})();
 /**
  * Test operations.
  */

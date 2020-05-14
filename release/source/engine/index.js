@@ -5,16 +5,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * This source code is licensed under the MIT License as described in the file LICENSE.
  */
 var sort_1 = require("./sort");
-exports.Sort = sort_1.Sort;
+Object.defineProperty(exports, "Sort", { enumerable: true, get: function () { return sort_1.Sort; } });
 var match_1 = require("./match");
-exports.Match = match_1.Match;
+Object.defineProperty(exports, "Match", { enumerable: true, get: function () { return match_1.Match; } });
 var filter_1 = require("./filter");
-exports.Filter = filter_1.Filter;
+Object.defineProperty(exports, "Filter", { enumerable: true, get: function () { return filter_1.Filter; } });
 var pipeline_1 = require("./pipeline");
-exports.Pipeline = pipeline_1.Pipeline;
+Object.defineProperty(exports, "Pipeline", { enumerable: true, get: function () { return pipeline_1.Pipeline; } });
 var schema_1 = require("./schema");
-exports.Schema = schema_1.Schema;
+Object.defineProperty(exports, "Schema", { enumerable: true, get: function () { return schema_1.Schema; } });
 var bson_1 = require("./bson");
-exports.ObjectId = bson_1.ObjectId;
-exports.Binary = bson_1.Binary;
+Object.defineProperty(exports, "ObjectId", { enumerable: true, get: function () { return bson_1.ObjectId; } });
+Object.defineProperty(exports, "Binary", { enumerable: true, get: function () { return bson_1.Binary; } });
 //# sourceMappingURL=index.js.map

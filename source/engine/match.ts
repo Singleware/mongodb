@@ -14,10 +14,26 @@ import * as BSON from './bson';
 @Class.Describe()
 export class Match extends Class.Null {
   /**
-   * Try to convert the specified input array to an ObjectID array.
+   * Try to convert the specified input value to a filterable.
+   * @param value Input value.
+   * @param schema Column schema.
+   * @returns Returns the converted value or the specified input value.
+   */
+  @Class.Private()
+  private static castValue<T extends string | number>(value: T, schema: Types.Columns.Real): T | BSON.ObjectId | Date {
+    if (schema.model === BSON.ObjectId || schema.formats.includes(Types.Format.Id)) {
+      return BSON.ObjectId.isValid(value) ? new BSON.ObjectId(value) : value;
+    } else if (schema.model === Date || schema.formats.includes(Types.Format.Date)) {
+      return !isNaN(Date.parse(<string>value)) ? new Date(Date.parse(<string>value)) : value;
+    }
+    return value;
+  }
+
+  /**
+   * Try to convert the specified input array to a filterable array.
    * @param input Input array.
    * @param schema Column schema.
-   * @returns Returns the array containing all converted and not converted values
+   * @returns Returns the array containing all converted and not converted values.
    * @throws Throws an type error when the specified value isn't an array.
    */
   @Class.Private()
@@ -25,39 +41,8 @@ export class Match extends Class.Null {
     if (!(input instanceof Array)) {
       throw new TypeError(`The filter input must be an array.`);
     } else {
-      if (schema.model === BSON.ObjectId) {
-        return input.map(value => {
-          return BSON.ObjectId.isValid(value) ? new BSON.ObjectId(value) : value;
-        });
-      } else if (schema.model === Date) {
-        return input.map(value => {
-          const timestamp = Date.parse(<string>value);
-          return !isNaN(timestamp) ? new Date(timestamp) : value;
-        });
-      }
-      return input;
+      return input.map(value => this.castValue(value, schema));
     }
-  }
-
-  /**
-   * Try to convert the specified input value to an ObjectID.
-   * @param value Input value.
-   * @param schema Column schema.
-   * @returns Returns the converted value when the operation was successful, otherwise returns the input value.
-   */
-  @Class.Private()
-  private static castValue<T extends string | number>(value: T, schema: Types.Columns.Real): T | BSON.ObjectId | Date {
-    if (schema.formats.includes(Types.Format.Id)) {
-      if (BSON.ObjectId.isValid(value)) {
-        return new BSON.ObjectId(<string>value);
-      }
-    } else if (schema.formats.includes(Types.Format.Date)) {
-      const timestamp = Date.parse(<string>value);
-      if (!isNaN(timestamp)) {
-        return new Date(timestamp);
-      }
-    }
-    return value;
   }
 
   /**

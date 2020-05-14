@@ -6,6 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.Schema = void 0;
 /*!
  * Copyright (C) 2018-2020 Silas B. Domingos
  * This source code is licensed under the MIT License as described in the file LICENSE.
@@ -17,78 +18,81 @@ const caster_1 = require("./caster");
 /**
  * Schema helper class.
  */
-let Schema = class Schema extends Types.Schema {
-    /**
-     * Decorates the specified property to be an object Id column.
-     * @returns Returns the decorator method.
-     */
-    static ObjectId() {
-        return (target, property, descriptor) => {
-            super.Id()(target, property, descriptor);
-            return super.Convert(caster_1.Caster.ObjectId.bind(caster_1.Caster))(target, property, descriptor);
-        };
-    }
-    /**
-     * Decorates the specified property to be the document object Id column.
-     * @returns Returns the decorator method.
-     */
-    static DocumentId() {
-        return (target, property, descriptor) => {
-            this.ObjectId()(target, property, descriptor);
-            return super.Alias('_id')(target, property, descriptor);
-        };
-    }
-    /**
-     * Decorates the specified property to be a map column that accepts only Object Ids.
-     * @returns Returns the decorator method.
-     */
-    static MapIds() {
-        return (target, property, descriptor) => {
-            super.Map(Engine.ObjectId)(target, property, descriptor);
-            return super.Convert(caster_1.Caster.ObjectIdMap.bind(caster_1.Caster))(target, property, descriptor);
-        };
-    }
-    /**
-     * Decorates the specified property to be an array column that accepts only Object Ids.
-     * @param unique Determines whether or not the array of items must be unique.
-     * @param minimum Minimum items.
-     * @param maximum Maximum items.
-     * @returns Returns the decorator method.
-     */
-    static ArrayIds(unique, minimum, maximum) {
-        return (target, property, descriptor) => {
-            super.Array(Engine.ObjectId, void 0, unique, minimum, maximum)(target, property, descriptor);
-            return super.Convert(caster_1.Caster.ObjectIdArray.bind(caster_1.Caster))(target, property, descriptor);
-        };
-    }
-    /**
-     * Decorates the specified property to be an Object Id column.
-     * @returns Returns the decorator method.
-     */
-    static Binary() {
-        return (target, property, descriptor) => {
-            super.Binary()(target, property, descriptor);
-            return super.Convert(caster_1.Caster.Binary.bind(caster_1.Caster))(target, property, descriptor);
-        };
-    }
-};
-__decorate([
-    Class.Public()
-], Schema, "ObjectId", null);
-__decorate([
-    Class.Public()
-], Schema, "DocumentId", null);
-__decorate([
-    Class.Public()
-], Schema, "MapIds", null);
-__decorate([
-    Class.Public()
-], Schema, "ArrayIds", null);
-__decorate([
-    Class.Public()
-], Schema, "Binary", null);
-Schema = __decorate([
-    Class.Describe()
-], Schema);
+let Schema = /** @class */ (() => {
+    let Schema = class Schema extends Types.Schema {
+        /**
+         * Decorates the specified property to be an object Id column.
+         * @returns Returns the decorator method.
+         */
+        static ObjectId() {
+            return (target, property, descriptor) => {
+                super.Id()(target, property, descriptor);
+                return super.Convert(caster_1.Caster.ObjectId.bind(caster_1.Caster))(target, property, descriptor);
+            };
+        }
+        /**
+         * Decorates the specified property to be the document object Id column.
+         * @returns Returns the decorator method.
+         */
+        static DocumentId() {
+            return (target, property, descriptor) => {
+                this.ObjectId()(target, property, descriptor);
+                return super.Alias('_id')(target, property, descriptor);
+            };
+        }
+        /**
+         * Decorates the specified property to be a map column that accepts only Object Ids.
+         * @returns Returns the decorator method.
+         */
+        static MapIds() {
+            return (target, property, descriptor) => {
+                super.Map(Engine.ObjectId)(target, property, descriptor);
+                return super.Convert(caster_1.Caster.ObjectIdMap.bind(caster_1.Caster))(target, property, descriptor);
+            };
+        }
+        /**
+         * Decorates the specified property to be an array column that accepts only Object Ids.
+         * @param unique Determines whether or not the array of items must be unique.
+         * @param minimum Minimum items.
+         * @param maximum Maximum items.
+         * @returns Returns the decorator method.
+         */
+        static ArrayIds(unique, minimum, maximum) {
+            return (target, property, descriptor) => {
+                super.Array(Engine.ObjectId, void 0, unique, minimum, maximum)(target, property, descriptor);
+                return super.Convert(caster_1.Caster.ObjectIdArray.bind(caster_1.Caster))(target, property, descriptor);
+            };
+        }
+        /**
+         * Decorates the specified property to be an Object Id column.
+         * @returns Returns the decorator method.
+         */
+        static Binary() {
+            return (target, property, descriptor) => {
+                super.Binary()(target, property, descriptor);
+                return super.Convert(caster_1.Caster.Binary.bind(caster_1.Caster))(target, property, descriptor);
+            };
+        }
+    };
+    __decorate([
+        Class.Public()
+    ], Schema, "ObjectId", null);
+    __decorate([
+        Class.Public()
+    ], Schema, "DocumentId", null);
+    __decorate([
+        Class.Public()
+    ], Schema, "MapIds", null);
+    __decorate([
+        Class.Public()
+    ], Schema, "ArrayIds", null);
+    __decorate([
+        Class.Public()
+    ], Schema, "Binary", null);
+    Schema = __decorate([
+        Class.Describe()
+    ], Schema);
+    return Schema;
+})();
 exports.Schema = Schema;
 //# sourceMappingURL=schema.js.map
