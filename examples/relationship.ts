@@ -50,13 +50,20 @@ class UserEntity extends Class.Null implements UserEntityBase {
  * User mapper.
  */
 @Class.Describe()
-class UserMapper extends MongoDB.Mapper<UserEntityBase> {
+class UserMapper extends Class.Null {
+  /**
+   * User mapper.
+   */
+  @Class.Private()
+  private mapper: MongoDB.Mapper<UserEntityBase>;
+
   /**
    * Default constructor.
    * @param session Mapper session.
    */
   constructor(session: MongoDB.Session) {
-    super(session, UserEntity);
+    super();
+    this.mapper = new MongoDB.Mapper(session, UserEntity);
   }
 
   /**
@@ -67,9 +74,9 @@ class UserMapper extends MongoDB.Mapper<UserEntityBase> {
    */
   @Class.Public()
   public async create(name: string, status: 'enabled' | 'disabled'): Promise<string> {
-    return await this.insert(<UserEntityBase>{
+    return this.mapper.insert(<UserEntityBase>{
       name: name,
-      status: status
+      status: status,
     });
   }
 }
@@ -123,13 +130,20 @@ class TypeEntity extends Class.Null implements TypeEntityBase {
  * Type mapper.
  */
 @Class.Describe()
-class TypeMapper extends MongoDB.Mapper<TypeEntityBase> {
+class TypeMapper extends Class.Null {
+  /**
+   * Type mapper.
+   */
+  @Class.Private()
+  private mapper: MongoDB.Mapper<TypeEntityBase>;
+
   /**
    * Default constructor.
    * @param session Mapper session.
    */
   constructor(session: MongoDB.Session) {
-    super(session, TypeEntity);
+    super();
+    this.mapper = new MongoDB.Mapper(session, TypeEntity);
   }
 
   /**
@@ -140,9 +154,9 @@ class TypeMapper extends MongoDB.Mapper<TypeEntityBase> {
    */
   @Class.Public()
   public async create(name: string, description: string): Promise<string> {
-    return await this.insert(<TypeEntityBase>{
+    return this.mapper.insert(<TypeEntityBase>{
       name: name,
-      description: description
+      description: description,
     });
   }
 }
@@ -495,12 +509,12 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
    */
   @MongoDB.Schema.JoinAll('name', () => TypeEntity, 'typeName', {
     sort: {
-      description: MongoDB.Order.Descending
+      description: MongoDB.Order.Descending,
     },
     limit: {
       start: 0,
-      count: 3
-    }
+      count: 3,
+    },
   })
   @Class.Public()
   public typeList!: TypeEntity[];
@@ -519,8 +533,8 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
   @MongoDB.Schema.JoinAll('name', () => TypeEntity, 'roleNames', {
     limit: {
       start: 0,
-      count: 6
-    }
+      count: 6,
+    },
   })
   @Class.Public()
   public roleList!: TypeEntity[];
@@ -543,7 +557,7 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
    * Entity list of allowed users in this account.
    */
   @MongoDB.Schema.Join('id', () => UserEntity, 'allowedUsersIdList', {
-    status: { eq: 'enabled' }
+    status: { eq: 'enabled' },
   })
   @Class.Public()
   public readonly allowedUsersList!: UserEntity[];
@@ -561,13 +575,20 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
  * Account mapper.
  */
 @Class.Describe()
-class AccountMapper extends MongoDB.Mapper<AccountEntityBase> {
+class AccountMapper extends Class.Null {
+  /**
+   * Account mapper.
+   */
+  @Class.Private()
+  private mapper: MongoDB.Mapper<AccountEntityBase>;
+
   /**
    * Default constructor.
    * @param session Mapper session.
    */
   constructor(session: MongoDB.Session) {
-    super(session, AccountEntity);
+    super();
+    this.mapper = new MongoDB.Mapper(session, AccountEntity);
   }
 
   /**
@@ -590,7 +611,7 @@ class AccountMapper extends MongoDB.Mapper<AccountEntityBase> {
     userBId: any,
     userCId: any
   ): Promise<string> {
-    return await this.insert({
+    return this.mapper.insert({
       ownerId: ownerId,
       typeName: type,
       roleNames: roles,
@@ -600,7 +621,7 @@ class AccountMapper extends MongoDB.Mapper<AccountEntityBase> {
         sharedUsersIdList: [userCId, userBId, userAId],
         messages: {
           adminId: ownerId,
-          usersIdList: [userAId, userBId, userCId]
+          usersIdList: [userAId, userBId, userCId],
         },
         groups: [
           {
@@ -610,16 +631,16 @@ class AccountMapper extends MongoDB.Mapper<AccountEntityBase> {
               {
                 userId: userAId,
                 description: {
-                  targets: [{ userId: userBId }, { userId: userCId }]
-                }
+                  targets: [{ userId: userBId }, { userId: userCId }],
+                },
               },
               {
                 userId: userBId,
                 description: {
-                  targets: [{ userId: userCId }]
-                }
-              }
-            ]
+                  targets: [{ userId: userCId }],
+                },
+              },
+            ],
           },
           {
             adminId: userBId,
@@ -628,18 +649,18 @@ class AccountMapper extends MongoDB.Mapper<AccountEntityBase> {
               {
                 userId: userBId,
                 description: {
-                  targets: [{ userId: userAId }]
-                }
-              }
-            ]
+                  targets: [{ userId: userAId }],
+                },
+              },
+            ],
           },
           {
             adminId: userCId,
             usersIdList: [userAId, userBId],
-            notifications: []
-          }
-        ]
-      }
+            notifications: [],
+          },
+        ],
+      },
     });
   }
 
@@ -651,7 +672,7 @@ class AccountMapper extends MongoDB.Mapper<AccountEntityBase> {
    */
   @Class.Public()
   public async read(id: any, select?: string[]): Promise<AccountEntity | undefined> {
-    return <AccountEntity | undefined>await super.findById(id, select);
+    return <AccountEntity | undefined>await this.mapper.findById(id, select);
   }
 }
 
@@ -700,7 +721,7 @@ async function example(): Promise<void> {
       'settings.groups.admin.name',
       'settings.groups.usersList.name',
       'settings.groups.notifications.user.name',
-      'settings.groups.notifications.description.targets.user.name'
+      'settings.groups.notifications.description.targets.user.name',
     ]);
     if (account !== void 0) {
       const entity = MongoDB.Normalizer.create(AccountEntity, account, false, true);

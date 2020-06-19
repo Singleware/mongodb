@@ -17,38 +17,35 @@ const Types = require("../types");
 /**
  * Sort helper class.
  */
-let Sort = /** @class */ (() => {
-    let Sort = class Sort extends Class.Null {
-        /**
-         * Build a new sorting entity based on the specified sort map.
-         * @param model Model type.
-         * @param sort Sort map.
-         * @returns Returns the new sorting entity.
-         */
-        static build(model, sort) {
-            const entity = {};
-            for (const column in sort) {
-                const schemas = Mapping.Helper.getPathColumns(model, column);
-                const path = Types.Columns.Helper.getPath(schemas);
-                switch (sort[column]) {
-                    case "asc" /* Ascending */:
-                        entity[path] = 1;
-                        break;
-                    case "desc" /* Descending */:
-                        entity[path] = -1;
-                        break;
-                }
+let Sort = class Sort extends Class.Null {
+    /**
+     * Build a new sorting entity based on the specified sort map.
+     * @param model Model type.
+     * @param sort Sort map.
+     * @returns Returns the new sorting entity.
+     */
+    static build(model, sort) {
+        const entity = {};
+        for (const column in sort) {
+            const schemas = Mapping.Helper.getPathColumns(model, column);
+            const path = Types.Columns.Helper.getPath(schemas);
+            switch (sort[column]) {
+                case "asc" /* Ascending */:
+                    entity[path] = 1;
+                    break;
+                case "desc" /* Descending */:
+                    entity[path] = -1;
+                    break;
             }
-            return entity;
         }
-    };
-    __decorate([
-        Class.Public()
-    ], Sort, "build", null);
-    Sort = __decorate([
-        Class.Describe()
-    ], Sort);
-    return Sort;
-})();
+        return entity;
+    }
+};
+__decorate([
+    Class.Public()
+], Sort, "build", null);
+Sort = __decorate([
+    Class.Describe()
+], Sort);
 exports.Sort = Sort;
 //# sourceMappingURL=sort.js.map

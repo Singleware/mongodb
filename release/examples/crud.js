@@ -15,144 +15,135 @@ const MongoDB = require("../source");
 /**
  * User details, entity class.
  */
-let UserDetailsEntity = /** @class */ (() => {
-    let UserDetailsEntity = class UserDetailsEntity extends Class.Null {
-    };
-    __decorate([
-        MongoDB.Schema.Date(),
-        Class.Public()
-    ], UserDetailsEntity.prototype, "birthDate", void 0);
-    __decorate([
-        MongoDB.Schema.String(),
-        Class.Public()
-    ], UserDetailsEntity.prototype, "phone", void 0);
-    __decorate([
-        MongoDB.Schema.String(),
-        Class.Public()
-    ], UserDetailsEntity.prototype, "email", void 0);
-    UserDetailsEntity = __decorate([
-        MongoDB.Schema.Entity('UserDetailsEntity'),
-        Class.Describe()
-    ], UserDetailsEntity);
-    return UserDetailsEntity;
-})();
+let UserDetailsEntity = class UserDetailsEntity extends Class.Null {
+};
+__decorate([
+    MongoDB.Schema.Date(),
+    Class.Public()
+], UserDetailsEntity.prototype, "birthDate", void 0);
+__decorate([
+    MongoDB.Schema.String(),
+    Class.Public()
+], UserDetailsEntity.prototype, "phone", void 0);
+__decorate([
+    MongoDB.Schema.String(),
+    Class.Public()
+], UserDetailsEntity.prototype, "email", void 0);
+UserDetailsEntity = __decorate([
+    MongoDB.Schema.Entity('UserDetailsEntity'),
+    Class.Describe()
+], UserDetailsEntity);
 /**
  * User entity class.
  */
-let UserEntity = /** @class */ (() => {
-    let UserEntity = class UserEntity extends Class.Null {
-    };
-    __decorate([
-        MongoDB.Schema.Primary(),
-        MongoDB.Schema.DocumentId(),
-        Class.Public()
-    ], UserEntity.prototype, "id", void 0);
-    __decorate([
-        MongoDB.Schema.String(),
-        Class.Public()
-    ], UserEntity.prototype, "firstName", void 0);
-    __decorate([
-        MongoDB.Schema.String(),
-        Class.Public()
-    ], UserEntity.prototype, "lastName", void 0);
-    __decorate([
-        MongoDB.Schema.Required(),
-        MongoDB.Schema.Object(UserDetailsEntity),
-        Class.Public()
-    ], UserEntity.prototype, "details", void 0);
-    UserEntity = __decorate([
-        MongoDB.Schema.Entity('UserEntity'),
-        Class.Describe()
-    ], UserEntity);
-    return UserEntity;
-})();
+let UserEntity = class UserEntity extends Class.Null {
+};
+__decorate([
+    MongoDB.Schema.Primary(),
+    MongoDB.Schema.DocumentId(),
+    Class.Public()
+], UserEntity.prototype, "id", void 0);
+__decorate([
+    MongoDB.Schema.String(),
+    Class.Public()
+], UserEntity.prototype, "firstName", void 0);
+__decorate([
+    MongoDB.Schema.String(),
+    Class.Public()
+], UserEntity.prototype, "lastName", void 0);
+__decorate([
+    MongoDB.Schema.Required(),
+    MongoDB.Schema.Object(UserDetailsEntity),
+    Class.Public()
+], UserEntity.prototype, "details", void 0);
+UserEntity = __decorate([
+    MongoDB.Schema.Entity('UserEntity'),
+    Class.Describe()
+], UserEntity);
 /**
  * Database mapper.
  */
-let UserMapper = /** @class */ (() => {
-    let UserMapper = class UserMapper extends MongoDB.Mapper {
-        /**
-         * Default constructor.
-         * @param session Mapper session.
-         */
-        constructor(session) {
-            super(session, UserEntity);
-        }
-        /**
-         * Create a test user.
-         * @returns Returns a promise to get the new user id.
-         */
-        async create() {
-            return await this.insert({
-                firstName: 'First 1',
-                lastName: 'Last 1',
-                details: {
-                    birthDate: new Date()
-                }
-            });
-        }
-        /**
-         * Change the test user.
-         * @param id User id.
-         * @returns Returns a promise to get true when the is updated.
-         */
-        async change(id) {
-            return await this.updateById(id, {
-                firstName: 'Changed!',
-                details: {
-                    phone: '+551199999999'
-                }
-            });
-        }
-        /**
-         * Replace the test user.
-         * @param id User id.
-         * @returns Returns a promise to get the replacement status.
-         */
-        async replace(id) {
-            return await this.replaceById(id, {
-                id: id,
-                firstName: 'Replaced!',
-                details: {}
-            });
-        }
-        /**
-         * Read the test user.
-         * @param id User id.
-         * @returns Returns a promise to get user entity.
-         */
-        async read(id) {
-            return await this.findById(id);
-        }
-        /**
-         * Remove the test user.
-         * @param id User id.
-         * @returns Returns a promise to get true when the user is removed.
-         */
-        async remove(id) {
-            return await this.deleteById(id);
-        }
-    };
-    __decorate([
-        Class.Public()
-    ], UserMapper.prototype, "create", null);
-    __decorate([
-        Class.Public()
-    ], UserMapper.prototype, "change", null);
-    __decorate([
-        Class.Public()
-    ], UserMapper.prototype, "replace", null);
-    __decorate([
-        Class.Public()
-    ], UserMapper.prototype, "read", null);
-    __decorate([
-        Class.Public()
-    ], UserMapper.prototype, "remove", null);
-    UserMapper = __decorate([
-        Class.Describe()
-    ], UserMapper);
-    return UserMapper;
-})();
+let UserMapper = class UserMapper extends MongoDB.Mapper {
+    /**
+     * Default constructor.
+     * @param session Mapper session.
+     */
+    constructor(session) {
+        super(session, UserEntity);
+    }
+    /**
+     * Create a test user.
+     * @returns Returns a promise to get the new user id.
+     */
+    async create() {
+        return await this.insert({
+            firstName: 'First 1',
+            lastName: 'Last 1',
+            details: {
+                birthDate: new Date()
+            }
+        });
+    }
+    /**
+     * Change the test user.
+     * @param id User id.
+     * @returns Returns a promise to get true when the is updated.
+     */
+    async change(id) {
+        return await this.updateById(id, {
+            firstName: 'Changed!',
+            details: {
+                phone: '+551199999999'
+            }
+        });
+    }
+    /**
+     * Replace the test user.
+     * @param id User id.
+     * @returns Returns a promise to get the replacement status.
+     */
+    async replace(id) {
+        return await this.replaceById(id, {
+            id: id,
+            firstName: 'Replaced!',
+            details: {}
+        });
+    }
+    /**
+     * Read the test user.
+     * @param id User id.
+     * @returns Returns a promise to get user entity.
+     */
+    async read(id) {
+        return await this.findById(id);
+    }
+    /**
+     * Remove the test user.
+     * @param id User id.
+     * @returns Returns a promise to get true when the user is removed.
+     */
+    async remove(id) {
+        return await this.deleteById(id);
+    }
+};
+__decorate([
+    Class.Public()
+], UserMapper.prototype, "create", null);
+__decorate([
+    Class.Public()
+], UserMapper.prototype, "change", null);
+__decorate([
+    Class.Public()
+], UserMapper.prototype, "replace", null);
+__decorate([
+    Class.Public()
+], UserMapper.prototype, "read", null);
+__decorate([
+    Class.Public()
+], UserMapper.prototype, "remove", null);
+UserMapper = __decorate([
+    Class.Describe()
+], UserMapper);
 /**
  * Test operations.
  */

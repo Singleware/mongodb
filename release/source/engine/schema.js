@@ -18,204 +18,201 @@ const BSON = require("./bson");
 /**
  * Schema helper class.
  */
-let Schema = /** @class */ (() => {
-    let Schema = class Schema extends Class.Null {
-        /**
-         * Sets the specified target property if the specified source property has some data.
-         * @param to Target property.
-         * @param target Target entity.
-         * @param from Source property.
-         * @param source Source entity.
-         */
-        static setProperty(to, target, from, source) {
-            if (source[from] !== void 0) {
-                target[to] = source[from];
-            }
+let Schema = class Schema extends Class.Null {
+    /**
+     * Sets the specified target property if the specified source property has some data.
+     * @param to Target property.
+     * @param target Target entity.
+     * @param from Source property.
+     * @param source Source entity.
+     */
+    static setProperty(to, target, from, source) {
+        if (source[from] !== void 0) {
+            target[to] = source[from];
         }
-        /**
-         * Build a new document schema based on the model in the specified column schema.
-         * @param column Column schema.
-         * @returns Returns the new document schema.
-         */
-        static buildDocumentSchema(column) {
-            if (column.model && Types.Schema.isEntity(column.model)) {
-                return this.build(Types.Schema.getRealRow(Mapping.Helper.getEntityModel(column.model)));
-            }
-            else {
-                return this.build({});
-            }
+    }
+    /**
+     * Build a new document schema based on the model in the specified column schema.
+     * @param column Column schema.
+     * @returns Returns the new document schema.
+     */
+    static buildDocumentSchema(column) {
+        if (column.model && Types.Schema.isEntity(column.model)) {
+            return this.build(Types.Schema.getRealRow(Mapping.Helper.getEntityModel(column.model)));
         }
-        /**
-         * Build a new property schema based on the specified column schema.
-         * @param column Column Schema.
-         * @returns Return the generated schema properties.
-         * @throws Throws an error when the column type is unsupported.
-         */
-        static buildPropertySchema(column) {
-            const entity = { bsonType: [] };
-            for (const type of column.formats) {
-                switch (type) {
-                    case 0 /* Id */:
-                        entity.bsonType.push('objectId');
-                        break;
-                    case 1 /* Null */:
-                        entity.bsonType.push('null');
-                        break;
-                    case 2 /* Binary */:
-                        entity.bsonType.push('binData');
-                        break;
-                    case 3 /* Boolean */:
-                        entity.bsonType.push('bool');
-                        break;
-                    case 4 /* Integer */:
-                        entity.bsonType.push('int');
-                        this.setProperty('minimum', entity, 'minimum', column);
-                        this.setProperty('maximum', entity, 'maximum', column);
-                        break;
-                    case 5 /* Decimal */:
-                        entity.bsonType.push('double');
-                        this.setProperty('minimum', entity, 'minimum', column);
-                        this.setProperty('maximum', entity, 'maximum', column);
-                        break;
-                    case 6 /* Number */:
-                        entity.bsonType.push('number');
-                        this.setProperty('minimum', entity, 'minimum', column);
-                        this.setProperty('maximum', entity, 'maximum', column);
-                        break;
-                    case 7 /* String */:
-                        entity.bsonType.push('string');
-                        this.setProperty('minLength', entity, 'minimum', column);
-                        this.setProperty('maxLength', entity, 'maximum', column);
-                        break;
-                    case 8 /* Enumeration */:
-                        entity.bsonType.push('string');
-                        entity.enum = column.values;
-                        break;
-                    case 9 /* Pattern */:
-                        const pattern = column.pattern.toString();
-                        entity.bsonType.push('string');
-                        entity.pattern = pattern.substring(1, pattern.lastIndexOf('/'));
-                        break;
-                    case 10 /* Timestamp */:
-                        entity.bsonType.push('timestamp');
-                        break;
-                    case 11 /* Date */:
-                        entity.bsonType.push('date');
-                        break;
-                    case 12 /* Array */:
-                        entity.bsonType.push('array');
-                        this.setProperty('minItems', entity, 'minimum', column);
-                        this.setProperty('maxItems', entity, 'maximum', column);
-                        this.setProperty('uniqueItems', entity, 'unique', column);
-                        switch (column.model) {
-                            case Object:
-                                entity.items = { bsonType: 'object' };
-                                break;
-                            case String:
-                                entity.items = { bsonType: 'string' };
-                                break;
-                            case Number:
-                                entity.items = { bsonType: 'number' };
-                                break;
-                            case Boolean:
-                                entity.items = { bsonType: 'bool' };
-                                break;
-                            case Date:
-                                entity.items = { bsonType: 'date' };
-                                break;
-                            case BSON.ObjectId:
-                                entity.items = { bsonType: 'objectId' };
-                                break;
-                            default:
-                                entity.items = this.buildDocumentSchema(column);
-                        }
-                        break;
-                    case 13 /* Map */:
-                        entity.bsonType.push('object');
-                        switch (column.model) {
-                            case Object:
-                                entity.additionalProperties = { bsonType: 'object' };
-                                break;
-                            case String:
-                                entity.additionalProperties = { bsonType: 'string' };
-                                break;
-                            case Number:
-                                entity.additionalProperties = { bsonType: 'number' };
-                                break;
-                            case Boolean:
-                                entity.additionalProperties = { bsonType: 'bool' };
-                                break;
-                            case Date:
-                                entity.additionalProperties = { bsonType: 'date' };
-                                break;
-                            case BSON.ObjectId:
-                                entity.additionalProperties = { bsonType: 'objectId' };
-                                break;
-                            default:
-                                entity.additionalProperties = this.buildDocumentSchema(column);
-                        }
-                        break;
-                    case 14 /* Object */:
-                        entity.bsonType.push('object');
-                        if (column.model === Object) {
-                            entity.additionalProperties = true;
-                        }
-                        else {
-                            const result = this.buildDocumentSchema(column);
-                            entity.properties = result.properties;
-                            entity.additionalProperties = false;
-                            this.setProperty('required', entity, 'required', result);
-                        }
-                        break;
-                    default:
-                        throw new TypeError(`Unsupported column schema type '${type}'`);
-                }
-            }
-            return entity;
+        else {
+            return this.build({});
         }
-        /**
-         * Build a new entity schema based on the specified row schema.
-         * @param row Row schema.
-         * @returns Returns the generated schema entity.
-         */
-        static build(row) {
-            const entity = {
-                bsonType: 'object',
-                properties: {},
-                additionalProperties: false
-            };
-            for (const column in row) {
-                const schema = row[column];
-                const name = schema.alias || schema.name;
-                if (schema.required) {
-                    if (entity.required === void 0) {
-                        entity.required = [name];
+    }
+    /**
+     * Build a new property schema based on the specified column schema.
+     * @param column Column Schema.
+     * @returns Return the generated schema properties.
+     * @throws Throws an error when the column type is unsupported.
+     */
+    static buildPropertySchema(column) {
+        const entity = { bsonType: [] };
+        for (const type of column.formats) {
+            switch (type) {
+                case 0 /* Id */:
+                    entity.bsonType.push('objectId');
+                    break;
+                case 1 /* Null */:
+                    entity.bsonType.push('null');
+                    break;
+                case 2 /* Binary */:
+                    entity.bsonType.push('binData');
+                    break;
+                case 3 /* Boolean */:
+                    entity.bsonType.push('bool');
+                    break;
+                case 4 /* Integer */:
+                    entity.bsonType.push('int');
+                    this.setProperty('minimum', entity, 'minimum', column);
+                    this.setProperty('maximum', entity, 'maximum', column);
+                    break;
+                case 5 /* Decimal */:
+                    entity.bsonType.push('double');
+                    this.setProperty('minimum', entity, 'minimum', column);
+                    this.setProperty('maximum', entity, 'maximum', column);
+                    break;
+                case 6 /* Number */:
+                    entity.bsonType.push('number');
+                    this.setProperty('minimum', entity, 'minimum', column);
+                    this.setProperty('maximum', entity, 'maximum', column);
+                    break;
+                case 7 /* String */:
+                    entity.bsonType.push('string');
+                    this.setProperty('minLength', entity, 'minimum', column);
+                    this.setProperty('maxLength', entity, 'maximum', column);
+                    break;
+                case 8 /* Enumeration */:
+                    entity.bsonType.push('string');
+                    entity.enum = column.values;
+                    break;
+                case 9 /* Pattern */:
+                    const pattern = column.pattern.toString();
+                    entity.bsonType.push('string');
+                    entity.pattern = pattern.substring(1, pattern.lastIndexOf('/'));
+                    break;
+                case 10 /* Timestamp */:
+                    entity.bsonType.push('timestamp');
+                    break;
+                case 11 /* Date */:
+                    entity.bsonType.push('date');
+                    break;
+                case 12 /* Array */:
+                    entity.bsonType.push('array');
+                    this.setProperty('minItems', entity, 'minimum', column);
+                    this.setProperty('maxItems', entity, 'maximum', column);
+                    this.setProperty('uniqueItems', entity, 'unique', column);
+                    switch (column.model) {
+                        case Object:
+                            entity.items = { bsonType: 'object' };
+                            break;
+                        case String:
+                            entity.items = { bsonType: 'string' };
+                            break;
+                        case Number:
+                            entity.items = { bsonType: 'number' };
+                            break;
+                        case Boolean:
+                            entity.items = { bsonType: 'bool' };
+                            break;
+                        case Date:
+                            entity.items = { bsonType: 'date' };
+                            break;
+                        case BSON.ObjectId:
+                            entity.items = { bsonType: 'objectId' };
+                            break;
+                        default:
+                            entity.items = this.buildDocumentSchema(column);
+                    }
+                    break;
+                case 13 /* Map */:
+                    entity.bsonType.push('object');
+                    switch (column.model) {
+                        case Object:
+                            entity.additionalProperties = { bsonType: 'object' };
+                            break;
+                        case String:
+                            entity.additionalProperties = { bsonType: 'string' };
+                            break;
+                        case Number:
+                            entity.additionalProperties = { bsonType: 'number' };
+                            break;
+                        case Boolean:
+                            entity.additionalProperties = { bsonType: 'bool' };
+                            break;
+                        case Date:
+                            entity.additionalProperties = { bsonType: 'date' };
+                            break;
+                        case BSON.ObjectId:
+                            entity.additionalProperties = { bsonType: 'objectId' };
+                            break;
+                        default:
+                            entity.additionalProperties = this.buildDocumentSchema(column);
+                    }
+                    break;
+                case 14 /* Object */:
+                    entity.bsonType.push('object');
+                    if (column.model === Object) {
+                        entity.additionalProperties = true;
                     }
                     else {
-                        entity.required.push(name);
+                        const result = this.buildDocumentSchema(column);
+                        entity.properties = result.properties;
+                        entity.additionalProperties = false;
+                        this.setProperty('required', entity, 'required', result);
                     }
-                }
-                entity.properties[name] = this.buildPropertySchema(schema);
+                    break;
+                default:
+                    throw new TypeError(`Unsupported column schema type '${type}'`);
             }
-            return entity;
         }
-    };
-    __decorate([
-        Class.Private()
-    ], Schema, "setProperty", null);
-    __decorate([
-        Class.Private()
-    ], Schema, "buildDocumentSchema", null);
-    __decorate([
-        Class.Private()
-    ], Schema, "buildPropertySchema", null);
-    __decorate([
-        Class.Public()
-    ], Schema, "build", null);
-    Schema = __decorate([
-        Class.Describe()
-    ], Schema);
-    return Schema;
-})();
+        return entity;
+    }
+    /**
+     * Build a new entity schema based on the specified row schema.
+     * @param row Row schema.
+     * @returns Returns the generated schema entity.
+     */
+    static build(row) {
+        const entity = {
+            bsonType: 'object',
+            properties: {},
+            additionalProperties: false
+        };
+        for (const column in row) {
+            const schema = row[column];
+            const name = schema.alias || schema.name;
+            if (schema.required) {
+                if (entity.required === void 0) {
+                    entity.required = [name];
+                }
+                else {
+                    entity.required.push(name);
+                }
+            }
+            entity.properties[name] = this.buildPropertySchema(schema);
+        }
+        return entity;
+    }
+};
+__decorate([
+    Class.Private()
+], Schema, "setProperty", null);
+__decorate([
+    Class.Private()
+], Schema, "buildDocumentSchema", null);
+__decorate([
+    Class.Private()
+], Schema, "buildPropertySchema", null);
+__decorate([
+    Class.Public()
+], Schema, "build", null);
+Schema = __decorate([
+    Class.Describe()
+], Schema);
 exports.Schema = Schema;
 //# sourceMappingURL=schema.js.map

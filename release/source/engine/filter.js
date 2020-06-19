@@ -16,31 +16,28 @@ const Types = require("../types");
 /**
  * Filter helper class.
  */
-let Filter = /** @class */ (() => {
-    let Filter = class Filter extends Class.Null {
-        /**
-         * Build a new primary Id filter based on the specified model type and the primary Id value.
-         * @param model Model type.
-         * @param value Primary Id value.
-         * @returns Returns the primary filter.
-         */
-        static primaryId(model, value) {
-            const primary = Types.Schema.getPrimaryColumn(model);
-            const filter = {};
-            filter[primary.name] = {
-                operator: "eq" /* Equal */,
-                value: value
-            };
-            return filter;
-        }
-    };
-    __decorate([
-        Class.Public()
-    ], Filter, "primaryId", null);
-    Filter = __decorate([
-        Class.Describe()
-    ], Filter);
-    return Filter;
-})();
+let Filter = class Filter extends Class.Null {
+    /**
+     * Build a new primary Id filter based on the specified model type and the primary Id value.
+     * @param model Model type.
+     * @param value Primary Id value.
+     * @returns Returns the primary filter.
+     */
+    static primaryId(model, value) {
+        const primary = Types.Schema.getPrimaryColumn(model);
+        const filter = {};
+        filter[primary.name] = {
+            operator: "eq" /* Equal */,
+            value: value
+        };
+        return filter;
+    }
+};
+__decorate([
+    Class.Public()
+], Filter, "primaryId", null);
+Filter = __decorate([
+    Class.Describe()
+], Filter);
 exports.Filter = Filter;
 //# sourceMappingURL=filter.js.map
