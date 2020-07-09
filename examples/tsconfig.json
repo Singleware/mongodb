@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "target": "ES2019",
-    "module": "commonjs",
+    "module": "CommonJS",
+    "newLine": "lf",
     "strict": true,
     "sourceMap": true,
     "incremental": true,
+    "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
-    "suppressExcessPropertyErrors": true,
     "outDir": "../release/"
   },
   "include": [
