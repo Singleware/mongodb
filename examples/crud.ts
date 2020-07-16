@@ -89,13 +89,13 @@ class UserMapper extends MongoDB.Mapper<UserEntity> {
    */
   @Class.Public()
   public async create(): Promise<string> {
-    return await this.insert({
+    return (await this.insert<UserEntity, string>({
       firstName: 'First 1',
       lastName: 'Last 1',
       details: {
         birthDate: new Date()
       }
-    });
+    }))!;
   }
 
   /**
@@ -105,12 +105,12 @@ class UserMapper extends MongoDB.Mapper<UserEntity> {
    */
   @Class.Public()
   public async change(id: string): Promise<boolean> {
-    return await this.updateById(id, {
+    return (await this.updateById(id, {
       firstName: 'Changed!',
       details: {
         phone: '+551199999999'
       }
-    });
+    }))!;
   }
 
   /**
@@ -120,11 +120,11 @@ class UserMapper extends MongoDB.Mapper<UserEntity> {
    */
   @Class.Public()
   public async replace(id: string): Promise<boolean> {
-    return await this.replaceById(id, {
+    return (await this.replaceById(id, {
       id: id,
       firstName: 'Replaced!',
       details: {}
-    });
+    }))!;
   }
 
   /**
@@ -144,7 +144,7 @@ class UserMapper extends MongoDB.Mapper<UserEntity> {
    */
   @Class.Public()
   public async remove(id: string): Promise<boolean> {
-    return await this.deleteById(id);
+    return (await this.deleteById(id))!;
   }
 }
 
@@ -168,39 +168,15 @@ async function example(): Promise<void> {
     // Create user
     const id = await mapper.create();
     const before = (await mapper.read(id))!;
-    console.log(
-      'Create:',
-      id,
-      before.firstName,
-      before.lastName,
-      before.details.birthDate,
-      before.details.phone,
-      before.details.email
-    );
+    console.log('Create:', id, before.firstName, before.lastName, before.details.birthDate, before.details.phone, before.details.email);
     // Update user
     const update = await mapper.change(id);
     const middle = (await mapper.read(id))!;
-    console.log(
-      'Update:',
-      update,
-      middle.firstName,
-      middle.lastName,
-      middle.details.birthDate,
-      middle.details.phone,
-      middle.details.email
-    );
+    console.log('Update:', update, middle.firstName, middle.lastName, middle.details.birthDate, middle.details.phone, middle.details.email);
     // Replace user
     const replace = await mapper.replace(id);
     const after = (await mapper.read(id))!;
-    console.log(
-      'Replace:',
-      replace,
-      after.firstName,
-      after.lastName,
-      after.details.birthDate,
-      after.details.phone,
-      after.details.email
-    );
+    console.log('Replace:', replace, after.firstName, after.lastName, after.details.birthDate, after.details.phone, after.details.email);
     // Delete user
     console.log('Delete:', await mapper.remove(id));
     // Disconnect

@@ -45,7 +45,7 @@ export declare class Session extends Class.Null implements Types.Driver {
      * @param entities Entity list.
      * @returns Returns a promise to get the list of inserted entities.
      */
-    insert<T extends Types.Entity>(model: Types.Model<T>, entities: T[]): Promise<string[]>;
+    insert<E, R>(model: Types.Model<E>, entities: E[]): Promise<R[] | undefined>;
     /**
      * Find the corresponding entities from the database.
      * @param model Model type.
@@ -53,7 +53,7 @@ export declare class Session extends Class.Null implements Types.Driver {
      * @param fields Viewed fields.
      * @returns Returns a promise to get the list of entities found.
      */
-    find<T extends Types.Entity>(model: Types.Model<T>, query: Types.Query, fields: string[]): Promise<T[]>;
+    find<E>(model: Types.Model<E>, query: Types.Query, fields: string[]): Promise<E[] | undefined>;
     /**
      * Find the entity that corresponds to the specified entity id.
      * @param model Model type.
@@ -61,7 +61,7 @@ export declare class Session extends Class.Null implements Types.Driver {
      * @param fields Viewed fields.
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
-    findById<T extends Types.Entity>(model: Types.Model<T>, id: MongoDb.ObjectId, fields: string[]): Promise<T | undefined>;
+    findById<E, I>(model: Types.Model<E>, id: I, fields: string[]): Promise<E | undefined>;
     /**
      * Update all entities that corresponds to the specified filter.
      * @param model Model type.
@@ -69,7 +69,7 @@ export declare class Session extends Class.Null implements Types.Driver {
      * @param entity Entity data.
      * @returns Returns a promise to get the number of updated entities.
      */
-    update(model: Types.Model, match: Types.Match, entity: Types.Entity): Promise<number>;
+    update<E>(model: Types.Model<E>, match: Types.Match, entity: E): Promise<number | undefined>;
     /**
      * Updates the entity that corresponds to the specified entity Id.
      * @param model Model type.
@@ -77,7 +77,7 @@ export declare class Session extends Class.Null implements Types.Driver {
      * @param entity Entity data.
      * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
      */
-    updateById(model: Types.Model, id: any, entity: Types.Model): Promise<boolean>;
+    updateById<E, I>(model: Types.Model<E>, id: I, entity: E): Promise<boolean | undefined>;
     /**
      * Replace the entity that corresponds to the specified entity Id.
      * @param model Model type.
@@ -85,26 +85,26 @@ export declare class Session extends Class.Null implements Types.Driver {
      * @param entity Entity data.
      * @returns Returns a promise to get the true when the entity has been replaced or false otherwise.
      */
-    replaceById(model: Types.Model, id: MongoDb.ObjectId, entity: Types.Model): Promise<boolean>;
+    replaceById<E, I>(model: Types.Model<E>, id: I, entity: E): Promise<boolean | undefined>;
     /**
      * Delete all entities that corresponds to the specified filter.
      * @param model Model type.
      * @param match Matching filter.
      * @return Returns a promise to get the number of deleted entities.
      */
-    delete(model: Types.Model, match: Types.Match): Promise<number>;
+    delete(model: Types.Model, match: Types.Match): Promise<number | undefined>;
     /**
      * Delete the entity that corresponds to the specified Id.
      * @param model Model type.
      * @param id Entity Id.
      * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
      */
-    deleteById(model: Types.Model, id: MongoDb.ObjectId): Promise<boolean>;
+    deleteById<I>(model: Types.Model, id: I): Promise<boolean | undefined>;
     /**
      * Count all corresponding entities from the database.
      * @param model Model type.
      * @param query Query filter.
      * @returns Returns a promise to get the total amount of found entities.
      */
-    count(model: Types.Model, query: Types.Query): Promise<number>;
+    count(model: Types.Model, query: Types.Query): Promise<number | undefined>;
 }

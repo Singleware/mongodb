@@ -171,9 +171,7 @@ let Pipeline = class Pipeline extends Class.Null {
     static composeGroup(pipeline, group, level) {
         const name = level.previous ? `_${level.column.name}` : level.column.name;
         if (level.column.type === 'virtual') {
-            const local = level.previous
-                ? `_${level.column.local}`
-                : level.column.local;
+            const local = level.previous ? `_${level.column.local}` : level.column.local;
             if (level.multiple) {
                 group[name] = { $push: `$${level.virtual}` };
                 group[local] = { $push: `$${level.name}` };

@@ -46,7 +46,7 @@ let Match = class Match extends Class.Null {
             throw new TypeError(`The filter input must be an array.`);
         }
         else {
-            return input.map(value => this.castValue(value, schema));
+            return input.map((value) => this.castValue(value, schema));
         }
     }
     /**
@@ -126,7 +126,7 @@ let Match = class Match extends Class.Null {
      */
     static build(model, match) {
         if (match instanceof Array) {
-            return { $or: match.map(match => this.buildExpression(model, match)) };
+            return { $or: match.map((match) => this.buildExpression(model, match)) };
         }
         return this.buildExpression(model, match);
     }

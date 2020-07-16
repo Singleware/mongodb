@@ -41,7 +41,7 @@ export class Match extends Class.Null {
     if (!(input instanceof Array)) {
       throw new TypeError(`The filter input must be an array.`);
     } else {
-      return input.map(value => this.castValue(value, schema));
+      return input.map((value) => this.castValue(value, schema));
     }
   }
 
@@ -53,12 +53,7 @@ export class Match extends Class.Null {
    * @param value Operation value.
    */
   @Class.Private()
-  private static attachOperation(
-    schemas: Types.Columns.Any[],
-    operations: Types.Entity,
-    operator: Types.Operator,
-    value: any
-  ): void {
+  private static attachOperation(schemas: Types.Columns.Any[], operations: Types.Entity, operator: Types.Operator, value: any): void {
     const path = Types.Columns.Helper.getPath(schemas);
     const schema = schemas[schemas.length - 1];
     switch (operator) {
@@ -131,7 +126,7 @@ export class Match extends Class.Null {
   @Class.Public()
   public static build(model: Types.Model, match: Types.Match | Types.Match[]): Types.Entity {
     if (match instanceof Array) {
-      return { $or: match.map(match => this.buildExpression(model, match)) };
+      return { $or: match.map((match) => this.buildExpression(model, match)) };
     }
     return this.buildExpression(model, match);
   }

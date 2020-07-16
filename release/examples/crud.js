@@ -76,13 +76,13 @@ let UserMapper = class UserMapper extends MongoDB.Mapper {
      * @returns Returns a promise to get the new user id.
      */
     async create() {
-        return await this.insert({
+        return (await this.insert({
             firstName: 'First 1',
             lastName: 'Last 1',
             details: {
                 birthDate: new Date()
             }
-        });
+        }));
     }
     /**
      * Change the test user.
@@ -90,12 +90,12 @@ let UserMapper = class UserMapper extends MongoDB.Mapper {
      * @returns Returns a promise to get true when the is updated.
      */
     async change(id) {
-        return await this.updateById(id, {
+        return (await this.updateById(id, {
             firstName: 'Changed!',
             details: {
                 phone: '+551199999999'
             }
-        });
+        }));
     }
     /**
      * Replace the test user.
@@ -103,11 +103,11 @@ let UserMapper = class UserMapper extends MongoDB.Mapper {
      * @returns Returns a promise to get the replacement status.
      */
     async replace(id) {
-        return await this.replaceById(id, {
+        return (await this.replaceById(id, {
             id: id,
             firstName: 'Replaced!',
             details: {}
-        });
+        }));
     }
     /**
      * Read the test user.
@@ -123,7 +123,7 @@ let UserMapper = class UserMapper extends MongoDB.Mapper {
      * @returns Returns a promise to get true when the user is removed.
      */
     async remove(id) {
-        return await this.deleteById(id);
+        return (await this.deleteById(id));
     }
 };
 __decorate([

@@ -55,10 +55,10 @@ let UserMapper = class UserMapper extends Class.Null {
      * @returns Returns the new user id.
      */
     async create(name, status) {
-        return this.mapper.insert({
+        return (await this.mapper.insert({
             name: name,
-            status: status,
-        });
+            status: status
+        }));
     }
 };
 __decorate([
@@ -113,10 +113,10 @@ let TypeMapper = class TypeMapper extends Class.Null {
      * @returns Returns the new type id.
      */
     async create(name, description) {
-        return this.mapper.insert({
+        return (await this.mapper.insert({
             name: name,
-            description: description,
-        });
+            description: description
+        }));
     }
 };
 __decorate([
@@ -298,12 +298,12 @@ __decorate([
 __decorate([
     MongoDB.Schema.JoinAll('name', () => TypeEntity, 'typeName', {
         sort: {
-            description: "desc" /* Descending */,
+            description: "desc" /* Descending */
         },
         limit: {
             start: 0,
-            count: 3,
-        },
+            count: 3
+        }
     }),
     Class.Public()
 ], AccountEntity.prototype, "typeList", void 0);
@@ -316,8 +316,8 @@ __decorate([
     MongoDB.Schema.JoinAll('name', () => TypeEntity, 'roleNames', {
         limit: {
             start: 0,
-            count: 6,
-        },
+            count: 6
+        }
     }),
     Class.Public()
 ], AccountEntity.prototype, "roleList", void 0);
@@ -331,7 +331,7 @@ __decorate([
 ], AccountEntity.prototype, "allowedUsersIdList", void 0);
 __decorate([
     MongoDB.Schema.Join('id', () => UserEntity, 'allowedUsersIdList', {
-        status: { eq: 'enabled' },
+        status: { eq: 'enabled' }
     }),
     Class.Public()
 ], AccountEntity.prototype, "allowedUsersList", void 0);
@@ -368,7 +368,7 @@ let AccountMapper = class AccountMapper extends Class.Null {
      * @returns Returns the new account id.
      */
     async create(ownerId, type, roles, userAId, userBId, userCId) {
-        return this.mapper.insert({
+        return (await this.mapper.insert({
             ownerId: ownerId,
             typeName: type,
             roleNames: roles,
@@ -378,7 +378,7 @@ let AccountMapper = class AccountMapper extends Class.Null {
                 sharedUsersIdList: [userCId, userBId, userAId],
                 messages: {
                     adminId: ownerId,
-                    usersIdList: [userAId, userBId, userCId],
+                    usersIdList: [userAId, userBId, userCId]
                 },
                 groups: [
                     {
@@ -388,16 +388,16 @@ let AccountMapper = class AccountMapper extends Class.Null {
                             {
                                 userId: userAId,
                                 description: {
-                                    targets: [{ userId: userBId }, { userId: userCId }],
-                                },
+                                    targets: [{ userId: userBId }, { userId: userCId }]
+                                }
                             },
                             {
                                 userId: userBId,
                                 description: {
-                                    targets: [{ userId: userCId }],
-                                },
-                            },
-                        ],
+                                    targets: [{ userId: userCId }]
+                                }
+                            }
+                        ]
                     },
                     {
                         adminId: userBId,
@@ -406,19 +406,19 @@ let AccountMapper = class AccountMapper extends Class.Null {
                             {
                                 userId: userBId,
                                 description: {
-                                    targets: [{ userId: userAId }],
-                                },
-                            },
-                        ],
+                                    targets: [{ userId: userAId }]
+                                }
+                            }
+                        ]
                     },
                     {
                         adminId: userCId,
                         usersIdList: [userAId, userBId],
-                        notifications: [],
-                    },
-                ],
-            },
-        });
+                        notifications: []
+                    }
+                ]
+            }
+        }));
     }
     /**
      * Reads an account entity that corresponds to the specified account id.
@@ -487,7 +487,7 @@ async function example() {
             'settings.groups.admin.name',
             'settings.groups.usersList.name',
             'settings.groups.notifications.user.name',
-            'settings.groups.notifications.description.targets.user.name',
+            'settings.groups.notifications.description.targets.user.name'
         ]);
         if (account !== void 0) {
             const entity = MongoDB.Normalizer.create(AccountEntity, account, false, true);

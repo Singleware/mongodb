@@ -76,7 +76,7 @@ let Session = class Session extends Class.Null {
      * @returns Returns a promise to get the list of inserted entities.
      */
     async insert(model, entities) {
-        const entries = entities.map(entity => Types.Normalizer.create(model, entity, true, true));
+        const entries = entities.map((entity) => Types.Normalizer.create(model, entity, true, true));
         const collection = this.database.collection(Types.Schema.getStorageName(model));
         const result = await collection.insertMany(entries, { session: this.session });
         return Object.values(result.insertedIds);
@@ -102,7 +102,11 @@ let Session = class Session extends Class.Null {
      * @returns Returns a promise to get the found entity or undefined when the entity was not found.
      */
     async findById(model, id, fields) {
-        return (await this.find(model, { pre: Engine.Filter.primaryId(model, id) }, fields))[0];
+        const result = await this.find(model, { pre: Engine.Filter.primaryId(model, id) }, fields);
+        if (result) {
+            return result[0];
+        }
+        return void 0;
     }
     /**
      * Update all entities that corresponds to the specified filter.

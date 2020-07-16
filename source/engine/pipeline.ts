@@ -183,9 +183,7 @@ export class Pipeline extends Class.Null {
   private static composeGroup(pipeline: Types.Entity[], group: Types.Entity, level: any): void {
     const name = level.previous ? `_${level.column.name}` : level.column.name;
     if (level.column.type === 'virtual') {
-      const local = level.previous
-        ? `_${(level.column as Types.Columns.Virtual).local}`
-        : (level.column as Types.Columns.Virtual).local;
+      const local = level.previous ? `_${(level.column as Types.Columns.Virtual).local}` : (level.column as Types.Columns.Virtual).local;
       if (level.multiple) {
         group[name] = { $push: `$${level.virtual}` };
         group[local] = { $push: `$${level.name}` };
@@ -352,13 +350,7 @@ export class Pipeline extends Class.Null {
    * @returns Returns the pipeline projection.
    */
   @Class.Private()
-  private static applyRelationship(
-    pipeline: Types.Entity[],
-    model: Types.Model,
-    view: string[],
-    fields: string[],
-    levels: any[]
-  ): Types.Entity {
+  private static applyRelationship(pipeline: Types.Entity[], model: Types.Model, view: string[], fields: string[], levels: any[]): Types.Entity {
     const project = {};
     this.resolveForeignRelation(pipeline, project, model, view, fields, levels);
     this.resolveNestedRelations(pipeline, project, model, view, fields, levels);

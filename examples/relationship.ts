@@ -13,6 +13,10 @@ interface UserEntityBase {
    * User name.
    */
   name: string;
+  /**
+   * User status.
+   */
+  status: 'enabled' | 'disabled';
 }
 
 /**
@@ -74,10 +78,10 @@ class UserMapper extends Class.Null {
    */
   @Class.Public()
   public async create(name: string, status: 'enabled' | 'disabled'): Promise<string> {
-    return this.mapper.insert(<UserEntityBase>{
+    return (await this.mapper.insert<UserEntityBase, string>({
       name: name,
-      status: status,
-    });
+      status: status
+    }))!;
   }
 }
 
@@ -154,10 +158,10 @@ class TypeMapper extends Class.Null {
    */
   @Class.Public()
   public async create(name: string, description: string): Promise<string> {
-    return this.mapper.insert(<TypeEntityBase>{
+    return (await this.mapper.insert<TypeEntityBase, string>({
       name: name,
-      description: description,
-    });
+      description: description
+    }))!;
   }
 }
 
@@ -509,12 +513,12 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
    */
   @MongoDB.Schema.JoinAll('name', () => TypeEntity, 'typeName', {
     sort: {
-      description: MongoDB.Order.Descending,
+      description: MongoDB.Order.Descending
     },
     limit: {
       start: 0,
-      count: 3,
-    },
+      count: 3
+    }
   })
   @Class.Public()
   public typeList!: TypeEntity[];
@@ -533,8 +537,8 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
   @MongoDB.Schema.JoinAll('name', () => TypeEntity, 'roleNames', {
     limit: {
       start: 0,
-      count: 6,
-    },
+      count: 6
+    }
   })
   @Class.Public()
   public roleList!: TypeEntity[];
@@ -557,7 +561,7 @@ class AccountEntity extends Class.Null implements AccountEntityBase {
    * Entity list of allowed users in this account.
    */
   @MongoDB.Schema.Join('id', () => UserEntity, 'allowedUsersIdList', {
-    status: { eq: 'enabled' },
+    status: { eq: 'enabled' }
   })
   @Class.Public()
   public readonly allowedUsersList!: UserEntity[];
@@ -603,15 +607,8 @@ class AccountMapper extends Class.Null {
    * @returns Returns the new account id.
    */
   @Class.Public()
-  public async create(
-    ownerId: any,
-    type: string,
-    roles: string[],
-    userAId: any,
-    userBId: any,
-    userCId: any
-  ): Promise<string> {
-    return this.mapper.insert({
+  public async create(ownerId: any, type: string, roles: string[], userAId: any, userBId: any, userCId: any): Promise<string> {
+    return (await this.mapper.insert<AccountEntityBase, string>({
       ownerId: ownerId,
       typeName: type,
       roleNames: roles,
@@ -621,7 +618,7 @@ class AccountMapper extends Class.Null {
         sharedUsersIdList: [userCId, userBId, userAId],
         messages: {
           adminId: ownerId,
-          usersIdList: [userAId, userBId, userCId],
+          usersIdList: [userAId, userBId, userCId]
         },
         groups: [
           {
@@ -631,16 +628,16 @@ class AccountMapper extends Class.Null {
               {
                 userId: userAId,
                 description: {
-                  targets: [{ userId: userBId }, { userId: userCId }],
-                },
+                  targets: [{ userId: userBId }, { userId: userCId }]
+                }
               },
               {
                 userId: userBId,
                 description: {
-                  targets: [{ userId: userCId }],
-                },
-              },
-            ],
+                  targets: [{ userId: userCId }]
+                }
+              }
+            ]
           },
           {
             adminId: userBId,
@@ -649,19 +646,19 @@ class AccountMapper extends Class.Null {
               {
                 userId: userBId,
                 description: {
-                  targets: [{ userId: userAId }],
-                },
-              },
-            ],
+                  targets: [{ userId: userAId }]
+                }
+              }
+            ]
           },
           {
             adminId: userCId,
             usersIdList: [userAId, userBId],
-            notifications: [],
-          },
-        ],
-      },
-    });
+            notifications: []
+          }
+        ]
+      }
+    }))!;
   }
 
   /**
@@ -721,7 +718,7 @@ async function example(): Promise<void> {
       'settings.groups.admin.name',
       'settings.groups.usersList.name',
       'settings.groups.notifications.user.name',
-      'settings.groups.notifications.description.targets.user.name',
+      'settings.groups.notifications.description.targets.user.name'
     ]);
     if (account !== void 0) {
       const entity = MongoDB.Normalizer.create(AccountEntity, account, false, true);

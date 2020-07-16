@@ -98,8 +98,8 @@ export class Session extends Class.Null implements Types.Driver {
    * @returns Returns a promise to get the list of inserted entities.
    */
   @Class.Public()
-  public async insert<T extends Types.Entity>(model: Types.Model<T>, entities: T[]): Promise<string[]> {
-    const entries = entities.map(entity => Types.Normalizer.create(model, entity, true, true));
+  public async insert<E, R>(model: Types.Model<E>, entities: E[]): Promise<R[] | undefined> {
+    const entries = entities.map((entity) => Types.Normalizer.create(model, entity, true, true));
     const collection = this.database.collection(Types.Schema.getStorageName(model));
     const result = await collection.insertMany(entries, { session: this.session });
     return Object.values(result.insertedIds);
@@ -113,7 +113,7 @@ export class Session extends Class.Null implements Types.Driver {
    * @returns Returns a promise to get the list of entities found.
    */
   @Class.Public()
-  public async find<T extends Types.Entity>(model: Types.Model<T>, query: Types.Query, fields: string[]): Promise<T[]> {
+  public async find<E>(model: Types.Model<E>, query: Types.Query, fields: string[]): Promise<E[] | undefined> {
     const pipeline = Engine.Pipeline.build(model, query, fields);
     const collection = this.database.collection(Types.Schema.getStorageName(model));
     const cursor = collection.aggregate(pipeline, { session: this.session, allowDiskUse: true });
@@ -128,12 +128,12 @@ export class Session extends Class.Null implements Types.Driver {
    * @returns Returns a promise to get the found entity or undefined when the entity was not found.
    */
   @Class.Public()
-  public async findById<T extends Types.Entity>(
-    model: Types.Model<T>,
-    id: MongoDb.ObjectId,
-    fields: string[]
-  ): Promise<T | undefined> {
-    return (await this.find(model, { pre: Engine.Filter.primaryId(model, id) }, fields))[0];
+  public async findById<E, I>(model: Types.Model<E>, id: I, fields: string[]): Promise<E | undefined> {
+    const result = await this.find(model, { pre: Engine.Filter.primaryId(model, id) }, fields);
+    if (result) {
+      return result[0];
+    }
+    return void 0;
   }
 
   /**
@@ -144,7 +144,7 @@ export class Session extends Class.Null implements Types.Driver {
    * @returns Returns a promise to get the number of updated entities.
    */
   @Class.Public()
-  public async update(model: Types.Model, match: Types.Match, entity: Types.Entity): Promise<number> {
+  public async update<E>(model: Types.Model<E>, match: Types.Match, entity: E): Promise<number | undefined> {
     const entry = Types.Normalizer.create(model, entity, true, true, true);
     const filter = Engine.Match.build(model, match);
     const collection = this.database.collection(Types.Schema.getStorageName(model));
@@ -160,7 +160,7 @@ export class Session extends Class.Null implements Types.Driver {
    * @returns Returns a promise to get the true when the entity has been updated or false otherwise.
    */
   @Class.Public()
-  public async updateById(model: Types.Model, id: any, entity: Types.Model): Promise<boolean> {
+  public async updateById<E, I>(model: Types.Model<E>, id: I, entity: E): Promise<boolean | undefined> {
     return (await this.update(model, Engine.Filter.primaryId(model, id), entity)) === 1;
   }
 
@@ -172,7 +172,7 @@ export class Session extends Class.Null implements Types.Driver {
    * @returns Returns a promise to get the true when the entity has been replaced or false otherwise.
    */
   @Class.Public()
-  public async replaceById(model: Types.Model, id: MongoDb.ObjectId, entity: Types.Model): Promise<boolean> {
+  public async replaceById<E, I>(model: Types.Model<E>, id: I, entity: E): Promise<boolean | undefined> {
     const entry = Types.Normalizer.create(model, entity, true, true);
     const filter = Engine.Match.build(model, Engine.Filter.primaryId(model, id));
     const collection = this.database.collection(Types.Schema.getStorageName(model));
@@ -187,7 +187,7 @@ export class Session extends Class.Null implements Types.Driver {
    * @return Returns a promise to get the number of deleted entities.
    */
   @Class.Public()
-  public async delete(model: Types.Model, match: Types.Match): Promise<number> {
+  public async delete(model: Types.Model, match: Types.Match): Promise<number | undefined> {
     const filter = Engine.Match.build(model, match);
     const collection = this.database.collection(Types.Schema.getStorageName(model));
     const result = await collection.deleteMany(filter, { session: this.session });
@@ -201,7 +201,7 @@ export class Session extends Class.Null implements Types.Driver {
    * @return Returns a promise to get the true when the entity has been deleted or false otherwise.
    */
   @Class.Public()
-  public async deleteById(model: Types.Model, id: MongoDb.ObjectId): Promise<boolean> {
+  public async deleteById<I>(model: Types.Model, id: I): Promise<boolean | undefined> {
     return (await this.delete(model, Engine.Filter.primaryId(model, id))) === 1;
   }
 
@@ -212,7 +212,7 @@ export class Session extends Class.Null implements Types.Driver {
    * @returns Returns a promise to get the total amount of found entities.
    */
   @Class.Public()
-  public async count(model: Types.Model, query: Types.Query): Promise<number> {
+  public async count(model: Types.Model, query: Types.Query): Promise<number | undefined> {
     const pipeline = [...Engine.Pipeline.build(model, query, []), { $count: 'records' }];
     const collection = this.database.collection(Types.Schema.getStorageName(model));
     const cursor = collection.aggregate(pipeline, { session: this.session, allowDiskUse: true });
